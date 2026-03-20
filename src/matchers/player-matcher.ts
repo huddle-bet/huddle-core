@@ -5,12 +5,16 @@ import { normalizePlayerName } from '../ids/normalize.js';
 /**
  * Match two player names, using the registry for canonical resolution
  * and falling back to fuzzy matching.
+ *
+ * Pass teamIds to disambiguate "M. Williams" — when both names match multiple
+ * players, only the one on the correct team is considered.
  */
 export function playersMatch(
   registry: PlayerRegistry,
   sport: Sport,
   name1: string,
   name2: string,
+  teamIds?: string[],
 ): boolean {
   // 1. Registry resolution
   const p1 = registry.resolve(sport, name1);
@@ -30,14 +34,36 @@ export function playersMatch(
   if (abbr2 && n1 === abbr2) return true;
   if (abbr1 && abbr2 && abbr1 === abbr2) return true;
 
-  // 4. Last name match (for esports gamertags this won't apply, which is correct)
+  // 4. Last name + first initial match — but only if unambiguous
+  //    "M. Williams" could be many players, so require team context
   const last1 = n1.split(' ').pop();
   const last2 = n2.split(' ').pop();
   const first1 = n1.split(' ')[0];
   const first2 = n2.split(' ')[0];
   if (last1 && last2 && last1 === last2 && last1.length > 3) {
-    // Same last name — check first initial matches
-    if (first1 && first2 && first1[0] === first2[0]) return true;
+    if (first1 && first2 && first1[0] === first2[0]) {
+      // If we have team context, verify only one player on those teams matches
+      if (teamIds && teamIds.length > 0) {
+        const candidates = registry.bySport(sport).filter((p) => {
+          const pNorm = normalizePlayerName(p.name);
+          const pLast = pNorm.split(' ').pop();
+          const pFirst = pNorm.split(' ')[0];
+          return pLast === last1 && pFirst[0] === first1[0];
+        });
+
+        // Filter to players on the relevant teams
+        const onTeam = candidates.filter((p) => {
+          const currentTeamId = p.teamHistory.length > 0
+            ? p.teamHistory[p.teamHistory.length - 1].teamId
+            : undefined;
+          return currentTeamId && teamIds.includes(currentTeamId);
+        });
+
+        // Ambiguous — multiple players with same initial+last on these teams
+        if (onTeam.length > 1) return false;
+      }
+      return true;
+    }
   }
 
   return false;

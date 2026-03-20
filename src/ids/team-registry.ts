@@ -35,8 +35,10 @@ export class TeamRegistry {
       this.nameIndex.set(this.key(team.sport, alias), team.id);
     }
 
-    // Index external IDs
+    // Index external IDs (scoped by sport to avoid cross-league ID collisions)
     for (const ext of team.externalIds) {
+      this.externalIndex.set(`${team.sport}:${ext.source}:${ext.id}`, team.id);
+      // Also keep unscoped for backwards compat (last write wins)
       this.externalIndex.set(`${ext.source}:${ext.id}`, team.id);
     }
   }
@@ -53,8 +55,14 @@ export class TeamRegistry {
     return id ? this.teams.get(id) : undefined;
   }
 
-  /** Resolve by external system ID */
-  resolveByExternalId(source: DataSource, externalId: string): Team | undefined {
+  /** Resolve by external system ID. Sport-scoped to avoid cross-league collisions. */
+  resolveByExternalId(source: DataSource, externalId: string, sport?: Sport): Team | undefined {
+    // Try sport-scoped first (precise)
+    if (sport) {
+      const scopedId = this.externalIndex.get(`${sport}:${source}:${externalId}`);
+      if (scopedId) return this.teams.get(scopedId);
+    }
+    // Fallback to unscoped (may collide across sports)
     const id = this.externalIndex.get(`${source}:${externalId}`);
     return id ? this.teams.get(id) : undefined;
   }
