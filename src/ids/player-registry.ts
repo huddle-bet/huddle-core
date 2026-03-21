@@ -12,21 +12,21 @@ import { normalizePlayerName } from './normalize.js';
  */
 export class PlayerRegistry {
   private readonly players = new Map<string, Player>();
-  /** "{sport}:{normalizedName}" → player ID */
-  private readonly nameIndex = new Map<string, string>();
+  /** "{sport}:{normalizedName}" → player IDs (multiple for duplicate names) */
+  private readonly nameIndex = new Map<string, string[]>();
   /** "{source}:{externalId}" → player ID */
   private readonly externalIndex = new Map<string, string>();
 
   register(player: Player): void {
     this.players.set(player.id, player);
 
-    this.nameIndex.set(this.key(player.sport, player.name), player.id);
+    this.addToNameIndex(player.sport, player.name, player.id);
     if (player.gamertag) {
-      this.nameIndex.set(this.key(player.sport, player.gamertag), player.id);
+      this.addToNameIndex(player.sport, player.gamertag, player.id);
     }
 
     for (const alias of player.aliases) {
-      this.nameIndex.set(this.key(player.sport, alias), player.id);
+      this.addToNameIndex(player.sport, alias, player.id);
     }
 
     for (const ext of player.externalIds) {
@@ -34,13 +34,34 @@ export class PlayerRegistry {
     }
   }
 
+  private addToNameIndex(sport: Sport, name: string, playerId: string): void {
+    const k = this.key(sport, name);
+    const existing = this.nameIndex.get(k) ?? [];
+    if (!existing.includes(playerId)) {
+      existing.push(playerId);
+      this.nameIndex.set(k, existing);
+    }
+  }
+
   loadPlayers(players: Player[]): void {
     for (const p of players) this.register(p);
   }
 
+  /**
+   * Resolve by name. If multiple players share the name, returns the first one.
+   * For disambiguation, use resolveByExternalId or resolveByNameAndTeam.
+   */
   resolve(sport: Sport, name: string): Player | undefined {
-    const id = this.nameIndex.get(this.key(sport, name));
-    return id ? this.players.get(id) : undefined;
+    const ids = this.nameIndex.get(this.key(sport, name));
+    if (!ids || ids.length === 0) return undefined;
+    return this.players.get(ids[0]);
+  }
+
+  /** Returns all players matching this name (for duplicate detection) */
+  resolveAll(sport: Sport, name: string): Player[] {
+    const ids = this.nameIndex.get(this.key(sport, name));
+    if (!ids) return [];
+    return ids.map((id) => this.players.get(id)).filter(Boolean) as Player[];
   }
 
   resolveByExternalId(source: DataSource, externalId: string): Player | undefined {
@@ -80,29 +101,43 @@ export class PlayerRegistry {
     source?: DataSource;
     externalId?: string;
   }): Player {
-    // Check if already known
-    const existing = this.resolve(sport, name)
-      ?? (opts?.gamertag ? this.resolve(sport, opts.gamertag) : undefined)
-      ?? (opts?.source && opts?.externalId
+    // Resolution priority:
+    // 1. External ID (most reliable — survives trades, name changes)
+    // 2. Name + team context (disambiguates same-name players)
+    // 3. Gamertag (esports)
+    // 4. Plain name (fallback)
+    const existing =
+      (opts?.source && opts?.externalId
         ? this.resolveByExternalId(opts.source, opts.externalId)
-        : undefined);
+        : undefined)
+      ?? (opts?.teamId
+        ? this.resolveByNameAndTeam(sport, name, opts.teamId)
+        : undefined)
+      ?? (opts?.gamertag ? this.resolve(sport, opts.gamertag) : undefined)
+      ?? this.resolve(sport, name);
 
     if (existing) {
-      // Merge in any new external ID
+      // Guard: if the caller provided an external ID and the matched player
+      // already has a DIFFERENT external ID from the SAME source, this is a
+      // different person with the same name. Do NOT merge — fall through to create.
       if (opts?.source && opts?.externalId) {
-        const hasExt = existing.externalIds.some(
-          (e) => e.source === opts.source && e.id === opts.externalId,
-        );
-        if (!hasExt) {
-          existing.externalIds.push({ source: opts.source, id: opts.externalId });
-          this.externalIndex.set(`${opts.source}:${opts.externalId}`, existing.id);
+        const sameSourceId = existing.externalIds.find((e) => e.source === opts.source);
+        if (sameSourceId && sameSourceId.id !== opts.externalId) {
+          // Different entity from the same source — create new player below
+        } else {
+          // Safe to merge: either no ID from this source yet, or same ID
+          if (!sameSourceId) {
+            existing.externalIds.push({ source: opts.source, id: opts.externalId });
+            this.externalIndex.set(`${opts.source}:${opts.externalId}`, existing.id);
+          }
+          if (opts?.teamId) updateTeamHistory(existing, opts.teamId, opts.date);
+          return existing;
         }
+      } else {
+        // No external ID provided — trust the name/team/gamertag match
+        if (opts?.teamId) updateTeamHistory(existing, opts.teamId, opts.date);
+        return existing;
       }
-      // Update team history
-      if (opts?.teamId) {
-        updateTeamHistory(existing, opts.teamId, opts.date);
-      }
-      return existing;
     }
 
     // Create new with UUID
@@ -126,6 +161,27 @@ export class PlayerRegistry {
 
     this.register(player);
     return player;
+  }
+
+  /**
+   * Resolve a player by name AND team context.
+   * Handles duplicate names: if multiple players share a name,
+   * returns the one currently on the given team.
+   */
+  private resolveByNameAndTeam(sport: Sport, name: string, teamId: string): Player | undefined {
+    const candidates = this.resolveAll(sport, name);
+    if (candidates.length === 0) return undefined;
+
+    // Only one player with this name — no ambiguity
+    if (candidates.length === 1) return candidates[0];
+
+    // Multiple players with same name — find the one on the target team
+    const onTeam = candidates.find((p) => currentTeam(p) === teamId);
+    if (onTeam) return onTeam;
+
+    // No candidate on the target team — could be a trade in progress.
+    // Return the first one; team history will update when the trade is confirmed.
+    return candidates[0];
   }
 
   private key(sport: Sport, name: string): string {
