@@ -117,19 +117,34 @@ export class PlayerRegistry {
       ?? this.resolve(sport, name);
 
     if (existing) {
-      // Guard: if the caller provided an external ID and the matched player
-      // already has a DIFFERENT external ID from the SAME source, this is a
-      // different person with the same name. Do NOT merge — fall through to create.
       if (opts?.source && opts?.externalId) {
-        const sameSourceId = existing.externalIds.find((e) => e.source === opts.source);
-        if (sameSourceId && sameSourceId.id !== opts.externalId) {
-          // Different entity from the same source — create new player below
-        } else {
-          // Safe to merge: either no ID from this source yet, or same ID
-          if (!sameSourceId) {
+        // Check if this exact external ID is already on the player
+        const hasExact = existing.externalIds.some(
+          (e) => e.source === opts.source && e.id === opts.externalId,
+        );
+
+        if (!hasExact) {
+          // New external ID from this source. Two cases:
+          // 1. Sources with per-PLAYER IDs (DK, PP, UD, ESPN): one ID per source per player.
+          //    A different ID means a different person — create new player.
+          // 2. Sources with per-SELECTION IDs (FD): multiple IDs per player expected.
+          //    Always merge.
+          const isPerSelectionSource = opts.source === 'fanduel';
+          const hasDifferentIdFromSource = existing.externalIds.some(
+            (e) => e.source === opts.source,
+          );
+
+          if (hasDifferentIdFromSource && !isPerSelectionSource) {
+            // Different player-level ID from same source → different person, fall through to create
+          } else {
+            // Safe to merge: new source, or per-selection source (FD)
             existing.externalIds.push({ source: opts.source, id: opts.externalId });
             this.externalIndex.set(`${opts.source}:${opts.externalId}`, existing.id);
+            if (opts?.teamId) updateTeamHistory(existing, opts.teamId, opts.date);
+            return existing;
           }
+        } else {
+          // Exact match — same ID already registered
           if (opts?.teamId) updateTeamHistory(existing, opts.teamId, opts.date);
           return existing;
         }
