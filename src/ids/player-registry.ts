@@ -124,20 +124,19 @@ export class PlayerRegistry {
         );
 
         if (!hasExact) {
-          // New external ID from this source. Two cases:
-          // 1. Sources with per-PLAYER IDs (DK, PP, UD, ESPN): one ID per source per player.
-          //    A different ID means a different person — create new player.
-          // 2. Sources with per-SELECTION IDs (FD): multiple IDs per player expected.
-          //    Always merge.
-          const isPerSelectionSource = opts.source === 'fanduel';
+          // New external ID. If the player already has a DIFFERENT ID from this
+          // same source, it's a different person with the same name.
+          // (Sources that give multiple IDs per player, like FD, should use
+          //  qualified source names like "fanduel_over" / "fanduel_under"
+          //  so each source has exactly one ID per player.)
           const hasDifferentIdFromSource = existing.externalIds.some(
             (e) => e.source === opts.source,
           );
 
-          if (hasDifferentIdFromSource && !isPerSelectionSource) {
-            // Different player-level ID from same source → different person, fall through to create
+          if (hasDifferentIdFromSource) {
+            // Different ID from same source → different person, fall through to create
           } else {
-            // Safe to merge: new source, or per-selection source (FD)
+            // New source — safe to merge
             existing.externalIds.push({ source: opts.source, id: opts.externalId });
             this.externalIndex.set(`${opts.source}:${opts.externalId}`, existing.id);
             if (opts?.teamId) updateTeamHistory(existing, opts.teamId, opts.date);

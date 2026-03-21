@@ -15,6 +15,8 @@ export type DataSource =
   // Odds
   | 'draftkings'
   | 'fanduel'
+  | 'fanduel_over'
+  | 'fanduel_under'
   | 'betmgm'
   | 'prizepicks'
   | 'underdog';
