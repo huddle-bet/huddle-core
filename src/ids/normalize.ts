@@ -38,8 +38,8 @@ export function normalizePlayerName(name: string): string {
     .replace(/^(CoD|Dota|Val|LoL|CS2?|CSGO):\s*/i, '')
     // Remove trailing Over/Under + optional line from selection labels
     .replace(/\s+(Over|Under|Higher|Lower)(\s+[\d.]+)?$/i, '')
-    // Normalize unicode quotes/apostrophes
-    .replace(/['']/g, "'")
+    // Normalize unicode quotes/apostrophes (U+2018, U+2019, U+02BC)
+    .replace(/[\u2018\u2019\u02BC]/g, "'")
     // Normalize diacritics (Dončić → Doncic)
     .normalize('NFD').replace(/[\u0300-\u036f]/g, '')
     // Normalize periods in initials (P.J. → pj for matching)
