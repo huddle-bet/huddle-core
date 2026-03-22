@@ -46,8 +46,8 @@ export function normalizePlayerName(name: string): string {
     .replace(/\./g, '')
     // Strip name suffixes — Jr, Jr., Sr, II, III, IV (books inconsistently include these)
     .replace(/\s+(jr\.?|sr\.?|ii|iii|iv|v)\s*$/i, '')
-    // Strip team abbrev in parens: "Gui Santos (GSW)" → "Gui Santos"
-    .replace(/\s*\([A-Z]{2,4}\)\s*$/, '')
+    // Strip parenthetical suffixes: team abbrev "(GSW)", position "(F)", birth year "(1998)"
+    .replace(/\s*\([^)]{1,10}\)\s*$/, '')
     // Normalize whitespace
     .replace(/\s+/g, ' ')
     .toLowerCase()
