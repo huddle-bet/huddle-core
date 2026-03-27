@@ -1,0 +1,107 @@
+services:
+  # ── huddle-api (Web Service) ──────────────────────────────
+  - type: web
+    name: huddle-api
+    runtime: node
+    region: oregon
+    plan: starter
+    repo: https://github.com/huddle-bet/huddle-api
+    buildCommand: npm install && npm run build
+    startCommand: node --import tsx src/server.ts
+    healthCheckPath: /health
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: PORT
+        value: "8080"
+      - key: SUPABASE_URL
+        sync: false
+      - key: SUPABASE_ANON_KEY
+        sync: false
+      - key: SUPABASE_SERVICE_KEY
+        sync: false
+      - key: WHOP_API_KEY
+        sync: false
+      - key: WHOP_CLIENT_ID
+        sync: false
+      - key: WHOP_CLIENT_SECRET
+        sync: false
+      - key: WHOP_REDIRECT_URI
+        sync: false
+      - key: REDIS_URL
+        fromService:
+          name: huddle-redis
+          type: redis
+          property: connectionString
+
+  # ── huddle-odds (Background Worker) ──────────────────────
+  - type: worker
+    name: huddle-odds
+    runtime: node
+    region: oregon
+    plan: starter
+    repo: https://github.com/huddle-bet/huddle-odds
+    buildCommand: npm install && npm run build
+    startCommand: node --import tsx src/cli.ts poll nba nhl mlb ncaam ncaaw cs2 lol val dota2 cod rl
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: SUPABASE_URL
+        sync: false
+      - key: SUPABASE_SERVICE_KEY
+        sync: false
+      - key: REDIS_URL
+        fromService:
+          name: huddle-redis
+          type: redis
+          property: connectionString
+
+  # ── huddle-data (Background Worker — Docker) ─────────────
+  - type: worker
+    name: huddle-data
+    runtime: docker
+    region: oregon
+    plan: starter
+    repo: https://github.com/huddle-bet/huddle-data
+    dockerfilePath: ./Dockerfile
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: SUPABASE_URL
+        sync: false
+      - key: SUPABASE_SERVICE_KEY
+        sync: false
+      - key: REDIS_URL
+        fromService:
+          name: huddle-redis
+          type: redis
+          property: connectionString
+
+  # ── huddle-engine (Background Worker) ────────────────────
+  - type: worker
+    name: huddle-engine
+    runtime: node
+    region: oregon
+    plan: starter
+    repo: https://github.com/huddle-bet/huddle-engine
+    buildCommand: npm install && npm run build
+    startCommand: node --import tsx src/cli.ts worker
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: SUPABASE_URL
+        sync: false
+      - key: SUPABASE_SERVICE_KEY
+        sync: false
+      - key: REDIS_URL
+        fromService:
+          name: huddle-redis
+          type: redis
+          property: connectionString
+
+databases:
+  - name: huddle-redis
+    type: redis
+    region: oregon
+    plan: starter
+    maxmemoryPolicy: allkeys-lru
