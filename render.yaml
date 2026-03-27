@@ -1,3 +1,23 @@
+envVarGroups:
+  - name: huddle-shared
+    envVars:
+      - key: DATABASE_URL
+        sync: false
+      - key: SUPABASE_URL
+        sync: false
+      - key: SUPABASE_SERVICE_KEY
+        sync: false
+      - key: SUPABASE_ANON_KEY
+        sync: false
+      - key: WHOP_API_KEY
+        sync: false
+      - key: WHOP_CLIENT_ID
+        sync: false
+      - key: WHOP_CLIENT_SECRET
+        sync: false
+      - key: WHOP_REDIRECT_URI
+        sync: false
+
 services:
   # ── huddle-api (Web Service) ──────────────────────────────
   - type: web
@@ -14,25 +34,22 @@ services:
         value: production
       - key: PORT
         value: "8080"
-      - key: SUPABASE_URL
-        sync: false
-      - key: SUPABASE_ANON_KEY
-        sync: false
-      - key: SUPABASE_SERVICE_KEY
-        sync: false
-      - key: WHOP_API_KEY
-        sync: false
-      - key: WHOP_CLIENT_ID
-        sync: false
-      - key: WHOP_CLIENT_SECRET
-        sync: false
-      - key: WHOP_REDIRECT_URI
-        sync: false
       - key: REDIS_URL
         fromService:
           name: huddle-redis
-          type: redis
+          type: keyvalue
           property: connectionString
+      - fromGroup: huddle-shared
+
+  # ── huddle-redis (Key Value) ────────────────────────────
+  - type: keyvalue
+    name: huddle-redis
+    region: oregon
+    plan: starter
+    maxmemoryPolicy: allkeys-lru
+    ipAllowList:
+      - source: 0.0.0.0/0
+        description: everywhere
 
   # ── huddle-odds (Background Worker) ──────────────────────
   - type: worker
@@ -46,15 +63,12 @@ services:
     envVars:
       - key: NODE_ENV
         value: production
-      - key: SUPABASE_URL
-        sync: false
-      - key: SUPABASE_SERVICE_KEY
-        sync: false
       - key: REDIS_URL
         fromService:
           name: huddle-redis
-          type: redis
+          type: keyvalue
           property: connectionString
+      - fromGroup: huddle-shared
 
   # ── huddle-data (Background Worker — Docker) ─────────────
   - type: worker
@@ -67,15 +81,12 @@ services:
     envVars:
       - key: NODE_ENV
         value: production
-      - key: SUPABASE_URL
-        sync: false
-      - key: SUPABASE_SERVICE_KEY
-        sync: false
       - key: REDIS_URL
         fromService:
           name: huddle-redis
-          type: redis
+          type: keyvalue
           property: connectionString
+      - fromGroup: huddle-shared
 
   # ── huddle-engine (Background Worker) ────────────────────
   - type: worker
@@ -89,19 +100,10 @@ services:
     envVars:
       - key: NODE_ENV
         value: production
-      - key: SUPABASE_URL
-        sync: false
-      - key: SUPABASE_SERVICE_KEY
-        sync: false
       - key: REDIS_URL
         fromService:
           name: huddle-redis
-          type: redis
+          type: keyvalue
           property: connectionString
+      - fromGroup: huddle-shared
 
-databases:
-  - name: huddle-redis
-    type: redis
-    region: oregon
-    plan: starter
-    maxmemoryPolicy: allkeys-lru
