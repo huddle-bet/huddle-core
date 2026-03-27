@@ -108,6 +108,46 @@ export class TeamRegistry {
     return undefined;
   }
 
+  /** Auto-register an unknown team (for college sports with 350+ teams) */
+  autoRegister(sport: Sport, name: string): Team {
+    // Generate deterministic UUID from sport + normalized name
+    const normalized = normalizeTeamName(name);
+    const id = this.deterministicId(sport, normalized);
+
+    // Derive abbreviation from name
+    const words = name.split(' ');
+    const abbreviation = words.length >= 2
+      ? words.map(w => w[0]).join('').toUpperCase().slice(0, 4)
+      : name.slice(0, 4).toUpperCase();
+
+    // Short name = last word (usually the mascot)
+    const shortName = words[words.length - 1] ?? name;
+
+    const team: Team = {
+      id,
+      name,
+      shortName,
+      abbreviation,
+      sport,
+      aliases: [normalized],
+      externalIds: [],
+    };
+
+    this.register(team);
+    return team;
+  }
+
+  private deterministicId(sport: Sport, normalized: string): string {
+    // Simple hash → UUID v5-like format
+    let hash = 0;
+    const input = `${sport}:${normalized}`;
+    for (let i = 0; i < input.length; i++) {
+      hash = ((hash << 5) - hash + input.charCodeAt(i)) | 0;
+    }
+    const hex = Math.abs(hash).toString(16).padStart(8, '0');
+    return `${hex.slice(0, 8)}-auto-${hex.slice(0, 4)}-${hex.slice(4, 8)}-${sport.slice(0, 4)}-${normalized.slice(0, 12).replace(/\s/g, '')}`;
+  }
+
   private key(sport: Sport, name: string): string {
     return `${sport}:${normalizeTeamName(name)}`;
   }

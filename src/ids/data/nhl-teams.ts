@@ -28,7 +28,7 @@ export const NHL_TEAMS = [
   defineTeam({ id: '8257e429-ad53-4a64-9733-7966ad87ffe0', name: 'St. Louis Blues',      shortName: 'Blues',        abbreviation: 'STL', sport: 'nhl', aliases: ['stl blues', 'st louis blues'] }),
   defineTeam({ id: 'fdffcc8f-1a58-4873-b602-3e4603fafc14', name: 'Tampa Bay Lightning',  shortName: 'Lightning',    abbreviation: 'TBL', sport: 'nhl', aliases: ['tb lightning'] }),
   defineTeam({ id: '67c8da59-5df6-4c71-a55c-13320f60b090', name: 'Toronto Maple Leafs',  shortName: 'Maple Leafs',  abbreviation: 'TOR', sport: 'nhl', aliases: ['tor maple leafs'] }),
-  defineTeam({ id: '0b2a8231-32bc-4538-bf0b-6cc8531a1666', name: 'Utah Hockey Club',     shortName: 'Utah HC',      abbreviation: 'UTA', sport: 'nhl', aliases: ['utah hockey', 'ari coyotes', 'arizona coyotes'] }),
+  defineTeam({ id: '0b2a8231-32bc-4538-bf0b-6cc8531a1666', name: 'Utah Mammoth',         shortName: 'Mammoth',      abbreviation: 'UTA', sport: 'nhl', aliases: ['utah mammoth', 'utah hockey', 'utah hockey club', 'utah hc', 'ari coyotes', 'arizona coyotes'] }),
   defineTeam({ id: '82d35439-03b6-46df-9508-00ce4ee36575', name: 'Vancouver Canucks',    shortName: 'Canucks',      abbreviation: 'VAN', sport: 'nhl', aliases: ['van canucks'] }),
   defineTeam({ id: '168aab9f-1849-45f8-b52d-fbba0196d55c', name: 'Vegas Golden Knights', shortName: 'Golden Knights', abbreviation: 'VGK', sport: 'nhl', aliases: ['vegas golden knights', 'las vegas', 'golden knights'] }),
   defineTeam({ id: '19b7a036-f687-4c74-ba3c-65100a4db766', name: 'Washington Capitals',  shortName: 'Capitals',     abbreviation: 'WSH', sport: 'nhl', aliases: ['was capitals'] }),
