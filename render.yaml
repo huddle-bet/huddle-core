@@ -59,7 +59,7 @@ services:
     plan: starter
     repo: https://github.com/huddle-bet/huddle-odds
     buildCommand: npm install
-    startCommand: node --import tsx src/cli.ts poll nba nhl mlb ncaam ncaaw cs2 lol val dota2 cod rl
+    startCommand: node --max-old-space-size=450 --import tsx src/cli.ts poll nba nhl mlb ncaam cs2 lol valorant dota2 cod rl
     envVars:
       - key: NODE_ENV
         value: production
