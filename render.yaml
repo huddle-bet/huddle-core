@@ -58,7 +58,7 @@ services:
     region: oregon
     plan: starter
     repo: https://github.com/huddle-bet/huddle-odds
-    buildCommand: npm install && npm run build
+    buildCommand: npm install
     startCommand: node --import tsx src/cli.ts poll nba nhl mlb ncaam ncaaw cs2 lol val dota2 cod rl
     envVars:
       - key: NODE_ENV
@@ -95,7 +95,7 @@ services:
     region: oregon
     plan: starter
     repo: https://github.com/huddle-bet/huddle-engine
-    buildCommand: npm install && npm run build
+    buildCommand: npm install
     startCommand: node --import tsx src/cli.ts worker
     envVars:
       - key: NODE_ENV
