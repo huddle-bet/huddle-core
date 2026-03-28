@@ -26,7 +26,7 @@ services:
     region: oregon
     plan: starter
     repo: https://github.com/huddle-bet/huddle-api
-    buildCommand: npm install && npm run build
+    buildCommand: npm install
     startCommand: node --import tsx src/server.ts
     healthCheckPath: /health
     envVars:
