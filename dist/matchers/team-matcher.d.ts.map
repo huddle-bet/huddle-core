@@ -1,0 +1,1 @@
+{"version":3,"file":"team-matcher.d.ts","sourceRoot":"","sources":["../../src/matchers/team-matcher.ts"],"names":[],"mappings":"AAAA,OAAO,KAAK,EAAE,YAAY,EAAE,MAAM,yBAAyB,CAAC;AAC5D,OAAO,KAAK,EAAE,KAAK,EAAE,MAAM,oBAAoB,CAAC;AAGhD;;;GAGG;AACH,wBAAgB,UAAU,CACxB,QAAQ,EAAE,YAAY,EACtB,KAAK,EAAE,KAAK,EACZ,KAAK,EAAE,MAAM,EACb,KAAK,EAAE,MAAM,GACZ,OAAO,CAwBT"}
