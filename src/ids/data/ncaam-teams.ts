@@ -1,0 +1,111 @@
+import { defineTeam } from '../team-registry.js';
+import { createHash } from 'node:crypto';
+
+/** Deterministic UUID-like ID from a seed string */
+const id = (name: string) => {
+  const hash = createHash('sha256').update(`ncaam:${name}`).digest('hex');
+  return `${hash.slice(0, 8)}-${hash.slice(8, 12)}-${hash.slice(12, 16)}-${hash.slice(16, 20)}-${hash.slice(20, 32)}`;
+};
+
+export const NCAAM_TEAMS = [
+  // ACC
+  defineTeam({ id: id('duke'),          name: 'Duke Blue Devils',           shortName: 'Duke',           abbreviation: 'DUKE', sport: 'ncaam', aliases: ['duke'] }),
+  defineTeam({ id: id('unc'),           name: 'North Carolina Tar Heels',   shortName: 'North Carolina', abbreviation: 'UNC',  sport: 'ncaam', aliases: ['unc', 'north carolina'] }),
+  defineTeam({ id: id('virginia'),      name: 'Virginia Cavaliers',         shortName: 'Virginia',       abbreviation: 'UVA',  sport: 'ncaam', aliases: ['virginia', 'uva'] }),
+  defineTeam({ id: id('clemson'),       name: 'Clemson Tigers',             shortName: 'Clemson',        abbreviation: 'CLEM', sport: 'ncaam', aliases: ['clemson'] }),
+  defineTeam({ id: id('nc-state'),      name: 'NC State Wolfpack',          shortName: 'NC State',       abbreviation: 'NCST', sport: 'ncaam', aliases: ['nc state', 'north carolina state'] }),
+  defineTeam({ id: id('wake-forest'),   name: 'Wake Forest Demon Deacons',  shortName: 'Wake Forest',    abbreviation: 'WAKE', sport: 'ncaam', aliases: ['wake forest'] }),
+  defineTeam({ id: id('louisville'),    name: 'Louisville Cardinals',        shortName: 'Louisville',     abbreviation: 'LOU',  sport: 'ncaam', aliases: ['louisville'] }),
+  defineTeam({ id: id('pitt'),          name: 'Pittsburgh Panthers',         shortName: 'Pitt',           abbreviation: 'PITT', sport: 'ncaam', aliases: ['pitt', 'pittsburgh'] }),
+  defineTeam({ id: id('syracuse'),      name: 'Syracuse Orange',             shortName: 'Syracuse',       abbreviation: 'SYR',  sport: 'ncaam', aliases: ['syracuse'] }),
+  defineTeam({ id: id('notre-dame'),    name: 'Notre Dame Fighting Irish',   shortName: 'Notre Dame',     abbreviation: 'ND',   sport: 'ncaam', aliases: ['notre dame'] }),
+  defineTeam({ id: id('miami-fl'),      name: 'Miami Hurricanes',            shortName: 'Miami',          abbreviation: 'MIA',  sport: 'ncaam', aliases: ['miami', 'miami hurricanes', 'miami (fl)'] }),
+  defineTeam({ id: id('virginia-tech'), name: 'Virginia Tech Hokies',        shortName: 'Virginia Tech',  abbreviation: 'VT',   sport: 'ncaam', aliases: ['virginia tech', 'vt'] }),
+  defineTeam({ id: id('georgia-tech'),  name: 'Georgia Tech Yellow Jackets', shortName: 'Georgia Tech',   abbreviation: 'GT',   sport: 'ncaam', aliases: ['georgia tech', 'gt'] }),
+  defineTeam({ id: id('florida-state'), name: 'Florida State Seminoles',     shortName: 'Florida State',  abbreviation: 'FSU',  sport: 'ncaam', aliases: ['florida state', 'fsu'] }),
+  defineTeam({ id: id('smu'),           name: 'SMU Mustangs',                shortName: 'SMU',            abbreviation: 'SMU',  sport: 'ncaam', aliases: ['smu', 'southern methodist'] }),
+  defineTeam({ id: id('stanford'),      name: 'Stanford Cardinal',           shortName: 'Stanford',       abbreviation: 'STAN', sport: 'ncaam', aliases: ['stanford'] }),
+  defineTeam({ id: id('cal'),           name: 'California Golden Bears',     shortName: 'California',     abbreviation: 'CAL',  sport: 'ncaam', aliases: ['cal', 'california'] }),
+
+  // Big Ten
+  defineTeam({ id: id('michigan'),      name: 'Michigan Wolverines',         shortName: 'Michigan',       abbreviation: 'MICH', sport: 'ncaam', aliases: ['michigan'] }),
+  defineTeam({ id: id('michigan-state'),name: 'Michigan State Spartans',     shortName: 'Michigan State', abbreviation: 'MSU',  sport: 'ncaam', aliases: ['michigan state', 'mich state', 'msu', 'michigan st'] }),
+  defineTeam({ id: id('ohio-state'),    name: 'Ohio State Buckeyes',         shortName: 'Ohio State',     abbreviation: 'OSU',  sport: 'ncaam', aliases: ['ohio state', 'osu'] }),
+  defineTeam({ id: id('purdue'),        name: 'Purdue Boilermakers',         shortName: 'Purdue',         abbreviation: 'PUR',  sport: 'ncaam', aliases: ['purdue', 'pur'] }),
+  defineTeam({ id: id('indiana'),       name: 'Indiana Hoosiers',            shortName: 'Indiana',        abbreviation: 'IND',  sport: 'ncaam', aliases: ['indiana'] }),
+  defineTeam({ id: id('iowa'),          name: 'Iowa Hawkeyes',               shortName: 'Iowa',           abbreviation: 'IOWA', sport: 'ncaam', aliases: ['iowa'] }),
+  defineTeam({ id: id('iowa-state'),    name: 'Iowa State Cyclones',         shortName: 'Iowa State',     abbreviation: 'ISU',  sport: 'ncaam', aliases: ['iowa state', 'iowa st', 'isu'] }),
+  defineTeam({ id: id('illinois'),      name: 'Illinois Fighting Illini',    shortName: 'Illinois',       abbreviation: 'ILL',  sport: 'ncaam', aliases: ['illinois', 'ill'] }),
+  defineTeam({ id: id('wisconsin'),     name: 'Wisconsin Badgers',           shortName: 'Wisconsin',      abbreviation: 'WIS',  sport: 'ncaam', aliases: ['wisconsin'] }),
+  defineTeam({ id: id('minnesota'),     name: 'Minnesota Golden Gophers',    shortName: 'Minnesota',      abbreviation: 'MINN', sport: 'ncaam', aliases: ['minnesota'] }),
+  defineTeam({ id: id('nebraska'),      name: 'Nebraska Cornhuskers',        shortName: 'Nebraska',       abbreviation: 'NEB',  sport: 'ncaam', aliases: ['nebraska', 'neb'] }),
+  defineTeam({ id: id('maryland'),      name: 'Maryland Terrapins',          shortName: 'Maryland',       abbreviation: 'MD',   sport: 'ncaam', aliases: ['maryland'] }),
+  defineTeam({ id: id('rutgers'),       name: 'Rutgers Scarlet Knights',     shortName: 'Rutgers',        abbreviation: 'RUT',  sport: 'ncaam', aliases: ['rutgers'] }),
+  defineTeam({ id: id('northwestern'),  name: 'Northwestern Wildcats',       shortName: 'Northwestern',   abbreviation: 'NW',   sport: 'ncaam', aliases: ['northwestern'] }),
+  defineTeam({ id: id('penn-state'),    name: 'Penn State Nittany Lions',    shortName: 'Penn State',     abbreviation: 'PSU',  sport: 'ncaam', aliases: ['penn state', 'psu'] }),
+  defineTeam({ id: id('oregon'),        name: 'Oregon Ducks',                shortName: 'Oregon',         abbreviation: 'ORE',  sport: 'ncaam', aliases: ['oregon'] }),
+  defineTeam({ id: id('washington'),    name: 'Washington Huskies',          shortName: 'Washington',     abbreviation: 'WASH', sport: 'ncaam', aliases: ['washington'] }),
+  defineTeam({ id: id('ucla'),          name: 'UCLA Bruins',                 shortName: 'UCLA',           abbreviation: 'UCLA', sport: 'ncaam', aliases: ['ucla'] }),
+  defineTeam({ id: id('usc'),           name: 'USC Trojans',                 shortName: 'USC',            abbreviation: 'USC',  sport: 'ncaam', aliases: ['usc', 'southern cal'] }),
+
+  // SEC
+  defineTeam({ id: id('alabama'),       name: 'Alabama Crimson Tide',        shortName: 'Alabama',        abbreviation: 'ALA',  sport: 'ncaam', aliases: ['alabama', 'ala', 'bama'] }),
+  defineTeam({ id: id('auburn'),        name: 'Auburn Tigers',               shortName: 'Auburn',         abbreviation: 'AUB',  sport: 'ncaam', aliases: ['auburn'] }),
+  defineTeam({ id: id('tennessee'),     name: 'Tennessee Volunteers',        shortName: 'Tennessee',      abbreviation: 'TENN', sport: 'ncaam', aliases: ['tennessee', 'tenn'] }),
+  defineTeam({ id: id('kentucky'),      name: 'Kentucky Wildcats',           shortName: 'Kentucky',       abbreviation: 'UK',   sport: 'ncaam', aliases: ['kentucky', 'uk'] }),
+  defineTeam({ id: id('arkansas'),      name: 'Arkansas Razorbacks',         shortName: 'Arkansas',       abbreviation: 'ARK',  sport: 'ncaam', aliases: ['arkansas', 'ark'] }),
+  defineTeam({ id: id('florida'),       name: 'Florida Gators',              shortName: 'Florida',        abbreviation: 'FLA',  sport: 'ncaam', aliases: ['florida'] }),
+  defineTeam({ id: id('georgia'),       name: 'Georgia Bulldogs',            shortName: 'Georgia',        abbreviation: 'UGA',  sport: 'ncaam', aliases: ['georgia', 'uga'] }),
+  defineTeam({ id: id('ole-miss'),      name: 'Ole Miss Rebels',             shortName: 'Ole Miss',       abbreviation: 'MISS', sport: 'ncaam', aliases: ['ole miss', 'mississippi'] }),
+  defineTeam({ id: id('miss-state'),    name: 'Mississippi State Bulldogs',  shortName: 'Mississippi State', abbreviation: 'MSST', sport: 'ncaam', aliases: ['mississippi state', 'miss state'] }),
+  defineTeam({ id: id('south-carolina'),name: 'South Carolina Gamecocks',    shortName: 'South Carolina', abbreviation: 'SC',   sport: 'ncaam', aliases: ['south carolina'] }),
+  defineTeam({ id: id('lsu'),           name: 'LSU Tigers',                  shortName: 'LSU',            abbreviation: 'LSU',  sport: 'ncaam', aliases: ['lsu', 'louisiana state'] }),
+  defineTeam({ id: id('vanderbilt'),    name: 'Vanderbilt Commodores',       shortName: 'Vanderbilt',     abbreviation: 'VAN',  sport: 'ncaam', aliases: ['vanderbilt'] }),
+  defineTeam({ id: id('missouri'),      name: 'Missouri Tigers',             shortName: 'Missouri',       abbreviation: 'MIZ',  sport: 'ncaam', aliases: ['missouri', 'mizzou'] }),
+  defineTeam({ id: id('texas-am'),      name: 'Texas A&M Aggies',            shortName: 'Texas A&M',      abbreviation: 'TAMU', sport: 'ncaam', aliases: ['texas a&m', 'tamu', 'texas am'] }),
+  defineTeam({ id: id('texas'),         name: 'Texas Longhorns',             shortName: 'Texas',          abbreviation: 'TEX',  sport: 'ncaam', aliases: ['texas', 'tex'] }),
+  defineTeam({ id: id('oklahoma'),      name: 'Oklahoma Sooners',            shortName: 'Oklahoma',       abbreviation: 'OU',   sport: 'ncaam', aliases: ['oklahoma', 'ou'] }),
+
+  // Big 12
+  defineTeam({ id: id('kansas'),        name: 'Kansas Jayhawks',             shortName: 'Kansas',         abbreviation: 'KU',   sport: 'ncaam', aliases: ['kansas', 'ku'] }),
+  defineTeam({ id: id('kansas-state'),  name: 'Kansas State Wildcats',       shortName: 'Kansas State',   abbreviation: 'KSU',  sport: 'ncaam', aliases: ['kansas state', 'k-state'] }),
+  defineTeam({ id: id('baylor'),        name: 'Baylor Bears',                shortName: 'Baylor',         abbreviation: 'BAY',  sport: 'ncaam', aliases: ['baylor'] }),
+  defineTeam({ id: id('tcu'),           name: 'TCU Horned Frogs',            shortName: 'TCU',            abbreviation: 'TCU',  sport: 'ncaam', aliases: ['tcu'] }),
+  defineTeam({ id: id('texas-tech'),    name: 'Texas Tech Red Raiders',      shortName: 'Texas Tech',     abbreviation: 'TTU',  sport: 'ncaam', aliases: ['texas tech', 'ttu'] }),
+  defineTeam({ id: id('oklahoma-st'),   name: 'Oklahoma State Cowboys',      shortName: 'Oklahoma State', abbreviation: 'OKST', sport: 'ncaam', aliases: ['oklahoma state', 'ok state'] }),
+  defineTeam({ id: id('houston'),       name: 'Houston Cougars',             shortName: 'Houston',        abbreviation: 'HOU',  sport: 'ncaam', aliases: ['houston', 'hou', 'houston u'] }),
+  defineTeam({ id: id('byu'),           name: 'BYU Cougars',                 shortName: 'BYU',            abbreviation: 'BYU',  sport: 'ncaam', aliases: ['byu', 'brigham young'] }),
+  defineTeam({ id: id('cincinnati'),    name: 'Cincinnati Bearcats',         shortName: 'Cincinnati',     abbreviation: 'CIN',  sport: 'ncaam', aliases: ['cincinnati'] }),
+  defineTeam({ id: id('ucf'),           name: 'UCF Knights',                 shortName: 'UCF',            abbreviation: 'UCF',  sport: 'ncaam', aliases: ['ucf', 'central florida'] }),
+  defineTeam({ id: id('west-virginia'), name: 'West Virginia Mountaineers',  shortName: 'West Virginia',  abbreviation: 'WVU',  sport: 'ncaam', aliases: ['west virginia', 'wvu'] }),
+  defineTeam({ id: id('colorado'),      name: 'Colorado Buffaloes',          shortName: 'Colorado',       abbreviation: 'COL',  sport: 'ncaam', aliases: ['colorado'] }),
+  defineTeam({ id: id('arizona'),       name: 'Arizona Wildcats',            shortName: 'Arizona',        abbreviation: 'ARIZ', sport: 'ncaam', aliases: ['arizona', 'ariz'] }),
+  defineTeam({ id: id('arizona-state'), name: 'Arizona State Sun Devils',    shortName: 'Arizona State',  abbreviation: 'ASU',  sport: 'ncaam', aliases: ['arizona state', 'asu'] }),
+  defineTeam({ id: id('utah'),          name: 'Utah Utes',                   shortName: 'Utah',           abbreviation: 'UTAH', sport: 'ncaam', aliases: ['utah'] }),
+
+  // Big East
+  defineTeam({ id: id('uconn'),         name: 'UConn Huskies',               shortName: 'UConn',          abbreviation: 'CONN', sport: 'ncaam', aliases: ['uconn', 'connecticut', 'conn'] }),
+  defineTeam({ id: id('villanova'),     name: 'Villanova Wildcats',           shortName: 'Villanova',      abbreviation: 'NOVA', sport: 'ncaam', aliases: ['villanova', 'nova'] }),
+  defineTeam({ id: id('marquette'),     name: 'Marquette Golden Eagles',     shortName: 'Marquette',      abbreviation: 'MARQ', sport: 'ncaam', aliases: ['marquette'] }),
+  defineTeam({ id: id('creighton'),     name: 'Creighton Bluejays',          shortName: 'Creighton',      abbreviation: 'CREI', sport: 'ncaam', aliases: ['creighton'] }),
+  defineTeam({ id: id('st-johns'),      name: "St. John's Red Storm",        shortName: "St. John's",     abbreviation: 'SJU',  sport: 'ncaam', aliases: ["st. john's", "st johns", "st. john's red storm", "saint john's", "sju", 'joes', "saint josephs", "saint joseph's", "st. joseph's"] }),
+  defineTeam({ id: id('xavier'),        name: 'Xavier Musketeers',           shortName: 'Xavier',         abbreviation: 'XAV',  sport: 'ncaam', aliases: ['xavier'] }),
+  defineTeam({ id: id('seton-hall'),    name: 'Seton Hall Pirates',          shortName: 'Seton Hall',     abbreviation: 'SH',   sport: 'ncaam', aliases: ['seton hall'] }),
+  defineTeam({ id: id('providence'),    name: 'Providence Friars',           shortName: 'Providence',     abbreviation: 'PROV', sport: 'ncaam', aliases: ['providence'] }),
+  defineTeam({ id: id('georgetown'),    name: 'Georgetown Hoyas',            shortName: 'Georgetown',     abbreviation: 'GTWN', sport: 'ncaam', aliases: ['georgetown'] }),
+  defineTeam({ id: id('butler'),        name: 'Butler Bulldogs',             shortName: 'Butler',         abbreviation: 'BUT',  sport: 'ncaam', aliases: ['butler'] }),
+  defineTeam({ id: id('depaul'),        name: 'DePaul Blue Demons',          shortName: 'DePaul',         abbreviation: 'DEP',  sport: 'ncaam', aliases: ['depaul'] }),
+
+  // Other notable programs
+  defineTeam({ id: id('gonzaga'),       name: 'Gonzaga Bulldogs',            shortName: 'Gonzaga',        abbreviation: 'GONZ', sport: 'ncaam', aliases: ['gonzaga'] }),
+  defineTeam({ id: id('memphis'),       name: 'Memphis Tigers',              shortName: 'Memphis',        abbreviation: 'MEM',  sport: 'ncaam', aliases: ['memphis'] }),
+  defineTeam({ id: id('dayton'),        name: 'Dayton Flyers',               shortName: 'Dayton',         abbreviation: 'DAY',  sport: 'ncaam', aliases: ['dayton'] }),
+  defineTeam({ id: id('new-mexico'),    name: 'New Mexico Lobos',            shortName: 'New Mexico',     abbreviation: 'UNM',  sport: 'ncaam', aliases: ['new mexico', 'unm'] }),
+  defineTeam({ id: id('wichita-state'), name: 'Wichita State Shockers',      shortName: 'Wichita State',  abbreviation: 'WICH', sport: 'ncaam', aliases: ['wichita state', 'wich', 'wichita st'] }),
+  defineTeam({ id: id('saint-marys'),   name: "Saint Mary's Gaels",          shortName: "Saint Mary's",   abbreviation: 'SMC',  sport: 'ncaam', aliases: ["saint mary's", "st. mary's", "saint marys"] }),
+  defineTeam({ id: id('nevada'),        name: 'Nevada Wolf Pack',            shortName: 'Nevada',         abbreviation: 'NEV',  sport: 'ncaam', aliases: ['nevada'] }),
+  defineTeam({ id: id('oregon-state'),  name: 'Oregon State Beavers',        shortName: 'Oregon State',   abbreviation: 'ORST', sport: 'ncaam', aliases: ['oregon state'] }),
+  defineTeam({ id: id('tulsa'),         name: 'Tulsa Golden Hurricane',      shortName: 'Tulsa',          abbreviation: 'TLSA', sport: 'ncaam', aliases: ['tulsa', 'tlsa'] }),
+  defineTeam({ id: id('south-florida'), name: 'South Florida Bulls',         shortName: 'USF',            abbreviation: 'USF',  sport: 'ncaam', aliases: ['south florida', 'usf'] }),
+  defineTeam({ id: id('vcu'),           name: 'VCU Rams',                    shortName: 'VCU',            abbreviation: 'VCU',  sport: 'ncaam', aliases: ['vcu'] }),
+];
