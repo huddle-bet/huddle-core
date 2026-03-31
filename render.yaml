@@ -51,15 +51,15 @@ services:
       - source: 0.0.0.0/0
         description: everywhere
 
-  # ── huddle-odds-sports (Background Worker) ────────────────
+  # ── huddle-odds-sports (Background Worker — Docker) ───────
   - type: worker
     name: huddle-odds-sports
-    runtime: node
+    runtime: docker
     region: oregon
     plan: starter
     repo: https://github.com/huddle-bet/huddle-odds
-    buildCommand: npm install
-    startCommand: node --max-old-space-size=450 --import tsx src/cli.ts poll nba nhl mlb ncaam
+    dockerfilePath: ./Dockerfile
+    dockerCommand: node --max-old-space-size=450 --import tsx src/cli.ts poll nba nhl mlb ncaam
     envVars:
       - key: NODE_ENV
         value: production
@@ -70,15 +70,15 @@ services:
           property: connectionString
       - fromGroup: huddle-shared
 
-  # ── huddle-odds-esports (Background Worker) ──────────────
+  # ── huddle-odds-esports (Background Worker — Docker) ─────
   - type: worker
     name: huddle-odds-esports
-    runtime: node
+    runtime: docker
     region: oregon
     plan: starter
     repo: https://github.com/huddle-bet/huddle-odds
-    buildCommand: npm install
-    startCommand: node --max-old-space-size=450 --import tsx src/cli.ts poll cs2 lol valorant dota2 cod rl
+    dockerfilePath: ./Dockerfile
+    dockerCommand: node --max-old-space-size=450 --import tsx src/cli.ts poll cs2 lol valorant dota2 cod rl
     envVars:
       - key: NODE_ENV
         value: production
