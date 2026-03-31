@@ -46,7 +46,7 @@ services:
     name: huddle-redis
     region: oregon
     plan: starter
-    maxmemoryPolicy: volatile-lru
+    maxmemoryPolicy: volatile-ttl
     ipAllowList:
       - source: 0.0.0.0/0
         description: everywhere
