@@ -2,7 +2,7 @@
 
 export type SportType = 'traditional' | 'esport';
 
-export type TraditionalSport = 'nba' | 'nfl' | 'nhl' | 'mlb' | 'ncaam' | 'ncaaw' | 'ncaaf' | 'wnba';
+export type TraditionalSport = 'nba' | 'nfl' | 'nhl' | 'mlb' | 'ncaam' | 'ncaaf';
 export type EsportGame = 'lol' | 'cs2' | 'valorant' | 'dota2' | 'cod' | 'rl';
 export type Sport = TraditionalSport | EsportGame;
 
@@ -21,9 +21,7 @@ export const SPORTS: Record<Sport, SportConfig> = {
   nhl:   { slug: 'nhl',   name: 'NHL',                        type: 'traditional', shortName: 'NHL' },
   mlb:   { slug: 'mlb',   name: 'MLB',                        type: 'traditional', shortName: 'MLB' },
   ncaam: { slug: 'ncaam', name: "NCAA Men's Basketball",       type: 'traditional', shortName: 'NCAAM' },
-  ncaaw: { slug: 'ncaaw', name: "NCAA Women's Basketball",     type: 'traditional', shortName: 'NCAAW' },
   ncaaf: { slug: 'ncaaf', name: 'NCAA Football',               type: 'traditional', shortName: 'NCAAF' },
-  wnba:  { slug: 'wnba',  name: 'WNBA',                       type: 'traditional', shortName: 'WNBA' },
   // Esports
   lol:      { slug: 'lol',      name: 'League of Legends', type: 'esport', shortName: 'LoL' },
   cs2:      { slug: 'cs2',      name: 'Counter-Strike 2',  type: 'esport', shortName: 'CS2' },

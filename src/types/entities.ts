@@ -7,17 +7,18 @@ export type DataSource =
   // Match data
   | 'espn'
   | 'gol.gg'
-  | 'hltv'
+  | 'bo3gg'
   | 'vlr.gg'
   | 'dltv'
   | 'bp.gg'
-  | 'blast.tv'
+  | 'blast'
   // Odds
   | 'draftkings'
   | 'fanduel'
   | 'betmgm'
   | 'prizepicks'
-  | 'underdog';
+  | 'underdog'
+  | 'pick6';
 
 // ─── External ID ────────────────────────────────────────────────────────────
 
