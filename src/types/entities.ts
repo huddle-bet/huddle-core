@@ -12,6 +12,9 @@ export type DataSource =
   | 'dltv'
   | 'bp.gg'
   | 'blast'
+  | 'hltv'
+  | 'breakingpoint'
+  | 'blast.tv'
   // Odds
   | 'draftkings'
   | 'fanduel'
