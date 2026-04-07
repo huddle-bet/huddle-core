@@ -17,6 +17,8 @@ envVarGroups:
         sync: false
       - key: WHOP_REDIRECT_URI
         sync: false
+      - key: GSK_TOKEN
+        sync: false
 
 services:
   # ── huddle-api (Web Service) ──────────────────────────────
@@ -34,22 +36,7 @@ services:
         value: production
       - key: PORT
         value: "8080"
-      - key: REDIS_URL
-        fromService:
-          name: huddle-redis
-          type: keyvalue
-          property: connectionString
       - fromGroup: huddle-shared
-
-  # ── huddle-redis (Key Value) ────────────────────────────
-  - type: keyvalue
-    name: huddle-redis
-    region: oregon
-    plan: starter
-    maxmemoryPolicy: volatile-ttl
-    ipAllowList:
-      - source: 0.0.0.0/0
-        description: everywhere
 
   # ── huddle-odds-sports (Background Worker — Docker) ───────
   - type: worker
@@ -63,11 +50,6 @@ services:
     envVars:
       - key: NODE_ENV
         value: production
-      - key: REDIS_URL
-        fromService:
-          name: huddle-redis
-          type: keyvalue
-          property: connectionString
       - fromGroup: huddle-shared
 
   # ── huddle-odds-esports (Background Worker — Docker) ─────
@@ -82,11 +64,6 @@ services:
     envVars:
       - key: NODE_ENV
         value: production
-      - key: REDIS_URL
-        fromService:
-          name: huddle-redis
-          type: keyvalue
-          property: connectionString
       - fromGroup: huddle-shared
 
   # ── huddle-data (Background Worker — Docker) ─────────────
@@ -100,11 +77,6 @@ services:
     envVars:
       - key: NODE_ENV
         value: production
-      - key: REDIS_URL
-        fromService:
-          name: huddle-redis
-          type: keyvalue
-          property: connectionString
       - fromGroup: huddle-shared
 
   # ── huddle-engine (Background Worker) ────────────────────
@@ -119,10 +91,18 @@ services:
     envVars:
       - key: NODE_ENV
         value: production
-      - key: REDIS_URL
-        fromService:
-          name: huddle-redis
-          type: keyvalue
-          property: connectionString
       - fromGroup: huddle-shared
 
+  # ── huddle-live (Background Worker) ───────────────────────
+  - type: worker
+    name: huddle-live
+    runtime: node
+    region: oregon
+    plan: starter
+    repo: https://github.com/huddle-bet/huddle-live
+    buildCommand: npm install
+    startCommand: node --import tsx src/cli.ts watch --all
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - fromGroup: huddle-shared
