@@ -1,0 +1,1 @@
+{"version":3,"file":"canonical.d.ts","sourceRoot":"","sources":["../src/canonical.ts"],"names":[],"mappings":"AAAA,OAAO,KAAK,EAAE,iBAAiB,EAAE,MAAM,mBAAmB,CAAC;AAE3D;;;;;;;;;;;;;;;;;GAiBG;AACH,wBAAgB,gBAAgB,CAAC,GAAG,EAAE,iBAAiB,GAAG,MAAM,CAS/D;AAED,+EAA+E;AAC/E,wBAAgB,aAAa,CAAC,OAAO,EAAE,MAAM,GAAG,MAAM,CAMrD;AAED;;;;GAIG;AACH,wBAAgB,eAAe,CAAC,SAAS,EAAE,MAAM,GAAG,MAAM,CAEzD"}

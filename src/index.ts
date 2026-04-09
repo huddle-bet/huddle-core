@@ -10,3 +10,9 @@ export {
 
 // Matchers
 export * from './matchers/index.js';
+
+// Canonical IDs & Realtime channels
+export * from './canonical.js';
+
+// Team drift logging
+export * from './drift.js';
