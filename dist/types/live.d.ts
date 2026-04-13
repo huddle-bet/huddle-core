@@ -5,6 +5,25 @@
  *
  * Kept as the single source of truth so the three services can't drift.
  */
+/**
+ * JSONB blob written to `live_state.state`. Loosely typed at this layer
+ * because each sport carries a different inner `gameState` shape (NBA's
+ * periodLabel/quarter, CS2's round history + per-player stats, LoL's
+ * objectives, etc.). The concrete per-sport shapes live in huddle-live's
+ * reducers (reducers/sports/common.ts for traditional, reducers/esports/*
+ * for esports). Consumers should narrow on `league_id` before reading
+ * sport-specific fields.
+ */
+export interface LiveStateBlob {
+    /** Per-sport game state — shape depends on `LiveStateRow.league_id`. */
+    gameState?: unknown;
+    /** Set by provider adapters to signal feed completeness ('full' = WS
+     *  stream, 'partial' = REST poll). Consumed by huddle-api. */
+    coverage?: 'full' | 'partial';
+    /** Additional provider-specific fields — esports reducers stash
+     *  seriesScore / teams / winnerId here; sports reducers are flatter. */
+    [key: string]: unknown;
+}
 export interface LiveStateRow {
     event_id: string;
     source_id: string;
@@ -14,7 +33,7 @@ export interface LiveStateRow {
     clock: string | null;
     home_score: number | null;
     away_score: number | null;
-    state: Record<string, any>;
+    state: LiveStateBlob;
     sort_index: number;
 }
 export interface LiveFeedRow {
