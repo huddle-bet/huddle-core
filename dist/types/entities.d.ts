@@ -1,6 +1,6 @@
 import type { Sport } from './sports.js';
 /** Every upstream system that provides data */
-export type DataSource = 'espn' | 'gol.gg' | 'hltv' | 'vlr.gg' | 'dltv' | 'bp.gg' | 'blast.tv' | 'draftkings' | 'fanduel' | 'betmgm' | 'prizepicks' | 'underdog';
+export type DataSource = 'espn' | 'gol.gg' | 'bo3gg' | 'vlr.gg' | 'dltv' | 'bp.gg' | 'blast' | 'hltv' | 'breakingpoint' | 'blast.tv' | 'draftkings' | 'fanduel' | 'betmgm' | 'prizepicks' | 'underdog' | 'pick6';
 /**
  * A reference to an entity in an external system.
  * Every team/player/event can have multiple external IDs — one per source.
