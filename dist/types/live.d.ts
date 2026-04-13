@@ -29,6 +29,43 @@ export interface LiveFeedRow {
 }
 export type FeedImportance = 'low' | 'medium' | 'high' | 'critical';
 /**
+ * Canonical feed_type values written to `live_feed.feed_type` by huddle-
+ * live's reducers and consumed by huddle-api + frontend.
+ *
+ * Organized by family — additions here are a contract change; coordinate
+ * with frontend consumers (hitrate-next/fraggg-next) before shipping new
+ * types.
+ *
+ * `LiveFeedRow.feed_type` remains typed as `string` for backward compat
+ * and forward extensibility; reference `FEED_TYPES` / `FeedType` at
+ * emission and consumption sites for type-safe checks.
+ */
+export declare const FEED_TYPES: {
+    readonly GAME_STARTED: "game_started";
+    readonly GAME_ENDED: "game_ended";
+    readonly SCORE_CHANGE: "score_change";
+    readonly PERIOD_ENDED: "period_ended";
+    readonly PLAY: "play";
+    readonly FIXTURE_STARTED: "fixture_started";
+    readonly FIXTURE_ENDED: "fixture_ended";
+    readonly MAP_STARTED: "map_started";
+    readonly MAP_ENDED: "map_ended";
+    readonly MAP_VOIDED: "map_voided";
+    readonly MAP_WINNER: "map_winner";
+    readonly HALF_STARTED: "half_started";
+    readonly ROUND_ENDED: "round_ended";
+    readonly KILL: "kill";
+    readonly BOMB_PLANTED: "bomb_planted";
+    readonly BOMB_EXPLODED: "bomb_exploded";
+    readonly BOMB_DEFUSED: "bomb_defused";
+    readonly BARON_SLAIN: "baron_slain";
+    readonly TOWER_DESTROYED: "tower_destroyed";
+    readonly INHIBITOR_DESTROYED: "inhibitor_destroyed";
+};
+export type FeedType = (typeof FEED_TYPES)[keyof typeof FEED_TYPES];
+/** Narrowing helper — returns true if `s` is a known canonical feed_type. */
+export declare function isFeedType(s: string): s is FeedType;
+/**
  * Broadcast-facing feed entry. This is the shape the frontend
  * (hitrate-next useMatchWebSocket) consumes, and what huddle-api's
  * hybrid WS relay sends on `state_update` / `snapshot` messages.
