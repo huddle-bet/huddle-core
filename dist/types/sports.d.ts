@@ -7,13 +7,19 @@ export type Sport = TraditionalSport | EsportGame;
  * live provider; when Sportradar ships, the traditional sports flip from
  * 'espn' to 'sportradar' here and huddle-live follows the config.
  */
-export type LiveProvider = 'gsk' | 'espn' | 'sportradar';
+export type LiveProvider = 'gsk' | 'espn' | 'sportradar' | 'genius';
 /**
  * Vendors that publish schedule (upcoming fixtures). Multiple providers
  * can contribute schedule rows for the same sport — canonical_event_id
  * bridges them in the `events` table.
  */
 export type ScheduleProvider = LiveProvider | 'bo3gg' | 'dltv' | 'vlr.gg' | 'blast' | 'breakingpoint';
+/**
+ * Provider this service will use for live data once all gates (key,
+ * entitlement, flag) are satisfied. `liveProvider` in SPORTS is the
+ * default at launch; huddle-live can override via EventsWatcher when
+ * a trial/contract flip justifies it.
+ */
 export interface SportConfig {
     slug: Sport;
     name: string;
