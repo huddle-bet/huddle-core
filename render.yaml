@@ -30,7 +30,7 @@ services:
     name: huddle-api
     runtime: node
     region: oregon
-    plan: starter
+    plan: free
     repo: https://github.com/huddle-bet/huddle-api
     buildCommand: npm install
     startCommand: node --import tsx src/server.ts
@@ -47,10 +47,10 @@ services:
     name: huddle-odds-sports
     runtime: docker
     region: oregon
-    plan: starter
+    plan: standard
     repo: https://github.com/huddle-bet/huddle-odds
     dockerfilePath: ./Dockerfile
-    dockerCommand: node --max-old-space-size=450 --import tsx src/cli.ts poll nba nhl mlb ncaam
+    dockerCommand: node --max-old-space-size=1800 --import tsx src/cli.ts poll nba nhl mlb ncaam
     envVars:
       - key: NODE_ENV
         value: production
@@ -61,10 +61,10 @@ services:
     name: huddle-odds-esports
     runtime: docker
     region: oregon
-    plan: starter
+    plan: standard
     repo: https://github.com/huddle-bet/huddle-odds
     dockerfilePath: ./Dockerfile
-    dockerCommand: node --max-old-space-size=450 --import tsx src/cli.ts poll cs2 lol valorant dota2 cod rl
+    dockerCommand: node --max-old-space-size=1800 --import tsx src/cli.ts poll cs2 lol valorant dota2 cod rl
     envVars:
       - key: NODE_ENV
         value: production
