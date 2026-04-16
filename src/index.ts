@@ -16,3 +16,6 @@ export * from './canonical.js';
 
 // Team drift logging
 export * from './drift.js';
+
+// Provider routing config (primary + fallback per league)
+export * from './config/leagues.js';

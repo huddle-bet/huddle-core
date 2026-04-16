@@ -84,12 +84,19 @@ export class TeamRegistry {
             if (byNickname)
                 return byNickname;
         }
-        // Try matching against all teams in the sport
+        // Substring match against team shortName. Gated on length >= 4 so
+        // short abbreviations (LA, SD, NY, DC) don't false-match team
+        // nicknames that happen to share letters — e.g. "LA" matched
+        // "Flames" (contains "la") and resolved as Calgary Flames. A miss
+        // is better than a false match; callers get undefined and can
+        // either add a proper alias or log and skip.
         const normalized = normalizeTeamName(name);
-        for (const team of this.bySport(sport)) {
-            const teamNorm = normalizeTeamName(team.shortName);
-            if (normalized.includes(teamNorm) || teamNorm.includes(normalized)) {
-                return team;
+        if (normalized.length >= 4) {
+            for (const team of this.bySport(sport)) {
+                const teamNorm = normalizeTeamName(team.shortName);
+                if (teamNorm.length >= 4 && (normalized.includes(teamNorm) || teamNorm.includes(normalized))) {
+                    return team;
+                }
             }
         }
         return undefined;

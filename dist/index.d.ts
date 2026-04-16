@@ -4,4 +4,5 @@ export { ALL_TEAMS, NBA_TEAMS, NFL_TEAMS, NHL_TEAMS, MLB_TEAMS, NCAAM_TEAMS, ESP
 export * from './matchers/index.js';
 export * from './canonical.js';
 export * from './drift.js';
+export * from './config/leagues.js';
 //# sourceMappingURL=index.d.ts.map
