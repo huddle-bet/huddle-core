@@ -42,29 +42,19 @@ services:
         value: "8080"
       - fromGroup: huddle-shared
 
-  # ── huddle-odds-sports (Background Worker — Docker) ───────
+  # ── huddle-odds (Background Worker — Docker) ─────────────
+  # Consolidated from huddle-odds-sports + huddle-odds-esports — per-league
+  # per-book pollers run independently on their own timers (see poller.ts),
+  # so one process handles all 10 leagues without contention. Saves a full
+  # standard-plan worker instance.
   - type: worker
-    name: huddle-odds-sports
+    name: huddle-odds
     runtime: docker
     region: oregon
     plan: standard
     repo: https://github.com/huddle-bet/huddle-odds
     dockerfilePath: ./Dockerfile
-    dockerCommand: node --max-old-space-size=1800 --import tsx src/cli.ts poll nba nhl mlb ncaam
-    envVars:
-      - key: NODE_ENV
-        value: production
-      - fromGroup: huddle-shared
-
-  # ── huddle-odds-esports (Background Worker — Docker) ─────
-  - type: worker
-    name: huddle-odds-esports
-    runtime: docker
-    region: oregon
-    plan: standard
-    repo: https://github.com/huddle-bet/huddle-odds
-    dockerfilePath: ./Dockerfile
-    dockerCommand: node --max-old-space-size=1800 --import tsx src/cli.ts poll cs2 lol valorant dota2 cod rl
+    dockerCommand: node --max-old-space-size=3800 --import tsx src/cli.ts poll nba nhl mlb ncaam cs2 lol valorant dota2 cod rl
     envVars:
       - key: NODE_ENV
         value: production
@@ -84,14 +74,18 @@ services:
       - fromGroup: huddle-shared
 
   # ── huddle-engine (Background Worker) ────────────────────
+  # Standard plan (2 CPU / 4 GB) — upgraded from starter (0.5 CPU) after
+  # production metrics showed CPU pegged at 60-100% with the 0.5 cap
+  # throttling projection refresh cycles. With per-league worker pool +
+  # bounded odds queries, CPU headroom was the last blocker.
   - type: worker
     name: huddle-engine
     runtime: node
     region: oregon
-    plan: starter
+    plan: standard
     repo: https://github.com/huddle-bet/huddle-engine
     buildCommand: npm install
-    startCommand: node --import tsx src/cli.ts worker
+    startCommand: node --max-old-space-size=3800 --import tsx src/cli.ts worker
     envVars:
       - key: NODE_ENV
         value: production
