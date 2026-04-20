@@ -11,7 +11,8 @@
  */
 export const LEAGUE_PROVIDERS = {
     nba: { primary: 'sportradar', fallback: 'espn' },
-    nfl: { primary: 'sportradar', fallback: 'espn' },
+    // NFL: Genius holds exclusive official-data rights through 2027.
+    nfl: { primary: 'genius', fallback: 'espn' },
     nhl: { primary: 'sportradar', fallback: 'espn' },
     mlb: { primary: 'sportradar', fallback: 'espn' },
     ncaam: { primary: 'genius', fallback: 'espn' },

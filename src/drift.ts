@@ -2,9 +2,13 @@
  * Drift logging — records upstream identities that didn't cleanly resolve
  * to canonical entities. Populates two tables:
  *
- *   `team_drift`   — huddle-live's ensureEvent() writes here when a team
- *                    name can't be matched via TeamRegistry. The events
- *                    row is REJECTED in that case (hard drift).
+ *   `team_drift`   — huddle-live's ensureEvent() writes here only when
+ *                    auto-creating a missing team fails at the DB layer.
+ *                    The normal miss path (TeamRegistry + DB ILIKE both
+ *                    empty) auto-creates a row in `teams` so the events
+ *                    row can still be written — matching huddle-data's
+ *                    scraper behavior. team_drift is therefore a last-
+ *                    resort error signal, not a routine miss log.
  *
  *   `player_drift` — huddle-data's resolveOrCreatePlayer() writes here
  *                    when both external ID and name lookups miss, right
