@@ -8,12 +8,13 @@ export const SPORTS = {
     ncaam: { slug: 'ncaam', name: "NCAA Men's Basketball", type: 'traditional', shortName: 'NCAAM', liveProvider: 'espn', scheduleProviders: ['espn'] },
     ncaaf: { slug: 'ncaaf', name: 'NCAA Football', type: 'traditional', shortName: 'NCAAF', liveProvider: 'espn', scheduleProviders: ['espn'] },
     // Esports
-    lol: { slug: 'lol', name: 'League of Legends', type: 'esport', shortName: 'LoL', liveProvider: 'gsk', scheduleProviders: ['bo3gg', 'gsk'] },
-    cs2: { slug: 'cs2', name: 'Counter-Strike 2', type: 'esport', shortName: 'CS2', liveProvider: 'gsk', scheduleProviders: ['bo3gg', 'gsk'] },
+    lol: { slug: 'lol', name: 'League of Legends', type: 'esport', shortName: 'LoL', liveProvider: 'gsk', scheduleProviders: ['bo3gg', 'gsk', 'lolesports'] },
+    cs2: { slug: 'cs2', name: 'Counter-Strike 2', type: 'esport', shortName: 'CS2', liveProvider: 'gsk', scheduleProviders: ['bo3gg', 'gsk', 'hltv'] },
     valorant: { slug: 'valorant', name: 'Valorant', type: 'esport', shortName: 'VAL', liveProvider: 'gsk', scheduleProviders: ['vlr.gg', 'gsk'] },
-    dota2: { slug: 'dota2', name: 'Dota 2', type: 'esport', shortName: 'Dota2', liveProvider: 'gsk', scheduleProviders: ['dltv', 'gsk'] },
+    dota2: { slug: 'dota2', name: 'Dota 2', type: 'esport', shortName: 'Dota2', liveProvider: 'gsk', scheduleProviders: ['dltv', 'gsk', 'valve'] },
     cod: { slug: 'cod', name: 'Call of Duty', type: 'esport', shortName: 'CoD', scheduleProviders: ['breakingpoint'] },
     rl: { slug: 'rl', name: 'Rocket League', type: 'esport', shortName: 'RL', scheduleProviders: ['blast'] },
+    r6: { slug: 'r6', name: 'Rainbow Six Siege', type: 'esport', shortName: 'R6', scheduleProviders: ['siege.gg'] },
 };
 export function isSport(s) {
     return s in SPORTS;

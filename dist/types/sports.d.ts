@@ -1,19 +1,19 @@
 export type SportType = 'traditional' | 'esport';
 export type TraditionalSport = 'nba' | 'nfl' | 'nhl' | 'mlb' | 'ncaam' | 'ncaaf';
-export type EsportGame = 'lol' | 'cs2' | 'valorant' | 'dota2' | 'cod' | 'rl';
+export type EsportGame = 'lol' | 'cs2' | 'valorant' | 'dota2' | 'cod' | 'rl' | 'r6';
 export type Sport = TraditionalSport | EsportGame;
 /**
  * Vendors that push/pull live data. Each sport has at most one primary
  * live provider; when Sportradar ships, the traditional sports flip from
  * 'espn' to 'sportradar' here and huddle-live follows the config.
  */
-export type LiveProvider = 'gsk' | 'espn' | 'sportradar' | 'genius';
+export type LiveProvider = 'gsk' | 'espn' | 'sportradar' | 'genius' | 'valve' | 'lolesports' | 'hltv';
 /**
  * Vendors that publish schedule (upcoming fixtures). Multiple providers
  * can contribute schedule rows for the same sport — canonical_event_id
  * bridges them in the `events` table.
  */
-export type ScheduleProvider = LiveProvider | 'bo3gg' | 'dltv' | 'vlr.gg' | 'blast' | 'breakingpoint';
+export type ScheduleProvider = LiveProvider | 'bo3gg' | 'dltv' | 'vlr.gg' | 'blast' | 'breakingpoint' | 'siege.gg';
 /**
  * Provider this service will use for live data once all gates (key,
  * entitlement, flag) are satisfied. `liveProvider` in SPORTS is the

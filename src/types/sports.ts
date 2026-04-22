@@ -3,7 +3,7 @@
 export type SportType = 'traditional' | 'esport';
 
 export type TraditionalSport = 'nba' | 'nfl' | 'nhl' | 'mlb' | 'ncaam' | 'ncaaf';
-export type EsportGame = 'lol' | 'cs2' | 'valorant' | 'dota2' | 'cod' | 'rl';
+export type EsportGame = 'lol' | 'cs2' | 'valorant' | 'dota2' | 'cod' | 'rl' | 'r6';
 export type Sport = TraditionalSport | EsportGame;
 
 /**
@@ -11,7 +11,7 @@ export type Sport = TraditionalSport | EsportGame;
  * live provider; when Sportradar ships, the traditional sports flip from
  * 'espn' to 'sportradar' here and huddle-live follows the config.
  */
-export type LiveProvider = 'gsk' | 'espn' | 'sportradar' | 'genius';
+export type LiveProvider = 'gsk' | 'espn' | 'sportradar' | 'genius' | 'valve' | 'lolesports' | 'hltv';
 
 /**
  * Vendors that publish schedule (upcoming fixtures). Multiple providers
@@ -24,7 +24,8 @@ export type ScheduleProvider =
   | 'dltv'
   | 'vlr.gg'
   | 'blast'
-  | 'breakingpoint';
+  | 'breakingpoint'
+  | 'siege.gg';
 
 /**
  * Provider this service will use for live data once all gates (key,
@@ -54,12 +55,13 @@ export const SPORTS: Record<Sport, SportConfig> = {
   ncaam: { slug: 'ncaam', name: "NCAA Men's Basketball",       type: 'traditional', shortName: 'NCAAM', liveProvider: 'espn', scheduleProviders: ['espn'] },
   ncaaf: { slug: 'ncaaf', name: 'NCAA Football',               type: 'traditional', shortName: 'NCAAF', liveProvider: 'espn', scheduleProviders: ['espn'] },
   // Esports
-  lol:      { slug: 'lol',      name: 'League of Legends', type: 'esport', shortName: 'LoL',   liveProvider: 'gsk', scheduleProviders: ['bo3gg', 'gsk'] },
-  cs2:      { slug: 'cs2',      name: 'Counter-Strike 2',  type: 'esport', shortName: 'CS2',   liveProvider: 'gsk', scheduleProviders: ['bo3gg', 'gsk'] },
+  lol:      { slug: 'lol',      name: 'League of Legends', type: 'esport', shortName: 'LoL',   liveProvider: 'gsk', scheduleProviders: ['bo3gg', 'gsk', 'lolesports'] },
+  cs2:      { slug: 'cs2',      name: 'Counter-Strike 2',  type: 'esport', shortName: 'CS2',   liveProvider: 'gsk', scheduleProviders: ['bo3gg', 'gsk', 'hltv'] },
   valorant: { slug: 'valorant', name: 'Valorant',          type: 'esport', shortName: 'VAL',   liveProvider: 'gsk', scheduleProviders: ['vlr.gg', 'gsk'] },
-  dota2:    { slug: 'dota2',    name: 'Dota 2',            type: 'esport', shortName: 'Dota2', liveProvider: 'gsk', scheduleProviders: ['dltv', 'gsk'] },
+  dota2:    { slug: 'dota2',    name: 'Dota 2',            type: 'esport', shortName: 'Dota2', liveProvider: 'gsk', scheduleProviders: ['dltv', 'gsk', 'valve'] },
   cod:      { slug: 'cod',      name: 'Call of Duty',      type: 'esport', shortName: 'CoD',                         scheduleProviders: ['breakingpoint'] },
   rl:       { slug: 'rl',       name: 'Rocket League',     type: 'esport', shortName: 'RL',                          scheduleProviders: ['blast'] },
+  r6:       { slug: 'r6',       name: 'Rainbow Six Siege', type: 'esport', shortName: 'R6',                          scheduleProviders: ['siege.gg'] },
 };
 
 export function isSport(s: string): s is Sport {

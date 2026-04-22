@@ -3,7 +3,7 @@ import type { Sport } from '../types/sports.js';
  * Every vendor that can own a league's live or schedule data. Keep in sync
  * with LiveProvider + ScheduleProvider in ../types/sports.ts.
  */
-export type Provider = 'espn' | 'sportradar' | 'genius' | 'gsk' | 'bo3gg' | 'dltv' | 'breakingpoint' | 'blast';
+export type Provider = 'espn' | 'sportradar' | 'genius' | 'gsk' | 'valve' | 'lolesports' | 'hltv' | 'bo3gg' | 'dltv' | 'breakingpoint' | 'blast' | 'siege.gg';
 export interface LeagueProviderConfig {
     /** Preferred source when its credentials are present. */
     primary: Provider;
