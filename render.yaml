@@ -111,3 +111,47 @@ services:
       - key: PORT
         value: "8081"
       - fromGroup: huddle-shared
+      # HLTV scorebot ingest for CS2. On by default via LEAGUE_PROVIDERS.cs2
+      # primary='hltv' in @huddle-bet/core, but gated in cli.ts on BOTH
+      # HLTV_ENABLED=1 and FLARESOLVERR_URL set. Until both are present,
+      # dispatch falls through to GSK (fallback in LEAGUE_PROVIDERS).
+      # See SPEC-ESPORTS-CS2.md §Legal for operating posture.
+      - key: HLTV_ENABLED
+        value: "1"
+      - key: FLARESOLVERR_URL
+        value: http://flaresolverr:8191
+
+  # ── FlareSolverr (Private Service — pre-built image) ──────
+  # Cloudflare challenge solver. huddle-live uses it to obtain cf_clearance
+  # cookies + a matching Chromium user-agent, then talks directly to
+  # scorebot-lb.hltv.org / www.hltv.org with those cookies.
+  #
+  # pserv = private service, no external ingress. Only reachable from
+  # other Render services in the same workspace via http://flaresolverr:8191.
+  #
+  # runtime=image + image.url pulls the official upstream build — no repo
+  # or Dockerfile needed on our side. Pinned to :latest for now; repin to
+  # a specific tag once we validate against a real tournament.
+  #
+  # Starter plan (512 MB) is tight for Chromium — a single busy session
+  # sits at ~300–450 MB. Bump to `standard` (2 CPU / 4 GB) if we see
+  # OOM kills during Major / IEM weekends. Cost delta: ~$18/mo.
+  - type: pserv
+    name: flaresolverr
+    runtime: image
+    region: oregon
+    plan: starter
+    image:
+      url: ghcr.io/flaresolverr/flaresolverr:latest
+    envVars:
+      - key: LOG_LEVEL
+        value: info
+      - key: CAPTCHA_SOLVER
+        value: none
+      # FlareSolverr's default 60s is conservative — HLTV challenges
+      # usually clear in 5–15s. 40s is the sweet spot observed in prod
+      # usage across community scrapers.
+      - key: BROWSER_TIMEOUT
+        value: "40000"
+      - key: PORT
+        value: "8191"
