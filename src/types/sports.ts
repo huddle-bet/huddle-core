@@ -10,8 +10,24 @@ export type Sport = TraditionalSport | EsportGame;
  * Vendors that push/pull live data. Each sport has at most one primary
  * live provider; when Sportradar ships, the traditional sports flip from
  * 'espn' to 'sportradar' here and huddle-live follows the config.
+ *
+ * `siege.gg`, `breakingpoint`, `blast` are HTML-scraped sources. Unlike
+ * the push-based providers they can't stream — huddle-live polls match
+ * detail pages during the live window and emits diffs. They live here
+ * because they are the authoritative live source for their sports; there's
+ * no richer feed to fall back to for R6/COD/RL.
  */
-export type LiveProvider = 'gsk' | 'espn' | 'sportradar' | 'genius' | 'valve' | 'lolesports' | 'hltv';
+export type LiveProvider =
+  | 'gsk'
+  | 'espn'
+  | 'sportradar'
+  | 'genius'
+  | 'valve'
+  | 'lolesports'
+  | 'hltv'
+  | 'siege.gg'
+  | 'breakingpoint'
+  | 'blast';
 
 /**
  * Vendors that publish schedule (upcoming fixtures). Multiple providers
@@ -22,10 +38,7 @@ export type ScheduleProvider =
   | LiveProvider
   | 'bo3gg'
   | 'dltv'
-  | 'vlr.gg'
-  | 'blast'
-  | 'breakingpoint'
-  | 'siege.gg';
+  | 'vlr.gg';
 
 /**
  * Provider this service will use for live data once all gates (key,
@@ -59,9 +72,9 @@ export const SPORTS: Record<Sport, SportConfig> = {
   cs2:      { slug: 'cs2',      name: 'Counter-Strike 2',  type: 'esport', shortName: 'CS2',   liveProvider: 'gsk', scheduleProviders: ['bo3gg', 'gsk', 'hltv'] },
   valorant: { slug: 'valorant', name: 'Valorant',          type: 'esport', shortName: 'VAL',   liveProvider: 'gsk', scheduleProviders: ['vlr.gg', 'gsk'] },
   dota2:    { slug: 'dota2',    name: 'Dota 2',            type: 'esport', shortName: 'Dota2', liveProvider: 'gsk', scheduleProviders: ['dltv', 'gsk', 'valve'] },
-  cod:      { slug: 'cod',      name: 'Call of Duty',      type: 'esport', shortName: 'CoD',                         scheduleProviders: ['breakingpoint'] },
-  rl:       { slug: 'rl',       name: 'Rocket League',     type: 'esport', shortName: 'RL',                          scheduleProviders: ['blast'] },
-  r6:       { slug: 'r6',       name: 'Rainbow Six Siege', type: 'esport', shortName: 'R6',                          scheduleProviders: ['siege.gg'] },
+  cod:      { slug: 'cod',      name: 'Call of Duty',      type: 'esport', shortName: 'CoD',   liveProvider: 'breakingpoint', scheduleProviders: ['breakingpoint'] },
+  rl:       { slug: 'rl',       name: 'Rocket League',     type: 'esport', shortName: 'RL',    liveProvider: 'blast',         scheduleProviders: ['blast'] },
+  r6:       { slug: 'r6',       name: 'Rainbow Six Siege', type: 'esport', shortName: 'R6',    liveProvider: 'siege.gg',      scheduleProviders: ['siege.gg'] },
 };
 
 export function isSport(s: string): s is Sport {
