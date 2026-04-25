@@ -132,14 +132,17 @@ services:
   # or Dockerfile needed on our side. Pinned to :latest for now; repin to
   # a specific tag once we validate against a real tournament.
   #
-  # Starter plan (512 MB) is tight for Chromium — a single busy session
-  # sits at ~300–450 MB. Bump to `standard` (2 CPU / 4 GB) if we see
-  # OOM kills during Major / IEM weekends. Cost delta: ~$18/mo.
+  # Standard plan (2 CPU / 4 GB) — bumped from starter after observing
+  # repeated "Ran out of memory (used over 512MB)" instance failures
+  # under live HLTV ingest. Each scorebot connect spins up a Chromium
+  # tab via FlareSolverr (~300–450MB) and the starter plan was tipping
+  # over once 2+ matches ran concurrently, taking the whole HLTV
+  # provider dark while it recovered. Cost delta: ~$18/mo.
   - type: pserv
     name: flaresolverr
     runtime: image
     region: oregon
-    plan: starter
+    plan: standard
     image:
       url: ghcr.io/flaresolverr/flaresolverr:latest
     envVars:
