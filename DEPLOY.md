@@ -1,116 +1,137 @@
 # Deploying Huddle to Render
 
-Everything except `huddle-bet` runs on Render. The `render.yaml` in this repo defines all four services plus Redis.
+Everything except `huddle-bet` runs on Render. `huddle-core/render.yaml` defines all five Render services plus the shared FlareSolverr private service. `huddle-bet` runs on Vercel.
 
 ## Prerequisites
 
-- A [Render](https://render.com) account (Starter plan ~$7/service/mo)
-- All four repos pushed to GitHub under `huddle-bet` org:
+- A [Render](https://render.com) account with billing enabled
+- All service repos pushed to GitHub under the `huddle-bet` org:
   - `huddle-bet/huddle-api`
   - `huddle-bet/huddle-odds`
   - `huddle-bet/huddle-data`
   - `huddle-bet/huddle-engine`
-- A Supabase project with the huddle schema
+  - `huddle-bet/huddle-live`
+- A Supabase project with the huddle schema applied (see `supabase/migrations`)
+- Provider API keys (Sportradar, ThunderPicks, Groq, Steam, etc.) — see env table below
 
 ## Quick Start (Blueprint)
 
-Render Blueprints let you deploy everything from `render.yaml` in one shot.
+`huddle-core/render.yaml` is the source of truth. Render Blueprints can apply it in one shot.
 
 1. Go to **https://dashboard.render.com/blueprints**
 2. Click **New Blueprint Instance**
-3. Connect the `huddle-bet/huddle-core` repo (which contains `render.yaml`)
-4. Render will detect the yaml and show you the services it will create
-5. Fill in the env vars it prompts for (see below)
-6. Click **Apply** — Render creates all services + Redis at once
+3. Connect the repo containing `render.yaml` (currently `huddle-bet/huddle-core`)
+4. Render parses the yaml and previews the services + the `huddle-shared` env var group
+5. Fill in every value marked `sync: false` (Render will prompt — see env table below)
+6. Click **Apply**
 
-## Environment Variables
+All services attach to the `huddle-shared` env var group, so shared values (Supabase, Whop, internal secret) are entered once and propagated.
 
-Each service needs these filled in on Render (marked `sync: false` in the yaml):
+## Services created by the blueprint
 
-### All services
-| Variable | Value |
+| Service | Type | Plan | Purpose |
+|---|---|---|---|
+| `huddle-api` | web (Node) | free | Public REST + WS bridge to browsers (`/health`) |
+| `huddle-live` | web (Node) | starter | Live state ingest + internal WS fanout to huddle-api (`/health`, port 8081) |
+| `huddle-odds` | worker (Docker) | standard | Sportsbook poller for all leagues |
+| `huddle-data` | worker (Docker) | starter | Schedule + final stats ingest |
+| `huddle-engine` | worker (Node) | standard | Projections, +EV, middles, slips |
+| `flaresolverr` | pserv (image) | starter | Cloudflare bypass sidecar (HLTV) — internal only |
+
+`huddle-bet` is **not** in `render.yaml`. It deploys to Vercel separately.
+
+Redis is **not** currently provisioned by `render.yaml`. huddle-api uses it for rate limiting; if you want Redis, create a Render Key Value instance and add `REDIS_URL` to the `huddle-shared` group.
+
+## Environment variables
+
+### `huddle-shared` env var group
+
+Set once on the group; every service inherits it. All marked `sync: false` in the yaml — Render will prompt during blueprint apply.
+
+| Variable | Required by | Notes |
+|---|---|---|
+| `DATABASE_URL` | data, engine | Supabase pooler connection string (`postgresql://postgres.<ref>:<pw>@aws-…pooler.supabase.com:5432/postgres`) |
+| `SUPABASE_URL` | all | `https://<ref>.supabase.co` |
+| `SUPABASE_SERVICE_KEY` | all | Service-role JWT (`eyJhbGci…role":"service_role"…`). **Not** the `sb_publishable_…` key — that's the publishable key and will silently fail RLS-protected writes. |
+| `SUPABASE_ANON_KEY` | api | Anon JWT — used for browser-scoped client calls |
+| `WHOP_API_KEY` | api | Whop server API key |
+| `WHOP_CLIENT_ID` | api | OAuth client ID |
+| `WHOP_CLIENT_SECRET` | api | OAuth client secret |
+| `WHOP_REDIRECT_URI` | api | e.g. `https://huddle-api.onrender.com/auth/whop/callback` |
+| `HUDDLE_INTERNAL_SECRET` | api, live | Shared secret for the huddle-api ↔ huddle-live fanout WS (any 256-bit hex string) |
+| `HUDDLE_LIVE_URL` | api | Internal URL of huddle-live, e.g. `http://huddle-live:8081` (Render private DNS) or `https://huddle-live.onrender.com` |
+
+### Service-scoped secrets (set on the individual service, not the group)
+
+These are not in the shared group because not every service needs them. Add them under each service's **Environment** tab in Render.
+
+| Variable | Service | Notes |
+|---|---|---|
+| `WHOP_WEBHOOK_SECRET` | huddle-api | Whop webhook signing secret (rejects unsigned events) |
+| `APP_URL` | huddle-api | Public app URL for OAuth redirects, e.g. `https://app.huddle.bet` |
+| `SPORTRADAR_API_KEY` | huddle-data | NBA/NHL/MLB stats ingest |
+| `SPORTRADAR_ACCESS_LEVEL` | huddle-data | `trial` or `production` |
+| `SPORTRADAR_PUSH_KEY` | huddle-live | Push-feed key (separate from REST key on Sportradar's side) |
+| `STEAM_API_KEY` | huddle-data, huddle-live | Dota/CS2 resolution. `STEAM_API_KEYS` (plural, comma-separated) is also accepted for round-robin. |
+| `THUNDERPICKS_API_KEY` | huddle-odds | Esports book |
+| `FANDUEL_API_KEY` | huddle-odds | Optional — falls back to public key if unset, but pin in prod |
+| `GROQ_API_KEY` | huddle-engine | LLM features (slip narratives, AI picks) |
+| `LOLESPORTS_API_KEY` | huddle-live | LoL Esports feed |
+| `OPENDOTA_API_KEY` | huddle-data | Dota stats backfill |
+| `GENIUS_API_KEY` / `GENIUS_CLIENT_ID` / `GENIUS_CLIENT_SECRET` | huddle-live | Genius Sports feed (NFL/NCAAF/NCAAM) — only set if `GENIUS_SOURCE=genius` |
+
+### Service-scoped non-secrets (set in `render.yaml`)
+
+These are baked into the yaml; no action needed. Documented for reference.
+
+| Variable | Service | Value |
+|---|---|---|
+| `NODE_ENV` | all | `production` |
+| `PORT` | huddle-api | `8080` |
+| `PORT` | huddle-live | `8081` |
+| `FLARESOLVERR_URL` | huddle-live | `http://flaresolverr:8191` (Render private DNS) |
+
+## huddle-bet (Vercel)
+
+Deployed separately from a connected GitHub repo. Required env:
+
+| Variable | Notes |
 |---|---|
-| `SUPABASE_URL` | Your Supabase project URL |
-| `SUPABASE_SERVICE_KEY` | Supabase service role key |
+| `NEXT_PUBLIC_API_URL` | Public URL of huddle-api, e.g. `https://huddle-api.onrender.com` |
+| `NEXT_PUBLIC_WS_URL` | Public WS URL of huddle-api, e.g. `wss://huddle-api.onrender.com` |
+| `JWT_SECRET` | App JWT signing secret. **Not** the placeholder. |
+| `JWT_EXPIRES_IN` | e.g. `7d` |
+| `ACCESS_PASSWORD` | Optional gating password during private beta |
+| `SPORTSDATAIO_API_KEY` | If any Vercel-side ingest is still in use; otherwise omit |
 
-### huddle-api only
-| Variable | Value |
-|---|---|
-| `SUPABASE_ANON_KEY` | Supabase anon/public key |
-| `WHOP_API_KEY` | Whop API key |
-| `WHOP_CLIENT_ID` | Whop OAuth client ID |
-| `WHOP_CLIENT_SECRET` | Whop OAuth client secret |
-| `WHOP_REDIRECT_URI` | e.g. `https://huddle-api.onrender.com/auth/whop/callback` |
+## Verifying the deploy
 
-`REDIS_URL` is auto-injected by Render from the managed Redis instance.
+1. **huddle-api** — `GET https://huddle-api.onrender.com/health` returns 200
+2. **huddle-live** — Render logs show provider sockets connecting (Sportradar, HLTV via FlareSolverr, etc.); `/health` returns 200 internally
+3. **huddle-odds** — Logs show per-league poll cycles with non-zero odds counts
+4. **huddle-data** — Logs show schedule discovery + stats ingest by sport
+5. **huddle-engine** — Logs show the worker loop and projection refresh cycles
+6. **flaresolverr** — Internal-only; verify by checking huddle-live's HLTV ingest logs (cookie acquisition + first scorebot frames)
+7. **Supabase** — Confirm rows landing in `events`, `live_state`, `odds_snapshots`, `ev_picks` etc.
 
-## Manual Setup (Alternative)
-
-If you prefer to create services individually:
-
-### 1. Create Redis
-- Dashboard > New > Redis
-- Name: `huddle-redis`
-- Region: Oregon
-- Plan: Starter
-- Eviction policy: allkeys-lru
-
-### 2. Create huddle-api (Web Service)
-- Dashboard > New > Web Service
-- Connect `huddle-bet/huddle-api`
-- Runtime: Node
-- Region: Oregon
-- Build: `npm install && npm run build`
-- Start: `node --import tsx src/server.ts`
-- Health check: `/health`
-- Add env vars from table above
-- Add `REDIS_URL` from the Redis instance's connection string
-
-### 3. Create huddle-odds (Background Worker)
-- Dashboard > New > Background Worker
-- Connect `huddle-bet/huddle-odds`
-- Runtime: Node
-- Build: `npm install && npm run build`
-- Start: `node --import tsx src/cli.ts poll nba nhl mlb ncaam ncaaw cs2 lol val dota2 cod rl`
-- Add `SUPABASE_URL`, `SUPABASE_SERVICE_KEY`, `REDIS_URL`
-
-### 4. Create huddle-data (Background Worker — Docker)
-- Dashboard > New > Background Worker
-- Connect `huddle-bet/huddle-data`
-- Runtime: **Docker** (uses the Dockerfile in repo root — needed for Python `curl_cffi`)
-- Add `SUPABASE_URL`, `SUPABASE_SERVICE_KEY`, `REDIS_URL`
-
-### 5. Create huddle-engine (Background Worker)
-- Dashboard > New > Background Worker
-- Connect `huddle-bet/huddle-engine`
-- Runtime: Node
-- Build: `npm install && npm run build`
-- Start: `node --import tsx src/cli.ts worker`
-- Add `SUPABASE_URL`, `SUPABASE_SERVICE_KEY`, `REDIS_URL`
-
-## Verifying the Deploy
-
-1. **huddle-api**: Hit `https://huddle-api.onrender.com/health` — should return 200
-2. **huddle-odds**: Check Render logs — should see poll cycles logging odds counts
-3. **huddle-data**: Check Render logs — should see schedule discovery + live polling
-4. **huddle-engine**: Check Render logs — should see worker loop starting
-5. **Redis**: Check the Render Redis dashboard for active connections (should be 4)
-
-## Cost Estimate
+## Cost estimate (current plan tiers in render.yaml)
 
 | Service | Plan | ~Cost/mo |
 |---|---|---|
-| huddle-api | Starter | $7 |
-| huddle-odds | Starter | $7 |
-| huddle-data | Starter | $7 |
-| huddle-engine | Starter | $7 |
-| huddle-redis | Starter | $10 |
-| **Total** | | **~$38/mo** |
+| huddle-api | free | $0 |
+| huddle-live | starter | $7 |
+| huddle-odds | standard | $25 |
+| huddle-data | starter | $7 |
+| huddle-engine | standard | $25 |
+| flaresolverr | starter | $7 |
+| **Total (Render)** | | **~$71/mo** |
+
+Add Supabase (Pro tier ~$25/mo if used) and Vercel (Hobby free / Pro $20/mo) for the full picture. If `huddle-api` outgrows free, bump to starter (+$7).
 
 ## Notes
 
-- **huddle-bet** is deployed separately (Vercel) — it's not in `render.yaml`
-- **huddle-core** is an npm package consumed by the other services, not a deployed service
-- All services are in Oregon to minimize latency to each other and to Redis
-- Render auto-deploys on push to the connected branch (usually `main`)
-- To pause a service without deleting it, suspend it from the Render dashboard
+- **huddle-bet** is on Vercel; it is intentionally not in `render.yaml`.
+- **huddle-core** is an npm package consumed by the workers, not a deployed service.
+- All Render services run in **Oregon** to minimize cross-service latency. Pair with a us-west Supabase project (the prod project is in `us-west-2`).
+- Render auto-deploys on push to the connected branch (usually `main`). Suspend a service from the dashboard if you need to pause without deleting.
+- The huddle-api ↔ huddle-live fanout uses Render's internal DNS (`http://huddle-live:8081`) — no public ingress required for that path. The `HUDDLE_INTERNAL_SECRET` header is the only auth on it; rotate if leaked.
