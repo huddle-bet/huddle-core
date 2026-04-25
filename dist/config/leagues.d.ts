@@ -3,7 +3,7 @@ import type { Sport } from '../types/sports.js';
  * Every vendor that can own a league's live or schedule data. Keep in sync
  * with LiveProvider + ScheduleProvider in ../types/sports.ts.
  */
-export type Provider = 'espn' | 'sportradar' | 'genius' | 'gsk' | 'valve' | 'lolesports' | 'hltv' | 'bo3gg' | 'dltv' | 'breakingpoint' | 'blast' | 'siege.gg';
+export type Provider = 'espn' | 'sportradar' | 'genius' | 'valve' | 'lolesports' | 'hltv' | 'vlr.gg' | 'bo3gg' | 'dltv' | 'breakingpoint' | 'blast' | 'siege.gg';
 export interface LeagueProviderConfig {
     /** Preferred source when its credentials are present. */
     primary: Provider;
@@ -17,9 +17,9 @@ export interface LeagueProviderConfig {
  *   - huddle-live watcher: which adapter to spin up per event
  *   - huddle-api data-players: which source_id joins player_game_stats
  *
- * Paid APIs (sportradar, genius, gsk) fall back to public sources (espn,
- * bo3gg, dltv) while keys are being provisioned. cod/rl run their sole
- * scraper as primary — no fallback path exists today.
+ * Paid APIs (sportradar, genius) fall back to public sources (espn) while
+ * keys are being provisioned. cod/rl run their sole scraper as primary —
+ * no fallback path exists today.
  */
 export declare const LEAGUE_PROVIDERS: Record<Sport, LeagueProviderConfig>;
 /**
@@ -30,7 +30,6 @@ export declare const LEAGUE_PROVIDERS: Record<Sport, LeagueProviderConfig>;
  * Env conventions match existing huddle-live/huddle-data code:
  *   sportradar → SPORTRADAR_API_KEY + per-league SPORTRADAR_<LEAGUE>=1
  *   genius     → GENIUS_API_KEY/CLIENT_ID/CLIENT_SECRET + GENIUS_<LEAGUE>=1
- *   gsk        → GSK_TOKEN
  */
 export declare function isProviderEnabled(provider: Provider, sport: Sport, env?: NodeJS.ProcessEnv): boolean;
 /**

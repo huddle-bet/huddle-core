@@ -18,13 +18,13 @@ export type Sport = TraditionalSport | EsportGame;
  * no richer feed to fall back to for R6/COD/RL.
  */
 export type LiveProvider =
-  | 'gsk'
   | 'espn'
   | 'sportradar'
   | 'genius'
   | 'valve'
   | 'lolesports'
   | 'hltv'
+  | 'vlr.gg'
   | 'siege.gg'
   | 'breakingpoint'
   | 'blast';
@@ -37,8 +37,7 @@ export type LiveProvider =
 export type ScheduleProvider =
   | LiveProvider
   | 'bo3gg'
-  | 'dltv'
-  | 'vlr.gg';
+  | 'dltv';
 
 /**
  * Provider this service will use for live data once all gates (key,
@@ -68,10 +67,10 @@ export const SPORTS: Record<Sport, SportConfig> = {
   ncaam: { slug: 'ncaam', name: "NCAA Men's Basketball",       type: 'traditional', shortName: 'NCAAM', liveProvider: 'espn', scheduleProviders: ['espn'] },
   ncaaf: { slug: 'ncaaf', name: 'NCAA Football',               type: 'traditional', shortName: 'NCAAF', liveProvider: 'espn', scheduleProviders: ['espn'] },
   // Esports
-  lol:      { slug: 'lol',      name: 'League of Legends', type: 'esport', shortName: 'LoL',   liveProvider: 'gsk', scheduleProviders: ['bo3gg', 'gsk', 'lolesports'] },
-  cs2:      { slug: 'cs2',      name: 'Counter-Strike 2',  type: 'esport', shortName: 'CS2',   liveProvider: 'gsk', scheduleProviders: ['bo3gg', 'gsk', 'hltv'] },
-  valorant: { slug: 'valorant', name: 'Valorant',          type: 'esport', shortName: 'VAL',   liveProvider: 'gsk', scheduleProviders: ['vlr.gg', 'gsk'] },
-  dota2:    { slug: 'dota2',    name: 'Dota 2',            type: 'esport', shortName: 'Dota2', liveProvider: 'gsk', scheduleProviders: ['dltv', 'gsk', 'valve'] },
+  lol:      { slug: 'lol',      name: 'League of Legends', type: 'esport', shortName: 'LoL',   liveProvider: 'lolesports', scheduleProviders: ['bo3gg', 'lolesports'] },
+  cs2:      { slug: 'cs2',      name: 'Counter-Strike 2',  type: 'esport', shortName: 'CS2',   liveProvider: 'hltv', scheduleProviders: ['hltv'] },
+  valorant: { slug: 'valorant', name: 'Valorant',          type: 'esport', shortName: 'VAL',   liveProvider: 'vlr.gg', scheduleProviders: ['vlr.gg'] },
+  dota2:    { slug: 'dota2',    name: 'Dota 2',            type: 'esport', shortName: 'Dota2', liveProvider: 'valve', scheduleProviders: ['bo3gg'] },
   cod:      { slug: 'cod',      name: 'Call of Duty',      type: 'esport', shortName: 'CoD',   liveProvider: 'breakingpoint', scheduleProviders: ['breakingpoint'] },
   rl:       { slug: 'rl',       name: 'Rocket League',     type: 'esport', shortName: 'RL',    liveProvider: 'blast',         scheduleProviders: ['blast'] },
   r6:       { slug: 'r6',       name: 'Rainbow Six Siege', type: 'esport', shortName: 'R6',    liveProvider: 'siege.gg',      scheduleProviders: ['siege.gg'] },

@@ -8,10 +8,10 @@ export type Provider =
   | 'espn'
   | 'sportradar'
   | 'genius'
-  | 'gsk'
   | 'valve'
   | 'lolesports'
   | 'hltv'
+  | 'vlr.gg'
   | 'bo3gg'
   | 'dltv'
   | 'breakingpoint'
@@ -32,9 +32,9 @@ export interface LeagueProviderConfig {
  *   - huddle-live watcher: which adapter to spin up per event
  *   - huddle-api data-players: which source_id joins player_game_stats
  *
- * Paid APIs (sportradar, genius, gsk) fall back to public sources (espn,
- * bo3gg, dltv) while keys are being provisioned. cod/rl run their sole
- * scraper as primary — no fallback path exists today.
+ * Paid APIs (sportradar, genius) fall back to public sources (espn) while
+ * keys are being provisioned. cod/rl run their sole scraper as primary —
+ * no fallback path exists today.
  */
 export const LEAGUE_PROVIDERS: Record<Sport, LeagueProviderConfig> = {
   nba:   { primary: 'sportradar', fallback: 'espn' },
@@ -44,19 +44,19 @@ export const LEAGUE_PROVIDERS: Record<Sport, LeagueProviderConfig> = {
   mlb:   { primary: 'sportradar', fallback: 'espn' },
   ncaam: { primary: 'genius',     fallback: 'espn' },
   ncaaf: { primary: 'genius',     fallback: 'espn' },
-  // CS2 moves to HLTV scorebot via FlareSolverr. See SPEC-ESPORTS-CS2.md.
-  // Opt-in via HLTV_ENABLED=1; absent flag keeps GSK as primary. bo3gg
-  // stays as the legal-safe fallback if we ever pull the plug on HLTV.
-  cs2:      { primary: 'hltv', fallback: 'gsk' },
-  valorant: { primary: 'gsk', fallback: 'bo3gg' },
-  // LoL moves to Riot's own lolesports feed. GSK stays as fallback for
-  // shadow validation during the Phase 4 cutover in SPEC-ESPORTS-LOL.md;
-  // bo3gg is the zero-dependency safety net after GSK decommissions.
-  lol:      { primary: 'lolesports', fallback: 'gsk' },
-  // Dota 2 moves to Valve's own WebAPI (free, GSK-equivalent depth + X/Y
-  // positions GSK doesn't ship). GSK stays as fallback for shadow validation;
-  // once Phase 6 of SPEC-ESPORTS-DOTA2.md completes, fallback flips to 'dltv'.
-  dota2:    { primary: 'valve', fallback: 'gsk' },
+  // CS2 runs on HLTV scorebot via FlareSolverr. No fallback — if HLTV is
+  // unavailable, CS2 live goes dark and the schedule/reconcile paths
+  // surface the outage. See SPEC-ESPORTS-CS2.md.
+  cs2:      { primary: 'hltv', fallback: null },
+  // Valorant runs on vlr.gg end-to-end (schedule + live + stats). No
+  // fallback — if vlr.gg blocks us or rolls layout, Valorant goes dark
+  // and we patch. See SPEC-ESPORTS-VAL.md.
+  valorant: { primary: 'vlr.gg', fallback: null },
+  // LoL runs on Riot's own lolesports feed end-to-end.
+  lol:      { primary: 'lolesports', fallback: null },
+  // Dota 2 runs on Valve's own WebAPI. dltv stays available as a schedule
+  // backfill source (no upcoming endpoint on Valve) but not a live fallback.
+  dota2:    { primary: 'valve', fallback: null },
   cod: { primary: 'breakingpoint', fallback: null },
   rl:  { primary: 'blast',         fallback: null },
   // R6: siege.gg is the community-standard schedule source. HTML-scraped,
@@ -73,7 +73,6 @@ export const LEAGUE_PROVIDERS: Record<Sport, LeagueProviderConfig> = {
  * Env conventions match existing huddle-live/huddle-data code:
  *   sportradar → SPORTRADAR_API_KEY + per-league SPORTRADAR_<LEAGUE>=1
  *   genius     → GENIUS_API_KEY/CLIENT_ID/CLIENT_SECRET + GENIUS_<LEAGUE>=1
- *   gsk        → GSK_TOKEN
  */
 export function isProviderEnabled(
   provider: Provider,
@@ -84,6 +83,7 @@ export function isProviderEnabled(
     case 'espn':
     case 'bo3gg':
     case 'dltv':
+    case 'vlr.gg':
     case 'breakingpoint':
     case 'blast':
     case 'siege.gg':
@@ -94,24 +94,19 @@ export function isProviderEnabled(
     case 'genius':
       return Boolean(env.GENIUS_API_KEY && env.GENIUS_CLIENT_ID && env.GENIUS_CLIENT_SECRET)
         && env[`GENIUS_${sport.toUpperCase()}`] === '1';
-    case 'gsk':
-      return Boolean(env.GSK_TOKEN);
     case 'valve':
       // Free Steam WebAPI key(s) — supports single STEAM_API_KEY or
       // comma-separated STEAM_API_KEYS for the multi-key round-robin pool.
       return Boolean(env.STEAM_API_KEY || env.STEAM_API_KEYS);
     case 'lolesports':
       // Riot's lolesports feed uses a public static x-api-key scraped
-      // from the lolesports.com JS bundle. No env auth required; the
-      // only gate is the opt-in flag so we don't accidentally flip live
-      // dispatch off GSK mid-event.
+      // from the lolesports.com JS bundle. No env auth required.
       return env.LOLESPORTS_ENABLED !== '0';
     case 'hltv':
-      // HLTV scorebot via FlareSolverr sidecar. Two gates: HLTV_ENABLED=1
-      // AND FLARESOLVERR_URL set (bypass isn't meaningful without the
-      // CF solver). Default off — CS2 stays on GSK until explicitly
-      // flipped (legal/ops posture per SPEC-ESPORTS-CS2.md §Legal).
-      return env.HLTV_ENABLED === '1' && Boolean(env.FLARESOLVERR_URL);
+      // HLTV scorebot via FlareSolverr sidecar. FLARESOLVERR_URL is the
+      // only gate — CF bypass is mandatory infrastructure for any HLTV
+      // fetch. See SPEC-ESPORTS-CS2.md §Legal for operating rules.
+      return Boolean(env.FLARESOLVERR_URL);
   }
 }
 

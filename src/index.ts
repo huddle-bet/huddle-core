@@ -17,5 +17,14 @@ export * from './canonical.js';
 // Team drift logging
 export * from './drift.js';
 
+// Upstream-enum drift guard
+export * from './unknown-variant.js';
+
 // Provider routing config (primary + fallback per league)
 export * from './config/leagues.js';
+
+// Per-sport curated allowlists (pro leagues we ingest).
+export * from './config/dota2-leagues.js';
+
+// Shared lolesports (Riot) public API key + self-harvest.
+export * from './config/lolesports-api.js';

@@ -4,5 +4,8 @@ export { ALL_TEAMS, NBA_TEAMS, NFL_TEAMS, NHL_TEAMS, MLB_TEAMS, NCAAM_TEAMS, ESP
 export * from './matchers/index.js';
 export * from './canonical.js';
 export * from './drift.js';
+export * from './unknown-variant.js';
 export * from './config/leagues.js';
+export * from './config/dota2-leagues.js';
+export * from './config/lolesports-api.js';
 //# sourceMappingURL=index.d.ts.map

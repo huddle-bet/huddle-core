@@ -63,7 +63,7 @@ export declare function buildTeamDriftUpsert(entry: TeamDriftEntry): {
  * Example:
  *   await logTeamDrift(
  *     (sql, values) => pool.query(sql, values),
- *     { service: 'huddle-live', source_id: 'gsk', sport: 'cs2', raw_team_name: 'Natus Vincere' }
+ *     { service: 'huddle-live', source_id: 'hltv', sport: 'cs2', raw_team_name: 'Natus Vincere' }
  *   );
  */
 export declare function logTeamDrift(query: TeamDriftQueryFn, entry: TeamDriftEntry): Promise<void>;

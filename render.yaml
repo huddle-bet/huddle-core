@@ -17,12 +17,17 @@ envVarGroups:
         sync: false
       - key: WHOP_REDIRECT_URI
         sync: false
-      - key: GSK_TOKEN
-        sync: false
       - key: HUDDLE_INTERNAL_SECRET
         sync: false
       - key: HUDDLE_LIVE_URL
         sync: false
+      # FlareSolverr internal hostname — needed by both huddle-live (HLTV
+      # scorebot CF bypass) and huddle-data (HLTV /results reconcile walk).
+      # Value is the Render private-service DNS name; not a secret. Both
+      # services live in the same workspace as the flaresolverr pserv
+      # declared below.
+      - key: FLARESOLVERR_URL
+        value: http://flaresolverr:8191
 
 services:
   # ── huddle-api (Web Service) ──────────────────────────────
@@ -110,16 +115,10 @@ services:
         value: production
       - key: PORT
         value: "8081"
+      # HLTV scorebot CF bypass sidecar — FLARESOLVERR_URL now lives in
+      # the huddle-shared env group so huddle-data's reconcile walk picks
+      # it up too. See SPEC-ESPORTS-CS2.md §Legal for operating posture.
       - fromGroup: huddle-shared
-      # HLTV scorebot ingest for CS2. On by default via LEAGUE_PROVIDERS.cs2
-      # primary='hltv' in @huddle-bet/core, but gated in cli.ts on BOTH
-      # HLTV_ENABLED=1 and FLARESOLVERR_URL set. Until both are present,
-      # dispatch falls through to GSK (fallback in LEAGUE_PROVIDERS).
-      # See SPEC-ESPORTS-CS2.md §Legal for operating posture.
-      - key: HLTV_ENABLED
-        value: "1"
-      - key: FLARESOLVERR_URL
-        value: http://flaresolverr:8191
 
   # ── FlareSolverr (Private Service — pre-built image) ──────
   # Cloudflare challenge solver. huddle-live uses it to obtain cf_clearance

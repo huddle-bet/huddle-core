@@ -13,13 +13,13 @@ export type Sport = TraditionalSport | EsportGame;
  * because they are the authoritative live source for their sports; there's
  * no richer feed to fall back to for R6/COD/RL.
  */
-export type LiveProvider = 'gsk' | 'espn' | 'sportradar' | 'genius' | 'valve' | 'lolesports' | 'hltv' | 'siege.gg' | 'breakingpoint' | 'blast';
+export type LiveProvider = 'espn' | 'sportradar' | 'genius' | 'valve' | 'lolesports' | 'hltv' | 'vlr.gg' | 'siege.gg' | 'breakingpoint' | 'blast';
 /**
  * Vendors that publish schedule (upcoming fixtures). Multiple providers
  * can contribute schedule rows for the same sport — canonical_event_id
  * bridges them in the `events` table.
  */
-export type ScheduleProvider = LiveProvider | 'bo3gg' | 'dltv' | 'vlr.gg';
+export type ScheduleProvider = LiveProvider | 'bo3gg' | 'dltv';
 /**
  * Provider this service will use for live data once all gates (key,
  * entitlement, flag) are satisfied. `liveProvider` in SPORTS is the
