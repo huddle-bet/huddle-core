@@ -21,13 +21,13 @@ envVarGroups:
         sync: false
       - key: HUDDLE_LIVE_URL
         sync: false
-      # FlareSolverr internal hostname — needed by both huddle-live (HLTV
-      # scorebot CF bypass) and huddle-data (HLTV /results reconcile walk).
-      # Value is the Render private-service DNS name; not a secret. Both
-      # services live in the same workspace as the flaresolverr pserv
-      # declared below.
+      # FlareSolverr URL — needed by both huddle-live (HLTV scorebot CF
+      # bypass) and huddle-data (HLTV /results reconcile walk). Value is
+      # set in the Render dashboard so it can point at whichever flaresolverr
+      # deployment is live (the in-repo pserv URL `http://flaresolverr:8191`
+      # is a fallback default; the real value can be a managed instance).
       - key: FLARESOLVERR_URL
-        value: http://flaresolverr:8191
+        sync: false
 
 services:
   # ── huddle-api (Web Service) ──────────────────────────────
