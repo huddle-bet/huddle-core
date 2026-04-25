@@ -28,6 +28,17 @@ envVarGroups:
       # is a fallback default; the real value can be a managed instance).
       - key: FLARESOLVERR_URL
         sync: false
+      # Optional residential / non-banned HTTP(S) proxy for HLTV traffic.
+      # Render's datacenter ranges are hard-blocked by Cloudflare for
+      # hltv.org ("Sorry, you have been blocked"). When this is set,
+      # FlareSolverr forwards the solve through the proxy (per-request
+      # `proxy.url` field) AND the live-side scorebot client routes its
+      # cookie-reusing direct fetch + WebSocket through the same proxy
+      # via undici ProxyAgent / https-proxy-agent. CF binds cf_clearance
+      # to the originating IP, so all three legs must share one IP.
+      # Format: http://user:pass@host:port  (Webshare, IPRoyal, etc.)
+      - key: FLARESOLVERR_PROXY_URL
+        sync: false
 
 services:
   # ── huddle-api (Web Service) ──────────────────────────────
