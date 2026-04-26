@@ -19,7 +19,8 @@
     "./ids": "./dist/ids/index.js",
     "./types": "./dist/types/index.js",
     "./matchers": "./dist/matchers/index.js",
-    "./config/leagues": "./dist/config/leagues.js"
+    "./config/leagues": "./dist/config/leagues.js",
+    "./reducers": "./dist/reducers/index.js"
   },
   "scripts": {
     "build": "tsc",

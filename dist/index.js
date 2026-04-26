@@ -17,4 +17,9 @@ export * from './config/leagues.js';
 export * from './config/dota2-leagues.js';
 // Shared lolesports (Riot) public API key + self-harvest.
 export * from './config/lolesports-api.js';
+// Esports live-state reducers (cs2, lol, dota2, valorant). Shared
+// between huddle-live's real-time ingestion and huddle-api's simulate
+// endpoint — both fold the same EsportsLiveEvent stream through the
+// same reducer to keep state-machine behavior identical.
+export * from './reducers/index.js';
 //# sourceMappingURL=index.js.map
