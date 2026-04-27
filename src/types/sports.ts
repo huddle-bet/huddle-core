@@ -37,7 +37,8 @@ export type LiveProvider =
 export type ScheduleProvider =
   | LiveProvider
   | 'bo3gg'
-  | 'dltv';
+  | 'dltv'
+  | 'r6.ubisoft.com';
 
 /**
  * Provider this service will use for live data once all gates (key,
@@ -73,7 +74,13 @@ export const SPORTS: Record<Sport, SportConfig> = {
   dota2:    { slug: 'dota2',    name: 'Dota 2',            type: 'esport', shortName: 'Dota2', liveProvider: 'valve', scheduleProviders: ['bo3gg'] },
   cod:      { slug: 'cod',      name: 'Call of Duty',      type: 'esport', shortName: 'CoD',   liveProvider: 'breakingpoint', scheduleProviders: ['breakingpoint'] },
   rl:       { slug: 'rl',       name: 'Rocket League',     type: 'esport', shortName: 'RL',    liveProvider: 'blast',         scheduleProviders: ['blast'] },
-  r6:       { slug: 'r6',       name: 'Rainbow Six Siege', type: 'esport', shortName: 'R6',    liveProvider: 'siege.gg',      scheduleProviders: ['siege.gg'] },
+  // r6: live polling retired — siege.gg moved behind a Cloudflare managed
+  // challenge and r6 is a low-volume sportsbook market. Schedule comes from
+  // Ubisoft's official esports portal (richer per-round telemetry post-game
+  // via the existing r6.ubisoft.com reconciler) and events transition
+  // scheduled → final without intermediate live_state writes. huddle-live's
+  // SiegeAdapter is intentionally unregistered (see huddle-live/src/cli.ts).
+  r6:       { slug: 'r6',       name: 'Rainbow Six Siege', type: 'esport', shortName: 'R6',                                   scheduleProviders: ['r6.ubisoft.com'] },
 };
 
 export function isSport(s: string): s is Sport {
