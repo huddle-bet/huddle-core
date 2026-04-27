@@ -11,11 +11,11 @@ export type Sport = TraditionalSport | EsportGame;
  * live provider; when Sportradar ships, the traditional sports flip from
  * 'espn' to 'sportradar' here and huddle-live follows the config.
  *
- * `siege.gg`, `breakingpoint`, `blast` are HTML-scraped sources. Unlike
- * the push-based providers they can't stream — huddle-live polls match
- * detail pages during the live window and emits diffs. They live here
- * because they are the authoritative live source for their sports; there's
- * no richer feed to fall back to for R6/COD/RL.
+ * `breakingpoint`, `blast` are HTML-scraped sources. Unlike the push-based
+ * providers they can't stream — huddle-live polls match detail pages during
+ * the live window and emits diffs. They live here because they are the
+ * authoritative live source for their sports; there's no richer feed to
+ * fall back to for COD/RL.
  */
 export type LiveProvider =
   | 'espn'
@@ -25,7 +25,6 @@ export type LiveProvider =
   | 'lolesports'
   | 'hltv'
   | 'vlr.gg'
-  | 'siege.gg'
   | 'breakingpoint'
   | 'blast';
 
@@ -74,12 +73,11 @@ export const SPORTS: Record<Sport, SportConfig> = {
   dota2:    { slug: 'dota2',    name: 'Dota 2',            type: 'esport', shortName: 'Dota2', liveProvider: 'valve', scheduleProviders: ['bo3gg'] },
   cod:      { slug: 'cod',      name: 'Call of Duty',      type: 'esport', shortName: 'CoD',   liveProvider: 'breakingpoint', scheduleProviders: ['breakingpoint'] },
   rl:       { slug: 'rl',       name: 'Rocket League',     type: 'esport', shortName: 'RL',    liveProvider: 'blast',         scheduleProviders: ['blast'] },
-  // r6: live polling retired — siege.gg moved behind a Cloudflare managed
-  // challenge and r6 is a low-volume sportsbook market. Schedule comes from
-  // Ubisoft's official esports portal (richer per-round telemetry post-game
-  // via the existing r6.ubisoft.com reconciler) and events transition
-  // scheduled → final without intermediate live_state writes. huddle-live's
-  // SiegeAdapter is intentionally unregistered (see huddle-live/src/cli.ts).
+  // r6: live polling retired (siege.gg moved behind a Cloudflare managed
+  // challenge; r6 is a low-volume sportsbook market). Schedule + post-game
+  // per-round telemetry come from Ubisoft's official esports portal via
+  // R6UbisoftBackfiller. Events transition scheduled → final without
+  // intermediate live_state writes; huddle-live has no R6 live adapter.
   r6:       { slug: 'r6',       name: 'Rainbow Six Siege', type: 'esport', shortName: 'R6',                                   scheduleProviders: ['r6.ubisoft.com'] },
 };
 

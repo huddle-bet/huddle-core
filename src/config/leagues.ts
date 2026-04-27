@@ -16,7 +16,6 @@ export type Provider =
   | 'dltv'
   | 'breakingpoint'
   | 'blast'
-  | 'siege.gg'
   | 'r6.ubisoft.com';
 
 export interface LeagueProviderConfig {
@@ -88,7 +87,6 @@ export function isProviderEnabled(
     case 'vlr.gg':
     case 'breakingpoint':
     case 'blast':
-    case 'siege.gg':
     case 'r6.ubisoft.com':
       return true;
     case 'sportradar':
