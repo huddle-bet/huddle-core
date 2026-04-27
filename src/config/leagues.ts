@@ -16,7 +16,8 @@ export type Provider =
   | 'dltv'
   | 'breakingpoint'
   | 'blast'
-  | 'siege.gg';
+  | 'siege.gg'
+  | 'r6.ubisoft.com';
 
 export interface LeagueProviderConfig {
   /** Preferred source when its credentials are present. */
@@ -59,10 +60,11 @@ export const LEAGUE_PROVIDERS: Record<Sport, LeagueProviderConfig> = {
   dota2:    { primary: 'valve', fallback: null },
   cod: { primary: 'breakingpoint', fallback: null },
   rl:  { primary: 'blast',         fallback: null },
-  // R6: siege.gg is the community-standard schedule source. HTML-scraped,
-  // no API key. No fallback today — ubi's official "R6 Share" API is not
-  // public.
-  r6:  { primary: 'siege.gg',      fallback: null },
+  // R6: Ubisoft's official esports portal (r6.ubisoft.com) supplies
+  // schedule + post-game per-round telemetry. Replaces the retired
+  // siege.gg HTML scraper which was blocked behind a Cloudflare managed
+  // challenge. No fallback — community sites all sit behind the same CF.
+  r6:  { primary: 'r6.ubisoft.com', fallback: null },
 };
 
 /**
@@ -87,6 +89,7 @@ export function isProviderEnabled(
     case 'breakingpoint':
     case 'blast':
     case 'siege.gg':
+    case 'r6.ubisoft.com':
       return true;
     case 'sportradar':
       return Boolean(env.SPORTRADAR_API_KEY)
