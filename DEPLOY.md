@@ -36,7 +36,7 @@ All services attach to the `huddle-shared` env var group, so shared values (Supa
 | `huddle-odds` | worker (Docker) | standard | Sportsbook poller for all leagues |
 | `huddle-data` | worker (Docker) | starter | Schedule + final stats ingest |
 | `huddle-engine` | worker (Node) | standard | Projections, +EV, middles, slips |
-| `flaresolverr` | pserv (image) | starter | Cloudflare bypass sidecar (HLTV) — internal only |
+| `flaresolverr` | pserv (image) | starter | CF JS-challenge solver — only used by huddle-data's CS2 /stats backfill |
 
 `huddle-bet` is **not** in `render.yaml`. It deploys to Vercel separately.
 
@@ -89,7 +89,8 @@ These are baked into the yaml; no action needed. Documented for reference.
 | `NODE_ENV` | all | `production` |
 | `PORT` | huddle-api | `8080` |
 | `PORT` | huddle-live | `8081` |
-| `FLARESOLVERR_URL` | huddle-live | `http://flaresolverr:8191` (Render private DNS) |
+| `FLARESOLVERR_URL` | huddle-data | `http://flaresolverr:8191` (Render private DNS) — only used during CS2 /stats backfill |
+| `FLARESOLVERR_PROXY_URL` | huddle-data, huddle-live | Comma-separated residential proxy pool. Cycletls pins one entry per process for HLTV cookie/IP affinity; FlareSolverr passes it through on /stats solves. |
 
 ## huddle-bet (Vercel)
 
@@ -107,11 +108,11 @@ Deployed separately from a connected GitHub repo. Required env:
 ## Verifying the deploy
 
 1. **huddle-api** — `GET https://huddle-api.onrender.com/health` returns 200
-2. **huddle-live** — Render logs show provider sockets connecting (Sportradar, HLTV via FlareSolverr, etc.); `/health` returns 200 internally
+2. **huddle-live** — Render logs show provider sockets connecting (Sportradar, HLTV polling scorebot via cycletls, etc.); `/health` returns 200 internally
 3. **huddle-odds** — Logs show per-league poll cycles with non-zero odds counts
 4. **huddle-data** — Logs show schedule discovery + stats ingest by sport
 5. **huddle-engine** — Logs show the worker loop and projection refresh cycles
-6. **flaresolverr** — Internal-only; verify by checking huddle-live's HLTV ingest logs (cookie acquisition + first scorebot frames)
+6. **flaresolverr** — Internal-only; verify by running a CS2 backfill (`huddle-data backfill-cs2-history --max-pages 1`) and watching for /stats fetch logs
 7. **Supabase** — Confirm rows landing in `events`, `live_state`, `odds_snapshots`, `ev_picks` etc.
 
 ## Cost estimate (current plan tiers in render.yaml)

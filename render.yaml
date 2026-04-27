@@ -21,22 +21,25 @@ envVarGroups:
         sync: false
       - key: HUDDLE_LIVE_URL
         sync: false
-      # FlareSolverr URL — needed by both huddle-live (HLTV scorebot CF
-      # bypass) and huddle-data (HLTV /results reconcile walk). Value is
-      # set in the Render dashboard so it can point at whichever flaresolverr
-      # deployment is live (the in-repo pserv URL `http://flaresolverr:8191`
-      # is a fallback default; the real value can be a managed instance).
+      # FlareSolverr URL — consumed only by huddle-data, and only for the
+      # /stats/matches/* HLTV path during backfill (CS2 per-map player
+      # stats). Every other HLTV fetch goes through cycletls + the
+      # residential proxy below. Kept in the shared group for blueprint
+      # simplicity; nothing else reads it.
       - key: FLARESOLVERR_URL
         sync: false
-      # Optional residential / non-banned HTTP(S) proxy for HLTV traffic.
+      # Residential / non-banned HTTP(S) proxy pool for HLTV traffic.
       # Render's datacenter ranges are hard-blocked by Cloudflare for
-      # hltv.org ("Sorry, you have been blocked"). When this is set,
-      # FlareSolverr forwards the solve through the proxy (per-request
-      # `proxy.url` field) AND the live-side scorebot client routes its
-      # cookie-reusing direct fetch + WebSocket through the same proxy
-      # via undici ProxyAgent / https-proxy-agent. CF binds cf_clearance
-      # to the originating IP, so all three legs must share one IP.
-      # Format: http://user:pass@host:port  (Webshare, IPRoyal, etc.)
+      # hltv.org ("Sorry, you have been blocked"). Two consumers:
+      #   - cycletls (huddle-data + huddle-live HTML scrapers + polling
+      #     scorebot) — pins one URL from the pool per process and keeps
+      #     it for cookie/IP affinity. CF's __cf_bm cookie is IP-bound.
+      #   - FlareSolverr — passes the same URL through as `proxy.url` on
+      #     the /stats solve.
+      # Format: comma-separated list of `http://user:pass@host:port` —
+      # one entry per sticky exit IP. Single bare URL also works for the
+      # static-IP case. `{session}` token in the URL is substituted with
+      # a random value at process start for sticky-session proxies.
       - key: FLARESOLVERR_PROXY_URL
         sync: false
 
@@ -126,34 +129,35 @@ services:
         value: production
       - key: PORT
         value: "8081"
-      # HLTV scorebot CF bypass sidecar — FLARESOLVERR_URL now lives in
-      # the huddle-shared env group so huddle-data's reconcile walk picks
-      # it up too. See SPEC-ESPORTS-CS2.md §Legal for operating posture.
+      # huddle-live no longer hits FlareSolverr — the polling scorebot
+      # and matches-harvester both go via cycletls + residential proxy.
+      # FLARESOLVERR_URL is inherited from the shared group but unused.
       - fromGroup: huddle-shared
 
   # ── FlareSolverr (Private Service — pre-built image) ──────
-  # Cloudflare challenge solver. huddle-live uses it to obtain cf_clearance
-  # cookies + a matching Chromium user-agent, then talks directly to
-  # scorebot-lb.hltv.org / www.hltv.org with those cookies.
+  # Cloudflare JS-challenge solver. Sole remaining caller is huddle-data's
+  # CS2 backfill — specifically the /stats/matches/mapstatsid/* path,
+  # which CF gates more strictly than the rest of www.hltv.org and
+  # rejects cycletls + JA3 + cookies. All other HLTV traffic (live
+  # ingest, /matches harvest, /results, match detail) now goes through
+  # cycletls and never touches this service.
   #
   # pserv = private service, no external ingress. Only reachable from
   # other Render services in the same workspace via http://flaresolverr:8191.
   #
-  # runtime=image + image.url pulls the official upstream build — no repo
-  # or Dockerfile needed on our side. Pinned to :latest for now; repin to
-  # a specific tag once we validate against a real tournament.
+  # runtime=image + image.url pulls the official upstream build.
   #
-  # Standard plan (2 CPU / 4 GB) — bumped from starter after observing
-  # repeated "Ran out of memory (used over 512MB)" instance failures
-  # under live HLTV ingest. Each scorebot connect spins up a Chromium
-  # tab via FlareSolverr (~300–450MB) and the starter plan was tipping
-  # over once 2+ matches ran concurrently, taking the whole HLTV
-  # provider dark while it recovered. Cost delta: ~$18/mo.
+  # Starter plan (0.5 CPU / 512 MB) — downgraded from standard now that
+  # FlareSolverr is no longer in the live ingest hot path. Backfill runs
+  # /stats sequentially (~once per map, paced 2s+) so at most one
+  # Chromium tab is open at a time. The historical OOM that forced
+  # standard plan was driven by concurrent live-ingest tabs — that load
+  # is gone. Saves ~$18/mo vs standard.
   - type: pserv
     name: flaresolverr
     runtime: image
     region: oregon
-    plan: standard
+    plan: starter
     image:
       url: ghcr.io/flaresolverr/flaresolverr:latest
     envVars:

@@ -103,10 +103,12 @@ export function isProviderEnabled(
       // from the lolesports.com JS bundle. No env auth required.
       return env.LOLESPORTS_ENABLED !== '0';
     case 'hltv':
-      // HLTV scorebot via FlareSolverr sidecar. FLARESOLVERR_URL is the
-      // only gate — CF bypass is mandatory infrastructure for any HLTV
-      // fetch. See SPEC-ESPORTS-CS2.md §Legal for operating rules.
-      return Boolean(env.FLARESOLVERR_URL);
+      // HLTV ingest is always-on — the polling scorebot uses cycletls
+      // (bundled) + the residential proxy in FLARESOLVERR_PROXY_URL. The
+      // only thing that still needs FlareSolverr is huddle-data's /stats
+      // backfill, which is gated independently inside huddle-data and
+      // doesn't determine whether we surface live cs2 events.
+      return true;
   }
 }
 
