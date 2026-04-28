@@ -23,5 +23,23 @@ USER root
 COPY entrypoint.sh /entrypoint.sh
 RUN chmod +x /entrypoint.sh
 
+# Patch out Camoufox's geoip lookup (Byparr passes geoip=True to
+# AsyncCamoufox in src/utils.py:92). With geoip=True, every browser
+# launch fires an extra request to api.ipify.org *through the proxy*
+# just to detect locale — doubling our Webshare CONNECT-tunnel rate
+# for no benefit (cf_clearance binds to actual egress IP, not
+# whatever locale Camoufox infers). Under load this trips Webshare's
+# 429 Too Many Requests at the proxy gateway and the browser fails
+# to launch with InvalidProxy before HLTV is even contacted.
+#
+# The sed targets the literal `geoip=True,` line — single occurrence
+# in utils.py, unambiguous. Verified against ThePhaseless/byparr@main
+# 2026-04-28. If a future image bump renames the kwarg or removes
+# the comma, the build fails loud (RUN exits non-zero) instead of
+# silently regressing.
+RUN grep -q '        geoip=True,' /app/src/utils.py \
+    && sed -i 's|        geoip=True,|        geoip=False,|' /app/src/utils.py \
+    && grep -q '        geoip=False,' /app/src/utils.py
+
 USER 1000
 ENTRYPOINT ["/entrypoint.sh"]
