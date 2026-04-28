@@ -172,3 +172,12 @@ services:
         value: "40000"
       - key: PORT
         value: "8191"
+      # Solver engine. nodriver is FlareSolverr's default since the 2025
+      # rewrite; switching to undetected-chromedriver is the diagnostic
+      # lever for "0.389s instant CF-block" failures — if both engines
+      # return the same instant block, the failure is IP-level (CF refusing
+      # the connection before any challenge renders) and no solver fixes
+      # it. If undetected-chromedriver behaves differently, the issue is
+      # nodriver's fingerprint on the current CF tier.
+      - key: DRIVER
+        value: undetected-chromedriver
