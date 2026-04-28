@@ -184,4 +184,24 @@ services:
       # Byparr egresses through the container IP unless PROXY_SERVER /
       # PROXY_USERNAME / PROXY_PASSWORD are set. Per-request proxy field
       # in the request body (FlareSolverr-style) is ignored by Byparr.
-      # Leaving unset for the initial direct-IP test.
+      #
+      # MUST be set: Render datacenter IPs are CF-hardblocked by HLTV
+      # for /stats — we get the "Attention Required! | Cloudflare" page
+      # instead of the solvable "Just a moment..." JS challenge.
+      #
+      # Set these in the Render dashboard (sync:false) to a single
+      # Webshare residential IP from the FLARESOLVERR_PROXY_URL pool.
+      # Format:
+      #   PROXY_SERVER=http://HOST:PORT     (e.g. http://136.143.251.24:7223)
+      #   PROXY_USERNAME=<webshare user>
+      #   PROXY_PASSWORD=<webshare pass>
+      #
+      # cf-session-cache caching benefits from this single IP being
+      # ALSO pinned for cycletls's huddle-data process — solve once on
+      # IP X, replay 50× on IP X via cycletls.
+      - key: PROXY_SERVER
+        sync: false
+      - key: PROXY_USERNAME
+        sync: false
+      - key: PROXY_PASSWORD
+        sync: false
