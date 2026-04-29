@@ -186,7 +186,11 @@ services:
     region: oregon
     plan: standard
     repo: https://github.com/huddle-bet/huddle-live
-    buildCommand: npm install
+    # Explicitly run `playwright install` after npm install. The package's
+    # postinstall hook normally handles this, but if it ever silently
+    # fails the headless transport crashes on launch with "Executable
+    # doesn't exist" — observed 2026-04-29 16:52 UTC. Belt-and-suspenders.
+    buildCommand: npm install && npx playwright install chromium --only-shell
     startCommand: node --import tsx src/cli.ts watch --all
     healthCheckPath: /health
     envVars:
