@@ -42,6 +42,17 @@ envVarGroups:
       # a random value at process start for sticky-session proxies.
       - key: FLARESOLVERR_PROXY_URL
         sync: false
+      # HLTV scorebot transport selector — consumed only by huddle-live's
+      # HltvAdapter at fixture spawn time:
+      #   - 'polling' (or unset): cycletls Engine.IO long-poll. Lightweight
+      #     but tops out at ~75-85% live coverage because Cloudflare
+      #     silent-blocks ~25% of long-poll sessions post-handshake.
+      #   - 'headless':           Playwright Chromium holds a real browser
+      #     session per match. ~95-98% coverage but ~100-150MB RAM per
+      #     concurrent match. Requires huddle-live on standard plan or
+      #     larger so 5-10 concurrent matches fit. See huddle-live below.
+      - key: HLTV_TRANSPORT
+        sync: false
 
 services:
   # ── huddle-api (Web Service) ──────────────────────────────
@@ -162,11 +173,18 @@ services:
   # /fanout. Realtime broadcast was the #1 Supabase message-cost driver;
   # this replaces it with a direct service-to-service WS. Auth via
   # HUDDLE_INTERNAL_SECRET header — not meant for browser clients.
+  #
+  # Plan: standard (1 CPU / 2 GB) — required by the headless Chromium
+  # scorebot transport. With per-context memory tuned to ~100-130MB
+  # (resource blocking + --max-old-space-size=192) the worker fits 5-7
+  # concurrent CS2 matches plus the base node process under 2GB. Polling
+  # transport alone runs comfortably on starter; standard is sized for
+  # HLTV_TRANSPORT=headless. Drop back to starter if reverting.
   - type: web
     name: huddle-live
     runtime: node
     region: oregon
-    plan: starter
+    plan: standard
     repo: https://github.com/huddle-bet/huddle-live
     buildCommand: npm install
     startCommand: node --import tsx src/cli.ts watch --all
@@ -176,6 +194,11 @@ services:
         value: production
       - key: PORT
         value: "8081"
+      # Memory canary cap for the headless transport's per-minute
+      # `[headless-scorebot] mem rss=...` log. Keep aligned with the
+      # service plan's actual RAM ceiling.
+      - key: PLAN_RAM_MB
+        value: "2048"
       # huddle-live no longer hits FlareSolverr — the polling scorebot
       # and matches-harvester both go via cycletls + residential proxy.
       # FLARESOLVERR_URL is inherited from the shared group but unused.
