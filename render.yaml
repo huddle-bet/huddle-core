@@ -203,13 +203,11 @@ services:
       # service plan's actual RAM ceiling.
       - key: PLAN_RAM_MB
         value: "2048"
-      # Make Playwright install browsers into node_modules instead of
-      # ~/.cache/ms-playwright/. Render's build cache persists the
-      # project dir (so node_modules ships with the build artifact)
-      # but NOT the home cache. With the default path, browsers
-      # downloaded during postinstall vanish at runtime.
-      - key: PLAYWRIGHT_BROWSERS_PATH
-        value: "0"
+      # Note: PLAYWRIGHT_BROWSERS_PATH=0 is defaulted in code (see
+      # headless-scorebot-client.ts top-of-file). Render's build artifact
+      # preserves node_modules but not ~/.cache, so browsers must live
+      # inside the project directory to survive build → runtime. Set this
+      # env here only to override (e.g. external browser cache mount).
       # huddle-live no longer hits FlareSolverr — the polling scorebot
       # and matches-harvester both go via cycletls + residential proxy.
       # FLARESOLVERR_URL is inherited from the shared group but unused.
