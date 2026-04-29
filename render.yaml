@@ -80,6 +80,13 @@ services:
       - fromGroup: huddle-shared
 
   # ── huddle-data (Background Worker — Docker) ─────────────
+  # Schedule + live-poll path only. Reconciler walks (blast/breakingpoint
+  # tournament walks, vlr per-page scrapes, OpenDota fallback buffers, Go
+  # replay parser invocations) live in huddle-reconciler below. They were
+  # sharing one ~512MB container budget and OOM'ing every ~5 min, killing
+  # in-flight walks before they could finish — split into two starter
+  # workers ($14/mo total, vs $25/mo to upgrade one to standard) so each
+  # gets its own RSS budget.
   - type: worker
     name: huddle-data
     runtime: docker
@@ -87,6 +94,7 @@ services:
     plan: starter
     repo: https://github.com/huddle-bet/huddle-data
     dockerfilePath: ./Dockerfile
+    dockerCommand: node --max-old-space-size=512 --import tsx src/cli.ts worker --mode=schedule
     envVars:
       - key: NODE_ENV
         value: production
@@ -97,6 +105,36 @@ services:
       # lifecycle and maxTimeout in seconds. byparr-client.ts handles
       # the protocol differences. Remove this env to revert to the
       # original FlareSolverr code path.
+      - key: BYPARR_MODE
+        value: "true"
+      - fromGroup: huddle-shared
+
+  # ── huddle-reconciler (Background Worker — Docker) ───────
+  # Post-game reconcile path: 7 unfilled sweeps (blast, breakingpoint,
+  # lolesports, vlr, hltv, valve-dota, r6) + the Reconciler retry loop
+  # with all 9 adapter registrations. Same repo + Dockerfile as
+  # huddle-data; only the start command differs (--mode=reconciler).
+  # Communicates with huddle-data exclusively via Supabase (events,
+  # game_summaries, player_game_stats, reconcile_dead_letters) — no IPC.
+  #
+  # Memory profile dominated by cheerio DOM trees from blast.tv +
+  # breakingpoint.gg + vlr.gg per-page scrapes during walks, plus the
+  # OpenDota /matches/{id} response buffers when Valve GetMatchDetails
+  # is 5xx-down. Sized at starter (512MB RSS); --max-old-space-size=512
+  # pins V8's heap cap to the container limit.
+  - type: worker
+    name: huddle-reconciler
+    runtime: docker
+    region: oregon
+    plan: starter
+    repo: https://github.com/huddle-bet/huddle-data
+    dockerfilePath: ./Dockerfile
+    dockerCommand: node --max-old-space-size=512 --import tsx src/cli.ts worker --mode=reconciler
+    envVars:
+      - key: NODE_ENV
+        value: production
+      # See huddle-data above — same Byparr-via-flaresolverr-port story.
+      # huddle-reconciler hits HLTV's /stats path during cs2 walks.
       - key: BYPARR_MODE
         value: "true"
       - fromGroup: huddle-shared
