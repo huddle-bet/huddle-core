@@ -7,19 +7,19 @@ export type Sport = TraditionalSport | EsportGame;
  * live provider; when Sportradar ships, the traditional sports flip from
  * 'espn' to 'sportradar' here and huddle-live follows the config.
  *
- * `siege.gg`, `breakingpoint`, `blast` are HTML-scraped sources. Unlike
- * the push-based providers they can't stream — huddle-live polls match
- * detail pages during the live window and emits diffs. They live here
- * because they are the authoritative live source for their sports; there's
- * no richer feed to fall back to for R6/COD/RL.
+ * `breakingpoint`, `blast` are HTML-scraped sources. Unlike the push-based
+ * providers they can't stream — huddle-live polls match detail pages during
+ * the live window and emits diffs. They live here because they are the
+ * authoritative live source for their sports; there's no richer feed to
+ * fall back to for COD/RL.
  */
-export type LiveProvider = 'espn' | 'sportradar' | 'genius' | 'valve' | 'lolesports' | 'hltv' | 'vlr.gg' | 'siege.gg' | 'breakingpoint' | 'blast';
+export type LiveProvider = 'espn' | 'sportradar' | 'genius' | 'valve' | 'lolesports' | 'hltv' | 'vlr.gg' | 'breakingpoint' | 'blast';
 /**
  * Vendors that publish schedule (upcoming fixtures). Multiple providers
  * can contribute schedule rows for the same sport — canonical_event_id
  * bridges them in the `events` table.
  */
-export type ScheduleProvider = LiveProvider | 'bo3gg' | 'dltv';
+export type ScheduleProvider = LiveProvider | 'bo3gg' | 'dltv' | 'r6.ubisoft.com';
 /**
  * Provider this service will use for live data once all gates (key,
  * entitlement, flag) are satisfied. `liveProvider` in SPORTS is the

@@ -2,18 +2,36 @@ import type { LiveStateRow, LiveFeedRow, ReducerResult, EsportsLiveEvent } from 
 
 // --- Dota2 Game State Shape ---
 
+interface Dota2StructureCount { destroyed: number; remaining: number; }
+interface Dota2Structures {
+  towers: Dota2StructureCount;
+  barracks: Dota2StructureCount;
+  shrines: Dota2StructureCount;
+  ancientDestroyed: boolean;
+}
+
 interface Dota2Team {
   id: string;
   name: string;
   side: string;
   totalKills: number;
   totalGold: number;
+  structures: Dota2Structures;
 }
+
+const EMPTY_STRUCTURES: Dota2Structures = {
+  towers: { destroyed: 0, remaining: 0 },
+  barracks: { destroyed: 0, remaining: 0 },
+  shrines: { destroyed: 0, remaining: 0 },
+  ancientDestroyed: false,
+};
 
 interface Dota2Player {
   id: string;
   name: string;
   teamId: string;
+  accountId: number | null;
+  teamSlot: number | null;
   heroId: number | null;
   heroName: string;
   kills: number;
@@ -32,6 +50,11 @@ interface Dota2Player {
 export interface Dota2GameState {
   mapNumber: number | null;
   gameTime: number;
+  /** Day/night clock from Valve's match.time_of_day — float in [0..1].
+   *  Null until the first full_state arrives. */
+  timeOfDay: number | null;
+  /** Night Stalker's ult forces night regardless of the natural cycle. */
+  isNightStalkerNight: boolean;
   phase: string;
   teams: Record<string, Dota2Team>;
   players: Record<string, Dota2Player>;
@@ -47,6 +70,11 @@ export interface Dota2GameState {
   /** Last known roshan_respawn_time (seconds). Going from 0/null → positive
    *  means Roshan was just killed. */
   _prevRoshanRespawn: number;
+  /** Total Roshan kills this map. Per-team attribution is not in Valve's
+   *  realtime feed (PandaScore exposes `roshan_kills` per side via heuristic
+   *  inference); we surface the total only and let consumers correlate to
+   *  aegis pickup via _aegisHolder if they need attribution. */
+  roshanKills: number;
   /** First blood happens exactly once per map — latched so the 2nd+
    *  full_state snapshots don't re-emit. */
   _firstBloodEmitted: boolean;
@@ -64,6 +92,8 @@ export function createDota2State(): Dota2GameState {
   return {
     mapNumber: null,
     gameTime: 0,
+    timeOfDay: null,
+    isNightStalkerNight: false,
     phase: 'warmup',
     teams: {},
     players: {},
@@ -73,6 +103,7 @@ export function createDota2State(): Dota2GameState {
     _prevPlayerKills: {},
     _prevBuildings: {},
     _prevRoshanRespawn: 0,
+    roshanKills: 0,
     _firstBloodEmitted: false,
     _prevPlayerNetWorth: {},
     _aegisHolder: null,
@@ -92,18 +123,30 @@ function fmtTime(secs: number | null | undefined): string {
 function applyDota2FullState(state: Dota2GameState, payload: any): void {
   state.gameTime = payload.gameTime || state.gameTime;
   state.mapNumber = payload.mapNumber || state.mapNumber;
+  if (payload.timeOfDay != null) state.timeOfDay = payload.timeOfDay;
+  if (payload.isNightStalkerNight != null) {
+    state.isNightStalkerNight = !!payload.isNightStalkerNight;
+  }
 
   for (const sideKey of ['radiant', 'dire'] as const) {
     const team = payload[sideKey];
     if (!team) continue;
     const teamId = String(team.id);
     if (!state.teams[teamId]) {
-      state.teams[teamId] = { id: teamId, name: '', side: sideKey, totalKills: 0, totalGold: 0 };
+      state.teams[teamId] = {
+        id: teamId,
+        name: '',
+        side: sideKey,
+        totalKills: 0,
+        totalGold: 0,
+        structures: { ...EMPTY_STRUCTURES },
+      };
     }
     Object.assign(state.teams[teamId], {
       name: team.name,
       totalKills: team.totalKills,
       totalGold: team.totalGold,
+      structures: team.structures ?? state.teams[teamId].structures,
     });
 
     for (const p of team.players || []) {
@@ -125,6 +168,8 @@ function applyDota2FullState(state: Dota2GameState, payload: any): void {
         id,
         name: p.name,
         teamId,
+        accountId: p.accountId ?? null,
+        teamSlot: p.teamSlot ?? null,
         heroId: p.heroId,
         heroName,
         kills: p.kills,
@@ -302,6 +347,7 @@ function detectRoshanSlain(
   const prev = state._prevRoshanRespawn;
   state._prevRoshanRespawn = current;
   if (prev <= 0 && current > 0) {
+    state.roshanKills += 1;
     // Aegis window is the first ~5 minutes after a kill; used as a rough
     // signal in the subtext for ops folks scanning the feed.
     return [{
@@ -497,6 +543,7 @@ export function reduceDota2(
     // destroyed" on the new map's fresh snapshot.
     gameState._prevBuildings = {};
     gameState._prevRoshanRespawn = 0;
+    gameState.roshanKills = 0;
     gameState._firstBloodEmitted = false;
     gameState._prevPlayerNetWorth = {};
     gameState._aegisHolder = null;
@@ -508,6 +555,7 @@ export function reduceDota2(
         side: p.side,
         totalKills: 0,
         totalGold: 0,
+        structures: { ...EMPTY_STRUCTURES },
       };
     }
 
@@ -523,6 +571,11 @@ export function reduceDota2(
 
   if (name === 'map_ended') {
     gameState.phase = 'map_end';
+    feed.push(makeFeedRow(feedBase, msg.sortIndex, 'map_ended', 'high', {
+      text: `Game ${payload.mapNumber} has ended`,
+      mapNumber: payload.mapNumber,
+      gameTime: payload.gameTime,
+    }));
   }
 
   if (name === 'map_winner') {

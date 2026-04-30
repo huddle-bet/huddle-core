@@ -29,6 +29,29 @@ interface LoLPlayer {
   currentHealth: number;
   maxHealth: number;
   items: any[];
+  wardsPlaced: number;
+  wardsDestroyed: number;
+  championDamageShare: number;
+  killParticipation: number;
+  combatStats: LoLCombatStats | null;
+  perkMetadata: LoLPerkMetadata | null;
+}
+
+interface LoLPerkMetadata {
+  styleId: number;
+  subStyleId: number;
+  perks: number[];
+}
+
+interface LoLCombatStats {
+  attackDamage: number;
+  abilityPower: number;
+  criticalChance: number;
+  attackSpeed: number;
+  lifeSteal: number;
+  armor: number;
+  magicResistance: number;
+  tenacity: number;
 }
 
 export interface LoLGameState {
@@ -101,6 +124,12 @@ function ensureLoLPlayer(state: LoLGameState, playerPayload: any): void {
       currentHealth: 0,
       maxHealth: 0,
       items: [],
+      wardsPlaced: 0,
+      wardsDestroyed: 0,
+      championDamageShare: 0,
+      killParticipation: 0,
+      combatStats: null,
+      perkMetadata: null,
     };
   }
 }
@@ -157,6 +186,12 @@ function applyLoLFullState(state: LoLGameState, payload: any): void {
         currentHealth: p.currentHealth ?? p.hp ?? p.health ?? 0,
         maxHealth: p.maxHealth ?? p.maxHp ?? 0,
         items: p.items || [],
+        wardsPlaced: p.wardsPlaced ?? 0,
+        wardsDestroyed: p.wardsDestroyed ?? 0,
+        championDamageShare: p.championDamageShare ?? 0,
+        killParticipation: p.killParticipation ?? 0,
+        combatStats: p.combatStats ?? null,
+        perkMetadata: p.perkMetadata ?? null,
       };
     }
   }
@@ -289,6 +324,11 @@ export function reduceLoL(
 
   if (name === 'map_ended') {
     gameState.phase = 'map_end';
+    feed.push(makeFeedRow(feedBase, msg.sortIndex, 'map_ended', 'high', {
+      text: `Game ${payload.mapNumber} has ended`,
+      mapNumber: payload.mapNumber,
+      gameTime: payload.gameTime,
+    }));
   }
 
   if (name === 'map_winner') {

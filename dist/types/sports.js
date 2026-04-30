@@ -14,7 +14,12 @@ export const SPORTS = {
     dota2: { slug: 'dota2', name: 'Dota 2', type: 'esport', shortName: 'Dota2', liveProvider: 'valve', scheduleProviders: ['bo3gg'] },
     cod: { slug: 'cod', name: 'Call of Duty', type: 'esport', shortName: 'CoD', liveProvider: 'breakingpoint', scheduleProviders: ['breakingpoint'] },
     rl: { slug: 'rl', name: 'Rocket League', type: 'esport', shortName: 'RL', liveProvider: 'blast', scheduleProviders: ['blast'] },
-    r6: { slug: 'r6', name: 'Rainbow Six Siege', type: 'esport', shortName: 'R6', liveProvider: 'siege.gg', scheduleProviders: ['siege.gg'] },
+    // r6: live polling retired (siege.gg moved behind a Cloudflare managed
+    // challenge; r6 is a low-volume sportsbook market). Schedule + post-game
+    // per-round telemetry come from Ubisoft's official esports portal via
+    // R6UbisoftBackfiller. Events transition scheduled → final without
+    // intermediate live_state writes; huddle-live has no R6 live adapter.
+    r6: { slug: 'r6', name: 'Rainbow Six Siege', type: 'esport', shortName: 'R6', scheduleProviders: ['r6.ubisoft.com'] },
 };
 export function isSport(s) {
     return s in SPORTS;

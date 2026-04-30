@@ -37,6 +37,12 @@ export interface LiveStateRow {
     sort_index: number;
 }
 export interface LiveFeedRow {
+    /**
+     * `live_feed.id` — bigint PK assigned by Postgres on insert. Optional
+     * because the row type is also used by writers before the insert
+     * round-trips. Readers will always see a value once the row is in DB.
+     */
+    id?: number;
     event_id: string;
     source_id: string;
     league_id: string;
@@ -90,7 +96,23 @@ export declare function isFeedType(s: string): s is FeedType;
  * hybrid WS relay sends on `state_update` / `snapshot` messages.
  */
 export interface FeedEntry {
+    /**
+     * React key. Stays as `String(sort_index)` for back-compat with existing
+     * cache/key behavior — sort_index is unique per (event, source) which is
+     * what live consumers see in practice.
+     */
     id: string;
+    /**
+     * `live_feed.id` — globally unique bigint, used as the anchor target for
+     * comments + reactions. Null only when the row was synthesized by code
+     * paths that don't round-trip through the DB (rare).
+     *
+     * Distinct from `id` because we don't want to flip the React key field
+     * out from under existing renderers, and because anchored writes need a
+     * truly globally unique identifier even if two events share a sort
+     * index across different sources.
+     */
+    playId: string | null;
     ts: number;
     type: string;
     text: string;

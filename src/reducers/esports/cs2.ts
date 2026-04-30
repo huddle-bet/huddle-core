@@ -24,6 +24,10 @@ interface CS2Player {
   helmet: boolean;
   defuseKit: boolean;
   primaryWeapon: string | null;
+  /** Valorant agent display name. Stays null for CS2; populated for
+   *  Valorant via the cs2_v2_full_state payload (reduceVal delegates
+   *  to reduceCS2). */
+  agent: string | null;
   dpr: number;
   clutchWins: number;
   bombPlanted: number;
@@ -114,6 +118,7 @@ export function makeEmptyCS2Player(p: any): CS2Player {
     helmet: false,
     defuseKit: false,
     primaryWeapon: null,
+    agent: null,
     dpr: 0,
     clutchWins: 0,
     bombPlanted: 0,
@@ -172,6 +177,7 @@ function applyCS2FullState(state: CS2GameState, payload: any): void {
         helmet: p.helmet ?? cur.helmet,
         defuseKit: p.defuseKit ?? cur.defuseKit,
         primaryWeapon: p.primaryWeapon ?? cur.primaryWeapon,
+        agent: p.agent ?? cur.agent,
         dpr: p.dpr ?? cur.dpr,
         clutchWins: p.clutchWins ?? cur.clutchWins,
         bombPlanted: p.bombPlanted ?? cur.bombPlanted,

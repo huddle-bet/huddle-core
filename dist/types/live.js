@@ -57,6 +57,7 @@ export function isFeedType(s) {
 export function adaptFeedRow(row) {
     return {
         id: String(row.sort_index),
+        playId: row.id != null ? String(row.id) : null,
         ts: row.occurred_at ? new Date(row.occurred_at).getTime() : Date.now(),
         type: row.feed_type,
         text: row.data?.text || '',
