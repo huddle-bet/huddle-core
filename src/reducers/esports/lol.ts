@@ -319,6 +319,10 @@ export function reduceLoL(
       text: `Game ${payload.mapNumber} has started`,
       subtext: sides,
       mapNumber: payload.mapNumber,
+      // Per-side lineup roster (champion + role) that the lolesports
+      // translator threads through on map_started. Lets consumers pin
+      // lineups before the first full_state frame arrives.
+      participants: payload.participants,
     }));
   }
 
@@ -347,6 +351,11 @@ export function reduceLoL(
       text: `${winnerName} wins Game ${payload.mapNumber}`,
       subtext: `Series: ${scores}`,
       winnerId: String(payload.winnerId),
+      // teamName comes from the translator (resolved via teamLabel) — pass
+      // it through on the feed row so machine consumers don't have to do
+      // their own teams[] lookup. Falls back to the reducer-derived
+      // winnerName when the translator didn't send one.
+      teamName: payload.teamName ?? winnerName,
       actors: [winnerName],
     }));
   }
