@@ -226,17 +226,18 @@ services:
   #
   # runtime=image + image.url pulls the official upstream build.
   #
-  # Starter plan (0.5 CPU / 512 MB) — downgraded from standard now that
-  # FlareSolverr is no longer in the live ingest hot path. Backfill runs
-  # /stats sequentially (~once per map, paced 2s+) so at most one
-  # Chromium tab is open at a time. The historical OOM that forced
-  # standard plan was driven by concurrent live-ingest tabs — that load
-  # is gone. Saves ~$18/mo vs standard.
+  # Standard plan (2 CPU / 4 GB) — Byparr's Camoufox/Firefox stack is
+  # heavier per-solve than the prior FlareSolverr/Chromium image. On
+  # starter (0.5 CPU / 512 MB) Playwright Page.goto routinely times out
+  # at 47-60s on HLTV's CF challenge during normal reconcile load,
+  # silently degrading ~24-28% of CS2 maps to sentinel-only (no per-
+  # player stats). Headroom is the fix; see render-data + reconciler
+  # observability for the silent-failure rate that drove this bump.
   - type: pserv
     name: flaresolverr
     runtime: docker
     region: oregon
-    plan: starter
+    plan: standard
     # Migrated 2026-04-28 from upstream FlareSolverr (vanilla Chromium,
     # effectively unmaintained) to Byparr — FlareSolverr-API-compatible
     # REST backed by Camoufox (patched Firefox with C-level anti-
