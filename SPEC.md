@@ -23,14 +23,19 @@ Zero runtime dependencies. Published to GitHub Packages as `@huddle-bet/core`. P
 
 ## Canonical event ID
 
-Every table that describes a game carries a `canonical_event_id`. It's the SHA-based join key across huddle-data, huddle-live, huddle-odds, and huddle-engine.
+Every table that describes a game carries a `canonical_event_id`. It's the deterministic join key across huddle-data, huddle-live, huddle-odds, and huddle-engine.
 
-```
-canonicalEventId('nba', '2026-03-17', 'nba:team:heat', 'nba:team:hornets')
-→ 'nba:2026-03-17:heat-hornets'
+```ts
+canonicalEventId({
+  sport: 'nba',
+  startTime: '2026-03-17T23:00:00Z',
+  teamIdA: 'nba:team:hornets',
+  teamIdB: 'nba:team:heat',
+})
+→ 'nba:event:2026-03-17:nba:team:heat:nba:team:hornets'
 ```
 
-Same inputs always produce the same ID, regardless of source. That's the entire join contract.
+Format: `${sport}:event:${YYYY-MM-DD}:${teamA}:${teamB}` where the team IDs are sorted alphabetically and the date is normalized to US Eastern time. Same inputs always produce the same ID, regardless of source — sort order means caller order doesn't matter, Eastern normalization means UTC-day boundaries don't fragment the same fixture across sources. That's the entire join contract.
 
 ## TeamRegistry
 
