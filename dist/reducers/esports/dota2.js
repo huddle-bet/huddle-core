@@ -1,7 +1,15 @@
+const EMPTY_STRUCTURES = {
+    towers: { destroyed: 0, remaining: 0 },
+    barracks: { destroyed: 0, remaining: 0 },
+    shrines: { destroyed: 0, remaining: 0 },
+    ancientDestroyed: false,
+};
 export function createDota2State() {
     return {
         mapNumber: null,
         gameTime: 0,
+        timeOfDay: null,
+        isNightStalkerNight: false,
         phase: 'warmup',
         teams: {},
         players: {},
@@ -11,6 +19,7 @@ export function createDota2State() {
         _prevPlayerKills: {},
         _prevBuildings: {},
         _prevRoshanRespawn: 0,
+        roshanKills: 0,
         _firstBloodEmitted: false,
         _prevPlayerNetWorth: {},
         _aegisHolder: null,
@@ -28,18 +37,31 @@ function fmtTime(secs) {
 function applyDota2FullState(state, payload) {
     state.gameTime = payload.gameTime || state.gameTime;
     state.mapNumber = payload.mapNumber || state.mapNumber;
+    if (payload.timeOfDay != null)
+        state.timeOfDay = payload.timeOfDay;
+    if (payload.isNightStalkerNight != null) {
+        state.isNightStalkerNight = !!payload.isNightStalkerNight;
+    }
     for (const sideKey of ['radiant', 'dire']) {
         const team = payload[sideKey];
         if (!team)
             continue;
         const teamId = String(team.id);
         if (!state.teams[teamId]) {
-            state.teams[teamId] = { id: teamId, name: '', side: sideKey, totalKills: 0, totalGold: 0 };
+            state.teams[teamId] = {
+                id: teamId,
+                name: '',
+                side: sideKey,
+                totalKills: 0,
+                totalGold: 0,
+                structures: { ...EMPTY_STRUCTURES },
+            };
         }
         Object.assign(state.teams[teamId], {
             name: team.name,
             totalKills: team.totalKills,
             totalGold: team.totalGold,
+            structures: team.structures ?? state.teams[teamId].structures,
         });
         for (const p of team.players || []) {
             const id = String(p.id);
@@ -59,6 +81,8 @@ function applyDota2FullState(state, payload) {
                 id,
                 name: p.name,
                 teamId,
+                accountId: p.accountId ?? null,
+                teamSlot: p.teamSlot ?? null,
                 heroId: p.heroId,
                 heroName,
                 kills: p.kills,
@@ -213,6 +237,7 @@ function detectRoshanSlain(state, payload, feedBase, sortIndex) {
     const prev = state._prevRoshanRespawn;
     state._prevRoshanRespawn = current;
     if (prev <= 0 && current > 0) {
+        state.roshanKills += 1;
         // Aegis window is the first ~5 minutes after a kill; used as a rough
         // signal in the subtext for ops folks scanning the feed.
         return [{
@@ -370,6 +395,7 @@ export function reduceDota2(prev, msg) {
         // destroyed" on the new map's fresh snapshot.
         gameState._prevBuildings = {};
         gameState._prevRoshanRespawn = 0;
+        gameState.roshanKills = 0;
         gameState._firstBloodEmitted = false;
         gameState._prevPlayerNetWorth = {};
         gameState._aegisHolder = null;
@@ -380,6 +406,7 @@ export function reduceDota2(prev, msg) {
                 side: p.side,
                 totalKills: 0,
                 totalGold: 0,
+                structures: { ...EMPTY_STRUCTURES },
             };
         }
         const sides = (payload.participants || [])
@@ -393,6 +420,11 @@ export function reduceDota2(prev, msg) {
     }
     if (name === 'map_ended') {
         gameState.phase = 'map_end';
+        feed.push(makeFeedRow(feedBase, msg.sortIndex, 'map_ended', 'high', {
+            text: `Game ${payload.mapNumber} has ended`,
+            mapNumber: payload.mapNumber,
+            gameTime: payload.gameTime,
+        }));
     }
     if (name === 'map_winner') {
         gameState.maps.push({

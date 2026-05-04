@@ -44,6 +44,12 @@ function ensureLoLPlayer(state, playerPayload) {
             currentHealth: 0,
             maxHealth: 0,
             items: [],
+            wardsPlaced: 0,
+            wardsDestroyed: 0,
+            championDamageShare: 0,
+            killParticipation: 0,
+            combatStats: null,
+            perkMetadata: null,
         };
     }
 }
@@ -98,6 +104,12 @@ function applyLoLFullState(state, payload) {
                 currentHealth: p.currentHealth ?? p.hp ?? p.health ?? 0,
                 maxHealth: p.maxHealth ?? p.maxHp ?? 0,
                 items: p.items || [],
+                wardsPlaced: p.wardsPlaced ?? 0,
+                wardsDestroyed: p.wardsDestroyed ?? 0,
+                championDamageShare: p.championDamageShare ?? 0,
+                killParticipation: p.killParticipation ?? 0,
+                combatStats: p.combatStats ?? null,
+                perkMetadata: p.perkMetadata ?? null,
             };
         }
     }
@@ -199,10 +211,19 @@ export function reduceLoL(prev, msg) {
             text: `Game ${payload.mapNumber} has started`,
             subtext: sides,
             mapNumber: payload.mapNumber,
+            // Per-side lineup roster (champion + role) that the lolesports
+            // translator threads through on map_started. Lets consumers pin
+            // lineups before the first full_state frame arrives.
+            participants: payload.participants,
         }));
     }
     if (name === 'map_ended') {
         gameState.phase = 'map_end';
+        feed.push(makeFeedRow(feedBase, msg.sortIndex, 'map_ended', 'high', {
+            text: `Game ${payload.mapNumber} has ended`,
+            mapNumber: payload.mapNumber,
+            gameTime: payload.gameTime,
+        }));
     }
     if (name === 'map_winner') {
         gameState.maps.push({
@@ -220,6 +241,11 @@ export function reduceLoL(prev, msg) {
             text: `${winnerName} wins Game ${payload.mapNumber}`,
             subtext: `Series: ${scores}`,
             winnerId: String(payload.winnerId),
+            // teamName comes from the translator (resolved via teamLabel) — pass
+            // it through on the feed row so machine consumers don't have to do
+            // their own teams[] lookup. Falls back to the reducer-derived
+            // winnerName when the translator didn't send one.
+            teamName: payload.teamName ?? winnerName,
             actors: [winnerName],
         }));
     }

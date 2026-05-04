@@ -21,6 +21,10 @@ interface CS2Player {
     helmet: boolean;
     defuseKit: boolean;
     primaryWeapon: string | null;
+    /** Valorant agent display name. Stays null for CS2; populated for
+     *  Valorant via the cs2_v2_full_state payload (reduceVal delegates
+     *  to reduceCS2). */
+    agent: string | null;
     dpr: number;
     clutchWins: number;
     bombPlanted: number;

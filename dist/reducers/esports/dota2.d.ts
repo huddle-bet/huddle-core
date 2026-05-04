@@ -1,15 +1,28 @@
 import type { LiveStateRow, ReducerResult, EsportsLiveEvent } from '../types.js';
+interface Dota2StructureCount {
+    destroyed: number;
+    remaining: number;
+}
+interface Dota2Structures {
+    towers: Dota2StructureCount;
+    barracks: Dota2StructureCount;
+    shrines: Dota2StructureCount;
+    ancientDestroyed: boolean;
+}
 interface Dota2Team {
     id: string;
     name: string;
     side: string;
     totalKills: number;
     totalGold: number;
+    structures: Dota2Structures;
 }
 interface Dota2Player {
     id: string;
     name: string;
     teamId: string;
+    accountId: number | null;
+    teamSlot: number | null;
     heroId: number | null;
     heroName: string;
     kills: number;
@@ -27,6 +40,11 @@ interface Dota2Player {
 export interface Dota2GameState {
     mapNumber: number | null;
     gameTime: number;
+    /** Day/night clock from Valve's match.time_of_day — float in [0..1].
+     *  Null until the first full_state arrives. */
+    timeOfDay: number | null;
+    /** Night Stalker's ult forces night regardless of the natural cycle. */
+    isNightStalkerNight: boolean;
     phase: string;
     teams: Record<string, Dota2Team>;
     players: Record<string, Dota2Player>;
@@ -45,6 +63,11 @@ export interface Dota2GameState {
     /** Last known roshan_respawn_time (seconds). Going from 0/null → positive
      *  means Roshan was just killed. */
     _prevRoshanRespawn: number;
+    /** Total Roshan kills this map. Per-team attribution is not in Valve's
+     *  realtime feed (PandaScore exposes `roshan_kills` per side via heuristic
+     *  inference); we surface the total only and let consumers correlate to
+     *  aegis pickup via _aegisHolder if they need attribution. */
+    roshanKills: number;
     /** First blood happens exactly once per map — latched so the 2nd+
      *  full_state snapshots don't re-emit. */
     _firstBloodEmitted: boolean;

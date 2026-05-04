@@ -145,19 +145,37 @@ export class TeamRegistry {
   }
 
   private deterministicId(sport: Sport, normalized: string): string {
-    // Simple hash → UUID v5-like format
-    let hash = 0;
-    const input = `${sport}:${normalized}`;
-    for (let i = 0; i < input.length; i++) {
-      hash = ((hash << 5) - hash + input.charCodeAt(i)) | 0;
-    }
-    const hex = Math.abs(hash).toString(16).padStart(8, '0');
-    return `${hex.slice(0, 8)}-auto-${hex.slice(0, 4)}-${hex.slice(4, 8)}-${sport.slice(0, 4)}-${normalized.slice(0, 12).replace(/\s/g, '')}`;
+    return deterministicTeamIdFromNormalized(sport, normalized);
   }
 
   private key(sport: Sport, name: string): string {
     return `${sport}:${normalizeTeamName(name)}`;
   }
+}
+
+/**
+ * Public, side-effect-free version of the auto-register hash.
+ *
+ * Used by services that auto-create esports teams directly against
+ * Supabase (huddle-data writer) rather than going through TeamRegistry.
+ * Returns the same id TeamRegistry.autoRegister would produce, so both
+ * paths converge on a single canonical row.
+ *
+ * @param sport - league key (nba, lol, dota2, ...)
+ * @param name  - raw team name from the source; will be normalized
+ */
+export function deterministicTeamId(sport: Sport, name: string): string {
+  return deterministicTeamIdFromNormalized(sport, normalizeTeamName(name));
+}
+
+function deterministicTeamIdFromNormalized(sport: Sport, normalized: string): string {
+  let hash = 0;
+  const input = `${sport}:${normalized}`;
+  for (let i = 0; i < input.length; i++) {
+    hash = ((hash << 5) - hash + input.charCodeAt(i)) | 0;
+  }
+  const hex = Math.abs(hash).toString(16).padStart(8, '0');
+  return `${hex.slice(0, 8)}-auto-${hex.slice(0, 4)}-${hex.slice(4, 8)}-${sport.slice(0, 4)}-${normalized.slice(0, 12).replace(/\s/g, '')}`;
 }
 
 // ─── Helper to build Team objects ───────────────────────────────────────────

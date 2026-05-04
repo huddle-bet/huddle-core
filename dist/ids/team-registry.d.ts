@@ -39,6 +39,18 @@ export declare class TeamRegistry {
     private deterministicId;
     private key;
 }
+/**
+ * Public, side-effect-free version of the auto-register hash.
+ *
+ * Used by services that auto-create esports teams directly against
+ * Supabase (huddle-data writer) rather than going through TeamRegistry.
+ * Returns the same id TeamRegistry.autoRegister would produce, so both
+ * paths converge on a single canonical row.
+ *
+ * @param sport - league key (nba, lol, dota2, ...)
+ * @param name  - raw team name from the source; will be normalized
+ */
+export declare function deterministicTeamId(sport: Sport, name: string): string;
 export interface TeamDef {
     id: string;
     name: string;

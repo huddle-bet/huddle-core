@@ -25,6 +25,27 @@ interface LoLPlayer {
     currentHealth: number;
     maxHealth: number;
     items: any[];
+    wardsPlaced: number;
+    wardsDestroyed: number;
+    championDamageShare: number;
+    killParticipation: number;
+    combatStats: LoLCombatStats | null;
+    perkMetadata: LoLPerkMetadata | null;
+}
+interface LoLPerkMetadata {
+    styleId: number;
+    subStyleId: number;
+    perks: number[];
+}
+interface LoLCombatStats {
+    attackDamage: number;
+    abilityPower: number;
+    criticalChance: number;
+    attackSpeed: number;
+    lifeSteal: number;
+    armor: number;
+    magicResistance: number;
+    tenacity: number;
 }
 export interface LoLGameState {
     mapNumber: number | null;
