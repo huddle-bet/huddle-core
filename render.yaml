@@ -95,9 +95,10 @@ services:
   # tournament walks, vlr per-page scrapes, OpenDota fallback buffers, Go
   # replay parser invocations) live in huddle-reconciler below. They were
   # sharing one ~512MB container budget and OOM'ing every ~5 min, killing
-  # in-flight walks before they could finish — split into two starter
-  # workers ($14/mo total, vs $25/mo to upgrade one to standard) so each
-  # gets its own RSS budget.
+  # in-flight walks before they could finish — split into two workers so
+  # each gets its own RSS budget. (Reconciler subsequently bumped to
+  # standard once the CS2 demo pipeline pushed peak RSS past 512 MB; this
+  # service stays on starter — schedule polling only, peaks ~200 MB.)
   - type: worker
     name: huddle-data
     runtime: docker
@@ -128,19 +129,28 @@ services:
   # Communicates with huddle-data exclusively via Supabase (events,
   # game_summaries, player_game_stats, reconcile_dead_letters) — no IPC.
   #
-  # Memory profile dominated by cheerio DOM trees from blast.tv +
-  # breakingpoint.gg + vlr.gg per-page scrapes during walks, plus the
-  # OpenDota /matches/{id} response buffers when Valve GetMatchDetails
-  # is 5xx-down. Sized at starter (512MB RSS); --max-old-space-size=512
-  # pins V8's heap cap to the container limit.
+  # Plan: standard (1 CPU / 2 GB) — upgraded from starter (512 MB) when
+  # the CS2 demo pipeline (May 2026) added per-match RAR downloads. A
+  # single demo pulls 140–300 MB into a Node Buffer, then spawns the Go
+  # parser (huddle-cs2-parser) which holds the .dem entity tracker in
+  # RSS at a documented 250–500 MB peak across BO3/BO5 maps. Combined
+  # peak observed in prod (2026-05-06 19:25 UTC, demoId=107779, 142 MB
+  # RAR): RSS 372 MB → OOM-killed by Render's 512 MB container limit
+  # before the parser could emit NDJSON. 2 GB / 1 CPU gives the demo
+  # pipeline ~3× headroom and absorbs the prior memory dominators
+  # (cheerio DOM trees from blast.tv / breakingpoint.gg / vlr.gg
+  # per-page scrapes, OpenDota fallback buffers when Valve
+  # GetMatchDetails is 5xx-down). --max-old-space-size=1536 leaves
+  # ~512 MB for the Go parser + Python (curl_cffi) child processes
+  # during demo fetch.
   - type: worker
     name: huddle-reconciler
     runtime: docker
     region: oregon
-    plan: starter
+    plan: standard
     repo: https://github.com/huddle-bet/huddle-data
     dockerfilePath: ./Dockerfile
-    dockerCommand: node --max-old-space-size=512 --import tsx src/cli.ts worker --mode=reconciler
+    dockerCommand: node --max-old-space-size=1536 --import tsx src/cli.ts worker --mode=reconciler
     envVars:
       - key: NODE_ENV
         value: production
