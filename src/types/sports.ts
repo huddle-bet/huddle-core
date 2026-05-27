@@ -2,14 +2,16 @@
 
 export type SportType = 'traditional' | 'esport';
 
-export type TraditionalSport = 'nba' | 'nfl' | 'nhl' | 'mlb' | 'ncaam' | 'ncaaf';
+export type TraditionalSport = 'nba' | 'nfl' | 'nhl' | 'mlb';
 export type EsportGame = 'lol' | 'cs2' | 'valorant' | 'dota2' | 'cod' | 'rl' | 'r6';
 export type Sport = TraditionalSport | EsportGame;
 
 /**
  * Vendors that push/pull live data. Each sport has at most one primary
- * live provider; when Sportradar ships, the traditional sports flip from
- * 'espn' to 'sportradar' here and huddle-live follows the config.
+ * live provider. The four traditional sports (NBA/NFL/NHL/MLB) run on
+ * Sportradar — NFL via the Pulse push feed — with ESPN retained as
+ * fallback. (Genius was retired in 2026-05; NFL moved to Sportradar and
+ * the NCAA leagues it covered were descoped.)
  *
  * `breakingpoint`, `blast` are HTML-scraped sources. Unlike the push-based
  * providers they can't stream — huddle-live polls match detail pages during
@@ -20,7 +22,6 @@ export type Sport = TraditionalSport | EsportGame;
 export type LiveProvider =
   | 'espn'
   | 'sportradar'
-  | 'genius'
   | 'valve'
   | 'lolesports'
   | 'hltv'
@@ -60,12 +61,10 @@ export interface SportConfig {
 
 export const SPORTS: Record<Sport, SportConfig> = {
   // Traditional
-  nba:   { slug: 'nba',   name: 'NBA',                        type: 'traditional', shortName: 'NBA',   liveProvider: 'espn', scheduleProviders: ['espn'] },
-  nfl:   { slug: 'nfl',   name: 'NFL',                        type: 'traditional', shortName: 'NFL',   liveProvider: 'espn', scheduleProviders: ['espn'] },
-  nhl:   { slug: 'nhl',   name: 'NHL',                        type: 'traditional', shortName: 'NHL',   liveProvider: 'espn', scheduleProviders: ['espn'] },
-  mlb:   { slug: 'mlb',   name: 'MLB',                        type: 'traditional', shortName: 'MLB',   liveProvider: 'espn', scheduleProviders: ['espn'] },
-  ncaam: { slug: 'ncaam', name: "NCAA Men's Basketball",       type: 'traditional', shortName: 'NCAAM', liveProvider: 'espn', scheduleProviders: ['espn'] },
-  ncaaf: { slug: 'ncaaf', name: 'NCAA Football',               type: 'traditional', shortName: 'NCAAF', liveProvider: 'espn', scheduleProviders: ['espn'] },
+  nba:   { slug: 'nba',   name: 'NBA',                        type: 'traditional', shortName: 'NBA',   liveProvider: 'sportradar', scheduleProviders: ['sportradar', 'espn'] },
+  nfl:   { slug: 'nfl',   name: 'NFL',                        type: 'traditional', shortName: 'NFL',   liveProvider: 'sportradar', scheduleProviders: ['sportradar', 'espn'] },
+  nhl:   { slug: 'nhl',   name: 'NHL',                        type: 'traditional', shortName: 'NHL',   liveProvider: 'sportradar', scheduleProviders: ['sportradar', 'espn'] },
+  mlb:   { slug: 'mlb',   name: 'MLB',                        type: 'traditional', shortName: 'MLB',   liveProvider: 'sportradar', scheduleProviders: ['sportradar', 'espn'] },
   // Esports
   lol:      { slug: 'lol',      name: 'League of Legends', type: 'esport', shortName: 'LoL',   liveProvider: 'lolesports', scheduleProviders: ['bo3gg', 'lolesports'] },
   cs2:      { slug: 'cs2',      name: 'Counter-Strike 2',  type: 'esport', shortName: 'CS2',   liveProvider: 'hltv', scheduleProviders: ['hltv'] },

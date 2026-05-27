@@ -1,11 +1,13 @@
 export type SportType = 'traditional' | 'esport';
-export type TraditionalSport = 'nba' | 'nfl' | 'nhl' | 'mlb' | 'ncaam' | 'ncaaf';
+export type TraditionalSport = 'nba' | 'nfl' | 'nhl' | 'mlb';
 export type EsportGame = 'lol' | 'cs2' | 'valorant' | 'dota2' | 'cod' | 'rl' | 'r6';
 export type Sport = TraditionalSport | EsportGame;
 /**
  * Vendors that push/pull live data. Each sport has at most one primary
- * live provider; when Sportradar ships, the traditional sports flip from
- * 'espn' to 'sportradar' here and huddle-live follows the config.
+ * live provider. The four traditional sports (NBA/NFL/NHL/MLB) run on
+ * Sportradar — NFL via the Pulse push feed — with ESPN retained as
+ * fallback. (Genius was retired in 2026-05; NFL moved to Sportradar and
+ * the NCAA leagues it covered were descoped.)
  *
  * `breakingpoint`, `blast` are HTML-scraped sources. Unlike the push-based
  * providers they can't stream — huddle-live polls match detail pages during
@@ -13,7 +15,7 @@ export type Sport = TraditionalSport | EsportGame;
  * authoritative live source for their sports; there's no richer feed to
  * fall back to for COD/RL.
  */
-export type LiveProvider = 'espn' | 'sportradar' | 'genius' | 'valve' | 'lolesports' | 'hltv' | 'vlr.gg' | 'breakingpoint' | 'blast';
+export type LiveProvider = 'espn' | 'sportradar' | 'valve' | 'lolesports' | 'hltv' | 'vlr.gg' | 'breakingpoint' | 'blast';
 /**
  * Vendors that publish schedule (upcoming fixtures). Multiple providers
  * can contribute schedule rows for the same sport — canonical_event_id

@@ -1,12 +1,10 @@
 // ─── Sport & League Classification ──────────────────────────────────────────
 export const SPORTS = {
     // Traditional
-    nba: { slug: 'nba', name: 'NBA', type: 'traditional', shortName: 'NBA', liveProvider: 'espn', scheduleProviders: ['espn'] },
-    nfl: { slug: 'nfl', name: 'NFL', type: 'traditional', shortName: 'NFL', liveProvider: 'espn', scheduleProviders: ['espn'] },
-    nhl: { slug: 'nhl', name: 'NHL', type: 'traditional', shortName: 'NHL', liveProvider: 'espn', scheduleProviders: ['espn'] },
-    mlb: { slug: 'mlb', name: 'MLB', type: 'traditional', shortName: 'MLB', liveProvider: 'espn', scheduleProviders: ['espn'] },
-    ncaam: { slug: 'ncaam', name: "NCAA Men's Basketball", type: 'traditional', shortName: 'NCAAM', liveProvider: 'espn', scheduleProviders: ['espn'] },
-    ncaaf: { slug: 'ncaaf', name: 'NCAA Football', type: 'traditional', shortName: 'NCAAF', liveProvider: 'espn', scheduleProviders: ['espn'] },
+    nba: { slug: 'nba', name: 'NBA', type: 'traditional', shortName: 'NBA', liveProvider: 'sportradar', scheduleProviders: ['sportradar', 'espn'] },
+    nfl: { slug: 'nfl', name: 'NFL', type: 'traditional', shortName: 'NFL', liveProvider: 'sportradar', scheduleProviders: ['sportradar', 'espn'] },
+    nhl: { slug: 'nhl', name: 'NHL', type: 'traditional', shortName: 'NHL', liveProvider: 'sportradar', scheduleProviders: ['sportradar', 'espn'] },
+    mlb: { slug: 'mlb', name: 'MLB', type: 'traditional', shortName: 'MLB', liveProvider: 'sportradar', scheduleProviders: ['sportradar', 'espn'] },
     // Esports
     lol: { slug: 'lol', name: 'League of Legends', type: 'esport', shortName: 'LoL', liveProvider: 'lolesports', scheduleProviders: ['bo3gg', 'lolesports'] },
     cs2: { slug: 'cs2', name: 'Counter-Strike 2', type: 'esport', shortName: 'CS2', liveProvider: 'hltv', scheduleProviders: ['hltv'] },

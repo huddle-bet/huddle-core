@@ -31,9 +31,9 @@ export interface EsportsLiveEvent {
 }
 /**
  * Normalized live event vocabulary for traditional sports. Providers
- * (ESPN today, Sportradar next, Genius after) translate their native
- * payloads into these events; sport reducers (nba, nfl, nhl, mlb, ncaam,
- * ncaaf) consume them with zero provider knowledge.
+ * (Sportradar primary, ESPN fallback) translate their native payloads
+ * into these events; sport reducers (nba, nfl, nhl, mlb) consume them
+ * with zero provider knowledge.
  *
  * Every variant carries the owning event's ID, a monotonic sortIndex
  * (Date.now() for poll-based providers), and the upstream source so the

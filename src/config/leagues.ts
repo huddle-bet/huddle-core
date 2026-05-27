@@ -7,7 +7,6 @@ import type { Sport } from '../types/sports.js';
 export type Provider =
   | 'espn'
   | 'sportradar'
-  | 'genius'
   | 'valve'
   | 'lolesports'
   | 'hltv'
@@ -32,18 +31,17 @@ export interface LeagueProviderConfig {
  *   - huddle-live watcher: which adapter to spin up per event
  *   - huddle-api data-players: which source_id joins player_game_stats
  *
- * Paid APIs (sportradar, genius) fall back to public sources (espn) while
+ * The paid API (sportradar) falls back to the public source (espn) while
  * keys are being provisioned. cod/rl run their sole scraper as primary —
  * no fallback path exists today.
  */
 export const LEAGUE_PROVIDERS: Record<Sport, LeagueProviderConfig> = {
   nba:   { primary: 'sportradar', fallback: 'espn' },
-  // NFL: Genius holds exclusive official-data rights through 2027.
-  nfl:   { primary: 'genius',     fallback: 'espn' },
+  // NFL live runs on Sportradar's Pulse push feed (nfl/official/.../pulse).
+  // Provider discussions superseded the prior Genius exclusivity.
+  nfl:   { primary: 'sportradar', fallback: 'espn' },
   nhl:   { primary: 'sportradar', fallback: 'espn' },
   mlb:   { primary: 'sportradar', fallback: 'espn' },
-  ncaam: { primary: 'genius',     fallback: 'espn' },
-  ncaaf: { primary: 'genius',     fallback: 'espn' },
   // CS2 runs on HLTV scorebot via FlareSolverr. No fallback — if HLTV is
   // unavailable, CS2 live goes dark and the schedule/reconcile paths
   // surface the outage. See SPEC-ESPORTS-CS2.md.
@@ -73,7 +71,6 @@ export const LEAGUE_PROVIDERS: Record<Sport, LeagueProviderConfig> = {
  *
  * Env conventions match existing huddle-live/huddle-data code:
  *   sportradar → SPORTRADAR_API_KEY + per-league SPORTRADAR_<LEAGUE>=1
- *   genius     → GENIUS_API_KEY/CLIENT_ID/CLIENT_SECRET + GENIUS_<LEAGUE>=1
  */
 export function isProviderEnabled(
   provider: Provider,
@@ -92,9 +89,6 @@ export function isProviderEnabled(
     case 'sportradar':
       return Boolean(env.SPORTRADAR_API_KEY)
         && env[`SPORTRADAR_${sport.toUpperCase()}`] === '1';
-    case 'genius':
-      return Boolean(env.GENIUS_API_KEY && env.GENIUS_CLIENT_ID && env.GENIUS_CLIENT_SECRET)
-        && env[`GENIUS_${sport.toUpperCase()}`] === '1';
     case 'valve':
       // Free Steam WebAPI key(s) — supports single STEAM_API_KEY or
       // comma-separated STEAM_API_KEYS for the multi-key round-robin pool.
