@@ -1,7 +1,7 @@
 /**
- * Shared live-ingest row shapes. Written by huddle-live's GSK reducers
+ * Shared live-ingest row shapes. Written by huddle-live's sport reducers
  * into the `live_state` and `live_feed` tables, read by huddle-api's
- * WebSocket relay, and broadcast to hitrate-next via Supabase Realtime.
+ * WebSocket relay and pushed to clients over the internal fanout.
  *
  * Kept as the single source of truth so the three services can't drift.
  */
