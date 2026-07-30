@@ -175,9 +175,9 @@ This is roughly **2× the ~$71/mo** the previous version of this table showed. T
 ## Notes
 
 - **huddle-core** is an npm package consumed by the workers, not a deployed service — but it *is* the repo Render builds the blueprint and the Byparr image from.
-- **Rotating any of these?** See `RUNBOOK-key-rotation.md` — the service-role
-  key has no zero-downtime path, and `HUDDLE_INTERNAL_SECRET` must change on
-  huddle-api and huddle-live together.
+- **Rotating any of these?** The runbook lives in `huddle-api` (private) —
+  this repo is public, and the procedure carries operational detail that
+  shouldn't be.
 - **huddle-data's repo backs two services.** Editing its Dockerfile or entrypoint affects `huddle-data` and `huddle-reconciler` both.
 - All Render services run in **Oregon** to minimize cross-service latency. Pair with a us-west Supabase project (the prod project is in `us-west-2`).
 - Render auto-deploys on push to the connected branch (usually `main`). Suspend a service from the dashboard if you need to pause without deleting.
