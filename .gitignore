@@ -1,1 +1,7 @@
 node_modules/
+
+# Secrets — huddle-core has no .env today, but nothing should stop one
+# appearing and being committed by accident.
+.env
+.env.*
+!.env.example
