@@ -53,3 +53,12 @@ jobs:
       # green check that silently proves nothing.
       - name: Test
         run: npm test --if-present
+
+      # Gate on critical only. High-severity findings still print, but several
+      # are unfixable without a breaking major on puppeteer-extra-plugin-stealth,
+      # which sits in the launch-critical CS2 scraping path — see ENG-255. A gate
+      # that is always red teaches everyone to ignore it.
+      - name: Dependency audit
+        run: |
+          npm audit || true
+          npm audit --audit-level=critical
