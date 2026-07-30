@@ -1,7 +1,7 @@
 import { reduceCS2, createCS2State } from './cs2.js';
 export { createCS2State as createValState };
 /**
- * Valorant uses the same GSK event structure as CS2.
+ * Valorant uses the same normalized event structure as CS2.
  * Spike maps to bomb, Attacker/Defender map to T/CT.
  * We delegate entirely to reduceCS2.
  */

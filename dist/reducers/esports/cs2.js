@@ -386,7 +386,7 @@ export function reduceCS2(prev, msg) {
             whileBlinded: payload.whileBlinded,
             // Map-coordinate enrichment — HLTV ships killer/victim (x,y) on
             // every log Kill entry and the translator computes euclidean
-            // distance when the server didn't. GSK never had these.
+            // distance when the server didn't. Not in the base envelope.
             killerPosition: payload.killerPosition ?? null,
             victimPosition: payload.victimPosition ?? null,
             distance: payload.distance ?? null,
