@@ -152,9 +152,9 @@ function applyDota2FullState(state: Dota2GameState, payload: any): void {
     for (const p of team.players || []) {
       const id = String(p.id);
       // Translator (valve-dota) resolves names from dotaconstants and passes
-      // them through; for GSK-shape payloads without pre-resolved names, fall
+      // them through; for raw provider payloads without pre-resolved names, fall
       // back to state maps (historically unpopulated — left in place for
-      // future GSK-side seeding), then to a placeholder.
+      // future provider-side seeding), then to a placeholder.
       const heroName: string = p.heroName
         ?? state.heroMap[String(p.heroId)]
         ?? (p.heroId ? `Hero ${p.heroId}` : 'Unknown');

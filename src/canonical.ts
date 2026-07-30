@@ -3,10 +3,10 @@ import type { CanonicalEventKey } from './types/events.js';
 /**
  * Compute the `canonical_event_id` that joins rows across data sources.
  *
- * Every source (GSK, bo3.gg, dltv, bp.gg, ESPN) writes its own row into
+ * Every source (HLTV, bo3.gg, dltv, bp.gg, ESPN) writes its own row into
  * the `events` table keyed by `(id, source_id)`. Rows that describe the
  * same real-world match share this canonical ID, which is the join key
- * for stitching live state (GSK-sourced) to final stats (scraper-sourced).
+ * for stitching live state (provider-sourced) to final stats (scraper-sourced).
  *
  * Format: `${sport}:event:${YYYY-MM-DD}:${teamA}:${teamB}` where the two
  * team IDs are sorted alphabetically and the date is normalized to US

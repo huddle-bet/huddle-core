@@ -14,8 +14,8 @@ interface CS2Player {
   flashAssists: number;
   suicides: number;
   entryKills: number;
-  entryDeaths: number;      // new — HLTV advancedStats (GSK never shipped)
-  multiKillRounds: number;  // new — HLTV advancedStats (GSK never shipped)
+  entryDeaths: number;      // new — HLTV advancedStats (beyond the base envelope)
+  multiKillRounds: number;  // new — HLTV advancedStats (beyond the base envelope)
   adr: number;
   kast: number;
   hp: number;
@@ -493,7 +493,7 @@ export function reduceCS2(
         whileBlinded: payload.whileBlinded,
         // Map-coordinate enrichment — HLTV ships killer/victim (x,y) on
         // every log Kill entry and the translator computes euclidean
-        // distance when the server didn't. GSK never had these.
+        // distance when the server didn't. Not in the base envelope.
         killerPosition: payload.killerPosition ?? null,
         victimPosition: payload.victimPosition ?? null,
         distance: payload.distance ?? null,
