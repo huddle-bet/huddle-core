@@ -95,7 +95,7 @@ These are not in the shared group because not every service needs them. Add them
 | `LOLESPORTS_API_KEY` | huddle-live, huddle-data | LoL Esports feed |
 | `OPENDOTA_API_KEY` | huddle-data | Dota stats backfill |
 
-`GENIUS_API_KEY` / `GENIUS_CLIENT_ID` / `GENIUS_CLIENT_SECRET` were removed — the Genius Sports feed was retired in 2026-05 and no code references `GENIUS_*`. Delete them from Render if they're still set.
+`GENIUS_API_KEY` / `GENIUS_CLIENT_ID` / `GENIUS_CLIENT_SECRET` were removed — the Genius Sports feed was retired in 2026-05 and no code references `GENIUS_*`. `GSK_TOKEN` was removed in ENG-233 along with the last GameScorekeeper caller. Delete all four from Render if still set.
 
 ### Service-scoped non-secrets (set in `render.yaml`)
 
