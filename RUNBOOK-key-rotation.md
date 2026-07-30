@@ -53,9 +53,12 @@ Supabase dashboard → Settings → Database → reset password. This changes th
 pooler connection string. Update `huddle-shared`, then verify huddle-data and
 huddle-engine reconnect.
 
-⚠️ **Rotate this now if you haven't since 2026-07-30.** A production pooler DSN
+⚠️ **A rotation is outstanding — tracked as ENG-379.** A production pooler DSN
 including its password was committed to `huddle-data/.claude/settings.local.json`
-and is in that repo's pushed history. See ENG-250.
+and remains in that repo's pushed history (found under ENG-250). Assessed as
+non-urgent: the repo is private and the file is now untracked and gitignored, so
+it cannot recur. It is a pre-launch gate rather than an incident — the app should
+not go public with a database credential sitting in reachable history.
 
 ## After any rotation
 
