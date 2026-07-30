@@ -1,0 +1,41 @@
+name: CI
+
+on:
+  pull_request:
+  push:
+    branches: [master]
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      # The @huddle-bet/core dep is pinned as git+ssh in package-lock.json and
+      # Actions has no SSH key. huddle-core is a public repo, so rewriting to
+      # HTTPS resolves it without needing a deploy key.
+      - name: Use HTTPS for GitHub git deps
+        run: |
+          git config --global url."https://github.com/".insteadOf "git@github.com:"
+          git config --global url."https://github.com/".insteadOf "ssh://git@github.com/"
+
+      - name: Install
+        run: npm ci
+
+      - name: Type check
+        run: npm run check-types
+
+      # --if-present: huddle-data and huddle-odds have no suite yet. This is a
+      # placeholder that starts working the moment one is added, rather than a
+      # green check that silently proves nothing.
+      - name: Test
+        run: npm test --if-present
