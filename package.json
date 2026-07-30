@@ -25,7 +25,8 @@
   "scripts": {
     "build": "tsc",
     "test": "vitest run",
-    "test:watch": "vitest"
+    "test:watch": "vitest",
+    "check-types": "tsc --noEmit"
   },
   "devDependencies": {
     "@types/node": "^22.0.0",
