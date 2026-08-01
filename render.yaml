@@ -75,8 +75,17 @@ services:
   # ── huddle-odds (Background Worker — Docker) ─────────────
   # Consolidated from huddle-odds-sports + huddle-odds-esports — per-league
   # per-book pollers run independently on their own timers (see poller.ts),
-  # so one process handles all 10 leagues without contention. Saves a full
+  # so one process handles every league without contention. Saves a full
   # standard-plan worker instance.
+  #
+  # `poll` takes no league list. It derives one from huddle-core's
+  # LEAGUE_REGISTRY (ENG-432), so the deployed set and the supported set cannot
+  # drift apart. They had: this command listed `ncaam`, which was removed from
+  # huddle-odds on 2026-05-27 ("descope NCAA"), and `resolveLeague` throws on it
+  # inside Poller's constructor. The running container survived because it was
+  # started before that removal — but it could never restart, and when it stopped
+  # on 2026-07-31 it stayed stopped. The list also omitted `nfl`, which has a
+  # complete book-id map (ENG-423), and included `rl`, which no book carries.
   - type: worker
     name: huddle-odds
     runtime: docker
@@ -84,7 +93,7 @@ services:
     plan: standard
     repo: https://github.com/huddle-bet/huddle-odds
     dockerfilePath: ./Dockerfile
-    dockerCommand: node --max-old-space-size=3800 --import tsx src/cli.ts poll nba nhl mlb ncaam cs2 lol valorant dota2 cod rl
+    dockerCommand: node --max-old-space-size=3800 --import tsx src/cli.ts poll
     envVars:
       - key: NODE_ENV
         value: production
