@@ -17,9 +17,23 @@ export interface LeagueProviderConfig {
  *   - huddle-live watcher: which adapter to spin up per event
  *   - huddle-api data-players: which source_id joins player_game_stats
  *
- * The paid API (sportradar) falls back to the public source (espn) while
- * keys are being provisioned. cod/rl run their sole scraper as primary —
- * no fallback path exists today.
+ * **Sportradar is the sole provider for NBA, NFL, NHL and MLB.** ESPN was their
+ * fallback and was removed 2026-08-01: it is a scraped public source and Sportradar
+ * is the paid, contractual one, so falling back silently swapped an official feed for
+ * an unofficial one at the moment reliability mattered most.
+ *
+ * It was also not carrying its weight. Measured before removal: ESPN contributed 0 of
+ * 39,489 NFL player rows, and Sportradar held more rows and equal recency in all four.
+ * On schedule coverage, once the season endpoints were wired (huddle-data#12):
+ *
+ *   nfl   sportradar 322 upcoming   espn 7
+ *   nhl   sportradar 1409           espn 0
+ *   mlb   sportradar 778            espn 53
+ *   nba   both 0 — the 2026-27 schedule is unpublished until mid-August
+ *
+ * `fallback: null` means an outage now takes the sport dark rather than quietly
+ * degrading to a scraper. That is the intended trade: a visible outage is preferable
+ * to unofficial data presented as official.
  */
 export declare const LEAGUE_PROVIDERS: Record<Sport, LeagueProviderConfig>;
 /**
