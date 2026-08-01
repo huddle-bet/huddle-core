@@ -1,28 +1,35 @@
 import { SPORTS, isSport } from '../types/sports.js';
 export const CAPABILITIES = ['schedule', 'live', 'odds', 'projections'];
 export const LEAGUE_REGISTRY = {
+    // ── The major four. Sportradar is the sole provider for all of them. ──
+    // Launch emphasis is NFL and NBA; MLB and NHL ship too if they hold up.
+    nfl: { active: true, capabilities: ['schedule', 'live', 'odds', 'projections'] },
     nba: { active: true, capabilities: ['schedule', 'live', 'odds', 'projections'] },
-    nfl: {
-        active: true,
-        capabilities: ['schedule', 'live', 'odds', 'projections'],
-        note: 'Absent from the deployed odds poll list despite a complete book-id map (ENG-423). Out of season as of 2026-08-01, which is why zero rows was not distinguishable from the defect.',
-    },
-    nhl: { active: true, capabilities: ['schedule', 'live', 'odds', 'projections'] },
     mlb: { active: true, capabilities: ['schedule', 'live', 'odds', 'projections'] },
+    nhl: { active: true, capabilities: ['schedule', 'live', 'odds', 'projections'] },
+    // ── The one esport. ──
     cs2: { active: true, capabilities: ['schedule', 'live', 'odds', 'projections'] },
-    lol: { active: true, capabilities: ['schedule', 'live', 'odds', 'projections'] },
-    valorant: { active: true, capabilities: ['schedule', 'live', 'odds', 'projections'] },
-    cod: { active: true, capabilities: ['schedule', 'live', 'odds', 'projections'] },
-    dota2: { active: true, capabilities: ['schedule', 'live', 'odds', 'projections'] },
+    // ── Descoped 2026-08-01. ──
+    // Scope is the major four plus CS2. These six stay in the type union because
+    // years of their rows are in the database and code still reads them — dropping
+    // the slug would orphan that data rather than retire the sport. `active: false`
+    // is the switch that matters: nothing polls, projects or asserts against them.
+    //
+    // Each ran on a single scraped source with no fallback, which is most of why
+    // the set is being cut. Reactivating one means committing to that scraper again.
+    lol: { active: false, capabilities: [], note: 'Descoped 2026-08-01. Ran on lolesports, sole source.' },
+    valorant: { active: false, capabilities: [], note: 'Descoped 2026-08-01. Ran on vlr.gg, sole source.' },
+    dota2: { active: false, capabilities: [], note: 'Descoped 2026-08-01. Ran on Valve, sole source.' },
+    cod: { active: false, capabilities: [], note: 'Descoped 2026-08-01. Ran on BreakingPoint, sole source.' },
     rl: {
-        active: true,
-        capabilities: ['schedule', 'live'],
-        note: 'No book carries Rocket League — every book id in huddle-odds is empty. It was in the deployed poll list anyway, where it could only ever be a no-op.',
+        active: false,
+        capabilities: [],
+        note: 'Descoped 2026-08-01. Ran on BLAST, sole source, and no book ever carried it — every book id in huddle-odds is empty, so its odds polling could only ever be a no-op.',
     },
     r6: {
         active: false,
-        capabilities: ['schedule'],
-        note: 'Schedule only, and dormant. PrizePicks and Underdog have offered R6 props during Six Invitational and Major windows, but the ids are gated behind live offerings and are empty outside them.',
+        capabilities: [],
+        note: 'Descoped 2026-08-01; already dormant before that. PrizePicks and Underdog offer R6 props only during Six Invitational and Major windows.',
     },
 };
 /** Active leagues expected to produce for a capability. This is what services derive from. */

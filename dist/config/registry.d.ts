@@ -2,6 +2,22 @@ import { type Sport } from '../types/sports.js';
 /**
  * Which leagues are live, and what each one is expected to produce.
  *
+ * ## Scope, set 2026-08-01
+ *
+ * The major four — NFL, NBA, MLB, NHL — plus CS2. Launch emphasis on NFL and NBA;
+ * MLB and NHL ship too if they hold up. Every other esport is descoped.
+ *
+ * The traditional four are to run on **Sportradar alone**. ESPN is being removed as their
+ * fallback: it contributed 0 of 39,489 NFL player rows, and Sportradar already carries
+ * more rows and equal recency in all four.
+ *
+ * That removal is **not done yet**, and doing it today would take NFL dark. Measured
+ * 2026-08-01: Sportradar has 0 upcoming NFL fixtures while ESPN has 7, because
+ * `NFL_SEASON_TYPES` in huddle-data omits `'PRE'` and it is preseason. Sportradar's
+ * schedule lookahead is also 3 days against ESPN's 14, which is why ESPN shows more
+ * upcoming MLB fixtures. Both are config, not capability — the API returns 49 preseason
+ * games on request. Fix those, verify Sportradar produces, then drop ESPN.
+ *
  * ## Why this exists
  *
  * Before this, "which leagues does a service handle" was a hardcoded string in a deploy
