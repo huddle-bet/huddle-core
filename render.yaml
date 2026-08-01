@@ -9,14 +9,6 @@ envVarGroups:
         sync: false
       - key: SUPABASE_ANON_KEY
         sync: false
-      - key: WHOP_API_KEY
-        sync: false
-      - key: WHOP_CLIENT_ID
-        sync: false
-      - key: WHOP_CLIENT_SECRET
-        sync: false
-      - key: WHOP_REDIRECT_URI
-        sync: false
       - key: HUDDLE_INTERNAL_SECRET
         sync: false
       - key: HUDDLE_LIVE_URL
