@@ -55,6 +55,10 @@ export type SportsLiveEvent =
   | (SportsEventBase & {
       kind: 'status';
       status: 'scheduled' | 'live' | 'final';
+      // Push providers ship a score alongside the status transition; the
+      // pull-based diff path leaves these undefined (ENG-291).
+      homeScore?: number;
+      awayScore?: number;
     })
   | (SportsEventBase & {
       kind: 'score';
@@ -80,4 +84,16 @@ export type SportsLiveEvent =
   | (SportsEventBase & {
       kind: 'play';
       data: Record<string, unknown>;
+    })
+  | (SportsEventBase & {
+      // Whole-object state snapshot from push providers: team scoreboard
+      // (name/score/logo anchor) and the current game situation (baseball
+      // count/bases/outs, batter/pitcher). Merged into live_state.state so
+      // consumers get teams + situation the pull-based diff can't provide.
+      kind: 'sync';
+      teams?: Record<string, unknown>;
+      situation?: Record<string, unknown>;
+      periodLabel?: string;
+      homeScore?: number;
+      awayScore?: number;
     });

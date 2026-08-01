@@ -1,0 +1,1 @@
+{"version":3,"file":"nfl.d.ts","sourceRoot":"","sources":["../../../src/reducers/sports/nfl.ts"],"names":[],"mappings":"AAAA,OAAO,KAAK,EAAE,YAAY,EAAE,aAAa,EAAE,eAAe,EAAE,MAAM,aAAa,CAAC;AAChF,OAAO,EAGL,KAAK,cAAc,EACpB,MAAM,aAAa,CAAC;AAErB,MAAM,MAAM,YAAY,GAAG,cAAc,CAAC;AAE1C,wBAAgB,cAAc,IAAI,YAAY,CAE7C;AAQD,wBAAgB,SAAS,CAAC,IAAI,EAAE,YAAY,EAAE,GAAG,EAAE,eAAe,GAAG,aAAa,CAEjF"}

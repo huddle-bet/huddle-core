@@ -49,6 +49,8 @@ interface SportsEventBase {
 export type SportsLiveEvent = (SportsEventBase & {
     kind: 'status';
     status: 'scheduled' | 'live' | 'final';
+    homeScore?: number;
+    awayScore?: number;
 }) | (SportsEventBase & {
     kind: 'score';
     homeScore: number;
@@ -69,5 +71,12 @@ export type SportsLiveEvent = (SportsEventBase & {
 }) | (SportsEventBase & {
     kind: 'play';
     data: Record<string, unknown>;
+}) | (SportsEventBase & {
+    kind: 'sync';
+    teams?: Record<string, unknown>;
+    situation?: Record<string, unknown>;
+    periodLabel?: string;
+    homeScore?: number;
+    awayScore?: number;
 });
 //# sourceMappingURL=types.d.ts.map
