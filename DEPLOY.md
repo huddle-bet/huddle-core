@@ -33,7 +33,7 @@ Huddle deploys from **two** Render blueprints:
 5. Fill in every value marked `sync: false` (Render will prompt — see env table below)
 6. Click **Apply**
 
-All services attach to the `huddle-shared` env var group, so shared values (Supabase, Whop, internal secret) are entered once and propagated.
+All services attach to the `huddle-shared` env var group, so shared values (Supabase, internal secret) are entered once and propagated.
 
 ## Services created by the blueprint
 
@@ -66,10 +66,9 @@ Set once on the group; every service inherits it. All marked `sync: false` in th
 | `SUPABASE_URL` | all | `https://<ref>.supabase.co` |
 | `SUPABASE_SERVICE_KEY` | all | Service-role JWT (`eyJhbGci…role":"service_role"…`). **Not** the `sb_publishable_…` key — that's the publishable key and will silently fail RLS-protected writes. |
 | `SUPABASE_ANON_KEY` | api | Anon JWT — used for client-scoped calls |
-| `WHOP_API_KEY` | api | Whop server API key |
-| `WHOP_CLIENT_ID` | api | OAuth client ID |
-| `WHOP_CLIENT_SECRET` | api | OAuth client secret |
-| `WHOP_REDIRECT_URI` | api | e.g. `https://huddle-api.onrender.com/auth/whop/callback` |
+| `STRIPE_SECRET_KEY` | api | Stripe secret key. **Absent = nothing can grant Pro**; all gated routes 403 |
+| `STRIPE_WEBHOOK_SECRET` | api | Signing secret for the endpoint targeting `/api/v1/webhooks/stripe` |
+| `STRIPE_PRICE_ID` | api | Price the Checkout session subscribes to |
 | `HUDDLE_INTERNAL_SECRET` | api, live | Shared secret for the huddle-api ↔ huddle-live fanout WS (any 256-bit hex string). **huddle-live will not start without it.** |
 | `HUDDLE_LIVE_URL` | api | Internal URL of huddle-live: `http://huddle-live:8081` (Render private DNS). Locally this must be `http://127.0.0.1:8085` — the Render hostname does not resolve off-platform. |
 | `FLARESOLVERR_PROXY_URL` | data, reconciler, live, flaresolverr | Comma-separated residential proxy pool. Cycletls pins one entry per process for HLTV cookie/IP affinity; the Byparr entrypoint parses the first entry. Contains credentials. |
@@ -83,8 +82,7 @@ These are not in the shared group because not every service needs them. Add them
 
 | Variable | Service | Notes |
 |---|---|---|
-| `WHOP_WEBHOOK_SECRET` | huddle-api | Whop webhook signing secret (rejects unsigned events) |
-| `APP_URL` | huddle-api | Public app URL for OAuth redirects, e.g. `https://app.huddle.bet` |
+| `APP_URL` | huddle-api | Public app URL, e.g. `https://app.huddle.bet` |
 | `SPORTRADAR_API_KEY` | huddle-data, huddle-live | NBA/NFL/NHL/MLB stats + live |
 | `SPORTRADAR_ACCESS_LEVEL` | huddle-data, huddle-live | `trial` or `production` — appears in the API path, so it is not cosmetic |
 | `SPORTRADAR_PUSH_KEY` | huddle-live | Push-feed key (separate from REST key on Sportradar's side) |

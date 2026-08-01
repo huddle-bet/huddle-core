@@ -9,15 +9,19 @@ envVarGroups:
         sync: false
       - key: SUPABASE_ANON_KEY
         sync: false
-      - key: WHOP_API_KEY
-        sync: false
-      - key: WHOP_CLIENT_ID
-        sync: false
-      - key: WHOP_CLIENT_SECRET
-        sync: false
-      - key: WHOP_REDIRECT_URI
-        sync: false
       - key: HUDDLE_INTERNAL_SECRET
+        sync: false
+      # Stripe — the only writer of user_entitlements.is_paid (ENG-444).
+      # Without STRIPE_SECRET_KEY nothing can grant Pro and every gated route
+      # (/picks, /middles, /slips, /trends) 403s for real users; huddle-api
+      # warns about exactly that at boot rather than serving it silently.
+      # STRIPE_WEBHOOK_SECRET is the signing secret for the endpoint pointed at
+      # /api/v1/webhooks/stripe — without it the webhook rejects everything.
+      - key: STRIPE_SECRET_KEY
+        sync: false
+      - key: STRIPE_WEBHOOK_SECRET
+        sync: false
+      - key: STRIPE_PRICE_ID
         sync: false
       - key: HUDDLE_LIVE_URL
         sync: false
