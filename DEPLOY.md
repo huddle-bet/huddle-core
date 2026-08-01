@@ -66,6 +66,9 @@ Set once on the group; every service inherits it. All marked `sync: false` in th
 | `SUPABASE_URL` | all | `https://<ref>.supabase.co` |
 | `SUPABASE_SERVICE_KEY` | all | Service-role JWT (`eyJhbGci…role":"service_role"…`). **Not** the `sb_publishable_…` key — that's the publishable key and will silently fail RLS-protected writes. |
 | `SUPABASE_ANON_KEY` | api | Anon JWT — used for client-scoped calls |
+| `STRIPE_SECRET_KEY` | api | Stripe secret key. **Absent = nothing can grant Pro**; all gated routes 403 |
+| `STRIPE_WEBHOOK_SECRET` | api | Signing secret for the endpoint targeting `/api/v1/webhooks/stripe` |
+| `STRIPE_PRICE_ID` | api | Price the Checkout session subscribes to |
 | `HUDDLE_INTERNAL_SECRET` | api, live | Shared secret for the huddle-api ↔ huddle-live fanout WS (any 256-bit hex string). **huddle-live will not start without it.** |
 | `HUDDLE_LIVE_URL` | api | Internal URL of huddle-live: `http://huddle-live:8081` (Render private DNS). Locally this must be `http://127.0.0.1:8085` — the Render hostname does not resolve off-platform. |
 | `FLARESOLVERR_PROXY_URL` | data, reconciler, live, flaresolverr | Comma-separated residential proxy pool. Cycletls pins one entry per process for HLTV cookie/IP affinity; the Byparr entrypoint parses the first entry. Contains credentials. |
