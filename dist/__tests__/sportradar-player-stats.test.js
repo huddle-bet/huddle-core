@@ -1,11 +1,7 @@
 import { describe, it, expect } from 'vitest';
 import { isSummaryStatsSport, mlbPlayerStats, nbaPlayerStats, nhlPlayerStats, sportradarPlayerStats, } from '../sportradar/player-stats.js';
-import { readFileSync } from 'node:fs';
-import { join } from 'node:path';
-// Read rather than `import ... with { type: 'json' }`: enabling resolveJsonModule would
-// change build output for a package four repos consume, and would compile 54KB of test
-// fixtures into `dist` for all of them.
-const golden = JSON.parse(readFileSync(join(import.meta.dirname, '../sportradar/__fixtures__/summary-player-stats.json'), 'utf8'));
+import { SUMMARY_PLAYER_STATS } from '../sportradar/__fixtures__/summary-player-stats.js';
+const golden = SUMMARY_PLAYER_STATS;
 describe.each(['nba', 'nhl', 'mlb'])('%s matches huddle-data byte for byte', (sport) => {
     const pairs = golden[sport];
     it('has fixtures to check', () => {
