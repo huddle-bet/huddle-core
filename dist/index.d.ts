@@ -7,6 +7,7 @@ export * from './canonical.js';
 export * from './drift.js';
 export * from './unknown-variant.js';
 export * from './config/leagues.js';
+export * from './config/registry.js';
 export * from './config/dota2-leagues.js';
 export * from './config/lolesports-api.js';
 export * from './reducers/index.js';
