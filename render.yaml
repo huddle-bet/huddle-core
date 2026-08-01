@@ -231,11 +231,31 @@ services:
     name: huddle-verify
     runtime: node
     region: oregon
-    plan: free
+    # starter, not free. Render has no free plan for cron jobs, and `plan: free` here made
+    # the whole blueprint invalid — `render blueprints validate` rejects it with
+    # "free not a valid plan for service type cron".
+    #
+    # That is why huddle-verify does not exist. It was not an un-synced blueprint waiting
+    # on someone to press a button; it could never have been created. Verified 2026-08-01
+    # against the Render API: 0 services of type=cron_job, 0 matching the name, while ten
+    # other services from this same file exist — an invalid entry blocks itself, not the
+    # file.
+    plan: starter
     repo: https://github.com/huddle-bet/huddle-engine
     schedule: "*/15 * * * *"
     buildCommand: npm install
-    startCommand: npm run check:freshness
+    # check:gated, not check:freshness — the gate is `freshness,coverage`.
+    #
+    # Freshness catches a plane being *gone*. Coverage catches it running and producing
+    # a fraction of its output, which is the failure mode that survives longest because
+    # nothing about it looks broken: CS2 round-stat coverage sat at 58.6% of finished
+    # series for a fortnight, flat, and was found by hand rather than by any check
+    # (ENG-490).
+    #
+    # Both are green today, so widening the gate does not make this cron red on its first
+    # run. That matters — a permanently red alert is one nobody reads, which is how the
+    # old 24h freshness ceiling slept through a 7.5h outage.
+    startCommand: npm run check:gated
     envVars:
       - key: NODE_ENV
         value: production
