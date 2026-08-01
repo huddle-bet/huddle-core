@@ -194,6 +194,39 @@ services:
         value: production
       - fromGroup: huddle-shared
 
+  # ── huddle-verify (Cron — output assertions) ─────────────
+  # Asserts that the system is producing data, on a schedule. Every significant
+  # defect this system has shipped reported success while producing nothing
+  # usable, so nothing that watches for errors catches them.
+  #
+  # Concretely: on 2026-07-31 huddle-odds and huddle-engine both stopped and the
+  # entire odds -> projections -> +EV path was dead for 7.5 hours. Nothing
+  # reported it; the API served stale prices with HTTP 200 the whole time. It was
+  # found by someone running a query by hand (ENG-462). At 15-minute cadence this
+  # job would have failed within the hour.
+  #
+  # A failing cron is the alert — Render notifies on non-zero exit, so this needs
+  # no new alerting stack. That is also why it runs `check:freshness` and not
+  # `check:output`: three content assertions fail today with issues open
+  # (ENG-460, ENG-420), and a job that is red from its first run is one nobody
+  # reads. `--gate=freshness` still prints those failures, it just does not alert
+  # on them. Widen the gate as they close.
+  #
+  # Free plan: one query every 15 minutes, no persistent process.
+  - type: cron
+    name: huddle-verify
+    runtime: node
+    region: oregon
+    plan: free
+    repo: https://github.com/huddle-bet/huddle-engine
+    schedule: "*/15 * * * *"
+    buildCommand: npm install
+    startCommand: npm run check:freshness
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - fromGroup: huddle-shared
+
   # ── huddle-live (Web Service — exposes fanout WS) ─────────
   # Flipped from worker → web so huddle-api can open an internal WS to
   # /fanout. Realtime broadcast was the #1 Supabase message-cost driver;
