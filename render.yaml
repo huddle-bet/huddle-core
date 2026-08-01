@@ -213,6 +213,20 @@ services:
   # on them. Widen the gate as they close.
   #
   # Free plan: one query every 15 minutes, no persistent process.
+  #
+  # Suspending ingestion on purpose (to control DB spend) makes this job red every
+  # 15 minutes, and an alert that fires on a normal operating mode is one people
+  # stop reading — the same way the old 24h ceiling survived. So declare the pause:
+  #
+  #     INGEST_PAUSED_UNTIL=2026-08-02T18:00:00Z
+  #
+  # It suppresses freshness:odds and freshness:projections until that moment, then
+  # asserts normally again. There is deliberately no indefinite form — a mute
+  # nobody clears is how the next outage gets missed. A lapsed window says so on
+  # every run, and a malformed value does not mute at all.
+  #
+  # Set it on this cron when suspending huddle-odds/huddle-engine; unset it, or
+  # simply let it lapse, when they come back.
   - type: cron
     name: huddle-verify
     runtime: node
@@ -226,6 +240,8 @@ services:
       - key: NODE_ENV
         value: production
       - fromGroup: huddle-shared
+      # - key: INGEST_PAUSED_UNTIL
+      #   value: 2026-08-02T18:00:00Z   # uncomment + set while ingestion is suspended
 
   # ── huddle-live (Web Service — exposes fanout WS) ─────────
   # Flipped from worker → web so huddle-api can open an internal WS to
