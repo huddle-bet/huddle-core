@@ -7,8 +7,7 @@ import {
   sportradarPlayerStats,
   type SummaryStatsSport,
 } from '../sportradar/player-stats.js';
-import { readFileSync } from 'node:fs';
-import { join } from 'node:path';
+import { SUMMARY_PLAYER_STATS, type GoldenPair } from '../sportradar/__fixtures__/summary-player-stats.js';
 
 /**
  * Golden fixtures, captured 2026-08-01 from real Sportradar `summary.json` payloads for
@@ -24,14 +23,8 @@ import { join } from 'node:path';
  * nothing about that. If a port here drifts from what the backfill produces, the two
  * writers put two vocabularies in one table again, which is the defect (ENG-460).
  */
-type Pair = { player: string; statistics: unknown; expected: Record<string, string | number> };
-
-// Read rather than `import ... with { type: 'json' }`: enabling resolveJsonModule would
-// change build output for a package four repos consume, and would compile 54KB of test
-// fixtures into `dist` for all of them.
-const golden = JSON.parse(
-  readFileSync(join(import.meta.dirname, '../sportradar/__fixtures__/summary-player-stats.json'), 'utf8'),
-) as Record<SummaryStatsSport, Pair[]>;
+type Pair = GoldenPair;
+const golden = SUMMARY_PLAYER_STATS as Record<SummaryStatsSport, Pair[]>;
 
 describe.each(['nba', 'nhl', 'mlb'] as const)('%s matches huddle-data byte for byte', (sport) => {
   const pairs = golden[sport];
