@@ -32,16 +32,27 @@ describe('leaguesFor', () => {
     expect(odds).toContain('cs2');
   });
 
-  it('excludes leagues no book carries', () => {
-    // rl is active and live, but every book id for it is empty — polling it for odds
-    // could only ever be a no-op, which is what the deployed command did.
-    expect(leaguesFor('live')).toContain('rl');
-    expect(leaguesFor('odds')).not.toContain('rl');
+  it('is the major four plus cs2, and nothing else', () => {
+    // Scope set 2026-08-01. If this list changes, every service's polling, projection
+    // and assertion set changes with it — that is the point of the registry.
+    expect(leaguesFor('odds').sort()).toEqual(['cs2', 'mlb', 'nba', 'nfl', 'nhl']);
+    expect(leaguesFor('live').sort()).toEqual(['cs2', 'mlb', 'nba', 'nfl', 'nhl']);
   });
 
-  it('excludes dormant leagues entirely', () => {
-    expect(isActive('r6')).toBe(false);
-    for (const c of CAPABILITIES) expect(leaguesFor(c)).not.toContain('r6');
+  it('excludes descoped leagues from every capability', () => {
+    for (const sport of ['lol', 'valorant', 'dota2', 'cod', 'rl', 'r6'] as const) {
+      expect(isActive(sport), `${sport} should be inactive`).toBe(false);
+      for (const c of CAPABILITIES) expect(leaguesFor(c)).not.toContain(sport);
+    }
+  });
+
+  it('keeps descoped leagues in the union rather than deleting them', () => {
+    // Years of their rows are in the database and code still reads them. Dropping the
+    // slug would orphan that data; `active: false` is the switch that matters.
+    for (const sport of ['lol', 'valorant', 'dota2', 'cod', 'rl', 'r6'] as const) {
+      expect(LEAGUE_REGISTRY[sport]).toBeDefined();
+      expect(LEAGUE_REGISTRY[sport].note).toMatch(/[Dd]escoped/);
+    }
   });
 
   it('never returns a league it does not also report as supported', () => {
@@ -57,12 +68,9 @@ describe('assertRegistered', () => {
     expect(() => assertRegistered('ncaam', 'odds')).toThrow(/Unknown league "ncaam"/);
   });
 
-  it('rejects an active league that cannot serve the capability, and says what it can', () => {
-    expect(() => assertRegistered('rl', 'odds')).toThrow(/not registered for "odds"/);
-    expect(() => assertRegistered('rl', 'odds')).toThrow(/provides: schedule, live/);
-  });
-
-  it('rejects a dormant league', () => {
+  it('rejects a descoped league and says so', () => {
+    expect(() => assertRegistered('rl', 'odds')).toThrow(/not active/);
+    expect(() => assertRegistered('valorant', 'odds')).toThrow(/not active/);
     expect(() => assertRegistered('r6', 'schedule')).toThrow(/not active/);
   });
 
@@ -78,7 +86,8 @@ describe('reconcile', () => {
     const result = reconcile(deployed, 'odds');
 
     expect(result.unknown).toEqual(['ncaam']);
-    expect(result.unsupported).toEqual(['rl']);
+    // Under the 2026-08-01 scope the descoped esports are unsupported too, not just rl.
+    expect(result.unsupported.sort()).toEqual(['cod', 'dota2', 'lol', 'rl', 'valorant']);
     expect(result.missing).toEqual(['nfl']);
   });
 
