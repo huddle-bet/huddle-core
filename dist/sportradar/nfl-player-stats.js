@@ -1,0 +1,75 @@
+/**
+ * Sportradar NFL per-player box-score flattening.
+ *
+ * NFL sits apart from NBA/NHL/MLB and cannot share `sportradarPlayerStats`:
+ *
+ *   - It has **no `summary` feed**. Verified 2026-08-01: `summary.json` returns 404 and
+ *     `statistics.json` returns 200. huddle-data has known this since it built a
+ *     separate `fetchGameStatistics`; huddle-live did not, and polled `summary.json`
+ *     for NFL anyway, so it would have written zero live NFL player rows all season
+ *     while logging a 404 warning every 30 seconds (ENG-463).
+ *   - Its payload is organised **by category at team level** —
+ *     `statistics.{home,away}.{passing,rushing,receiving,…}.players[]` — rather than one
+ *     `statistics` object per player. A quarterback appears under both `passing` and
+ *     `rushing`, so players are coalesced into one row with category-prefixed keys:
+ *     `passing_yards`, `rushing_attempts`, `receiving_receptions`.
+ *
+ * That prefixing is the vocabulary huddle-engine reads (`PROP_STATS_BY_LEAGUE.nfl`), and
+ * it is deliberate rather than incidental: the compact ESPN-era keys were ambiguous
+ * because `YDS` mapped to passing, rushing and receiving at once against a flat lookup
+ * (ENG-395). Do not reintroduce them as fallbacks.
+ *
+ * Lives here so huddle-data's backfill and huddle-live's in-game poll produce identical
+ * rows. Two writers with two shapes is what left MLB with zero projections (ENG-460).
+ */
+/** Player-identity keys on a category entry — descriptive, not statistics. */
+const IDENTITY_FIELDS = new Set([
+    'id', 'name', 'jersey', 'position', 'sr_id', 'reference', 'played', 'started',
+]);
+/**
+ * Flatten one team's categorised statistics into one row per player.
+ *
+ * Order is first-appearance, so output is stable across runs for a given payload.
+ */
+export function nflTeamPlayerStats(team) {
+    const byId = new Map();
+    if (!team || typeof team !== 'object')
+        return [];
+    for (const [category, group] of Object.entries(team)) {
+        // `summary` is the team's own totals, not a player group.
+        if (IDENTITY_FIELDS.has(category) || category === 'summary')
+            continue;
+        const players = group?.players;
+        if (!Array.isArray(players))
+            continue;
+        for (const p of players) {
+            const key = p.id ?? p.sr_id ?? p.name;
+            if (!key)
+                continue;
+            let entry = byId.get(key);
+            if (!entry) {
+                entry = { name: p.name, athleteId: p.id, position: p.position ?? '', stats: {} };
+                byId.set(key, entry);
+            }
+            for (const [field, value] of Object.entries(p)) {
+                if (IDENTITY_FIELDS.has(field))
+                    continue;
+                // Nested objects are per-category breakdowns we do not flatten, and null means
+                // the stat does not apply to this player in this category.
+                if (value === null || typeof value === 'object')
+                    continue;
+                entry.stats[`${category}_${field}`] = value;
+            }
+        }
+    }
+    return [...byId.values()];
+}
+/** Both teams from a `statistics.json` payload, as `{ home, away }`. */
+export function nflGamePlayerStats(statistics) {
+    const root = statistics?.statistics ?? statistics;
+    return {
+        home: nflTeamPlayerStats(root?.home),
+        away: nflTeamPlayerStats(root?.away),
+    };
+}
+//# sourceMappingURL=nfl-player-stats.js.map

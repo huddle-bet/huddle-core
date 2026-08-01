@@ -25,6 +25,7 @@ export * from './unknown-variant.js';
 export * from './config/leagues.js';
 export * from './config/registry.js';
 export * from './sportradar/player-stats.js';
+export * from './sportradar/nfl-player-stats.js';
 
 // Per-sport curated allowlists (pro leagues we ingest).
 export * from './config/dota2-leagues.js';
