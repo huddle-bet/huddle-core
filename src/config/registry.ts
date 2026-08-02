@@ -3,10 +3,21 @@ import { SPORTS, isSport, type Sport } from '../types/sports.js';
 /**
  * Which leagues are live, and what each one is expected to produce.
  *
- * ## Scope, set 2026-08-01
+ * ## Scope, set 2026-08-01, confirmed 2026-08-02
  *
- * The major four — NFL, NBA, MLB, NHL — plus CS2. Launch emphasis on NFL and NBA;
- * MLB and NHL ship too if they hold up. Every other esport is descoped.
+ * The major four — NFL, NBA, MLB, NHL — plus CS2. Every other esport is descoped.
+ *
+ * **`active` is also the launch-visibility flag.** All five active leagues surface in the
+ * product; the six descoped esports do not. There is no second flag and no third state,
+ * and huddle-api's read gate derives from `isActive` for exactly this reason (ENG-515).
+ *
+ * This used to read "launch emphasis on NFL and NBA; MLB and NHL ship too if they hold
+ * up", which was true but hedged, and ENG-403 was simultaneously recording MLB and NHL as
+ * "ingest on, hidden at read". Both readings survived because neither was falsifiable
+ * from here. They are not equivalent: MLB is the only traditional sport currently in
+ * season, so hiding it would have taken the August product from 125 fixtures to 31.
+ * Settled in favour of showing all five — if that changes, change it here, because this
+ * is the only place the answer lives.
  *
  * The traditional four are to run on **Sportradar alone**. ESPN is being removed as their
  * fallback: it contributed 0 of 39,489 NFL player rows, and Sportradar already carries
