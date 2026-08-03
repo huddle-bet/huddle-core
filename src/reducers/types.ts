@@ -54,6 +54,10 @@ interface SportsEventBase {
 export type SportsLiveEvent =
   | (SportsEventBase & {
       kind: 'status';
+      // Deliberately narrower than EventStatus: this is in-play state a live
+      // provider observes, not the event's lifecycle. Carrying `suspended`
+      // here means teaching every sport reducer what to do with a resumable
+      // stoppage — ENG-521's call, not this type's.
       status: 'scheduled' | 'live' | 'final';
       // Push providers ship a score alongside the status transition; the
       // pull-based diff path leaves these undefined (ENG-291).
