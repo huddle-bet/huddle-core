@@ -1,5 +1,6 @@
 import type { DataSource } from './entities.js';
 import type { Sport } from './sports.js';
+import type { EventStatus } from './events.js';
 
 /**
  * Schema-ready interfaces matching what any consuming repo's DB would look like.
@@ -17,7 +18,7 @@ export interface DbGame {
   startTime: string;
   homeTeamId: string;
   awayTeamId: string;
-  status: 'scheduled' | 'live' | 'final';
+  status: EventStatus;
   /** Source that provided this game data */
   source: DataSource;
   sourceId: string;
