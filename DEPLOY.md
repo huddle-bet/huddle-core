@@ -87,7 +87,8 @@ These are not in the shared group because not every service needs them. Add them
 | `SPORTRADAR_ACCESS_LEVEL` | huddle-data, huddle-live | `trial` or `production` — appears in the API path, so it is not cosmetic |
 | `SPORTRADAR_PUSH_KEY` | huddle-live | Push-feed key (separate from REST key on Sportradar's side) |
 | `STEAM_API_KEY` | huddle-data, huddle-live | Dota/CS2 resolution. `STEAM_API_KEYS` (plural, comma-separated) is also accepted for round-robin. |
-| `THUNDERPICKS_API_KEY` | huddle-odds, huddle-engine | Esports book. huddle-odds also reads the legacy alias `TP_APIKEY`. |
+| `THUNDERPICKS_API_KEY` | huddle-engine | Esports book. **huddle-odds no longer reads this** — its Thunderpick client was removed on 2026-08-05 when the key stopped authenticating (401 on the documented header and unauthenticated alike) and CS2 was already covered by PrizePicks and Underdog. The legacy alias `TP_APIKEY` went with it. huddle-engine still fetches Thunderpick directly (ENG-438), so the key stays set — but if it is the same dead credential, that path is failing silently too. |
+| `BETRIVERS_BRAND` | huddle-odds | Optional, defaults to `rsiuspa`. Selects which state's Kambi offering to read. Measured 2026-08-04: the per-league boards this client reads are byte-identical across PA, NJ, IL, MI and NY, so it currently changes nothing for any polled league — it is the sport/league *menu* that differs by state. |
 | `FANDUEL_API_KEY` | huddle-odds | Optional. This is a **public client key**, not a secret — the same value appears as the `_ak` query param in FanDuel's web app. Falls back to that public value if unset; pin it in prod. |
 | `GROQ_API_KEY` | huddle-engine | LLM features (slip narratives, AI picks) |
 | `LOLESPORTS_API_KEY` | huddle-live, huddle-data | LoL Esports feed |
