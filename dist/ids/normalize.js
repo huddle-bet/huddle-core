@@ -129,4 +129,42 @@ function foldDiacritics(name) {
 export function searchName(name) {
     return foldDiacritics(name).replace(/[^a-z0-9]/g, '');
 }
+/**
+ * Words a source appends to an org's name without meaning a different club.
+ *
+ * Deliberately org-type words only. The ones that must NEVER be here denote a *separate
+ * roster* — `academy`, `junior`, `nxt`, `prospects`, `fe` — and those are real, separately
+ * competing teams. `teams` holds `Imperial`, `Imperial Academy` and `Imperial Valkyries`
+ * as three rows, and collapsing that class is the wrong-bridge defect that took a
+ * 47-canonical migration to undo.
+ */
+const ORG_SUFFIXES = new Set(['esports', 'esport', 'gaming', 'team', 'cs']);
+/**
+ * `NRG Esports` -> `nrg`, when a source has decorated a club name.
+ *
+ * Returns the stripped key only. **The caller must look it up and accept the result only
+ * if a team already exists under it.** That guard is the entire safety argument, and it is
+ * why this is a resolver step rather than the suffix allowlist rejected earlier:
+ *
+ *   - it never mints a stripped id, so it cannot invent a club
+ *   - a decoration on a name nobody holds falls through to auto-create unchanged
+ *   - the strip is trailing-only, so `Team Liquid` and `Team Spirit` are untouched
+ *
+ * Lives here rather than in either service because both write teams. One scoped CS2 poll
+ * created 18 rows, 15 of them decorations of clubs already in the table; huddle-data's
+ * resolution order would mint all 15 the moment HLTV sent the same spellings. A guard in
+ * one writer only is the shape of defect this repo keeps producing — ENG-492 fixed fuzzy
+ * in one service and the other carried it for weeks.
+ *
+ * Input must already be normalized (`normalizeTeamName`), so the caller's lookup key and
+ * this function's output are comparable.
+ */
+export function stripOrgSuffix(normalized) {
+    const parts = normalized.split(' ');
+    if (parts.length < 2)
+        return null;
+    if (!ORG_SUFFIXES.has(parts[parts.length - 1].toLowerCase()))
+        return null;
+    return parts.slice(0, -1).join(' ');
+}
 //# sourceMappingURL=normalize.js.map
