@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { normalizeTeamName, normalizePlayerName, slugify } from '../normalize.js';
+import { normalizeTeamName, normalizePlayerName, searchName, slugify } from '../normalize.js';
 describe('normalizeTeamName', () => {
     it('lowercases', () => {
         expect(normalizeTeamName('Los Angeles Lakers')).toBe('los angeles lakers');
@@ -13,6 +13,44 @@ describe('normalizeTeamName', () => {
     });
     it('handles empty string', () => {
         expect(normalizeTeamName('')).toBe('');
+    });
+    // huddle-data reads HLTV, which spells clubs with their diacritics; the DFS platforms
+    // huddle-odds reads mostly do not. Both derive team ids from this function, so an
+    // unfolded name gave one club two ids and two disagreeing canonical_event_ids.
+    it('folds diacritics so one club gets one id', () => {
+        expect(normalizeTeamName('Grêmio')).toBe(normalizeTeamName('Gremio'));
+        expect(normalizeTeamName('Honvéd')).toBe(normalizeTeamName('Honved'));
+        expect(normalizeTeamName('KRÜ')).toBe(normalizeTeamName('KRU'));
+        expect(normalizeTeamName('QUINTESSÊNCIA')).toBe(normalizeTeamName('QUINTESSENCIA'));
+    });
+    it('folds the diacritics NFD cannot decompose', () => {
+        expect(normalizeTeamName('Ølgod')).toBe('olgod');
+        expect(normalizeTeamName('Frøslev')).toBe('froslev');
+    });
+    // The fold must not reach for `searchName`, which ends by deleting everything outside
+    // [a-z0-9]. That is right for a key mirroring a Postgres column and wrong here: it
+    // reduces every CJK and Cyrillic name to '', collapsing all of them onto a single id.
+    it('leaves non-Latin scripts intact rather than folding them to empty', () => {
+        for (const name of ['剑来！', '植物驾到', '横揺れヤンキー', 'банда фляя']) {
+            expect(normalizeTeamName(name)).not.toBe('');
+        }
+        const ids = new Set(['剑来！', '植物驾到', '横揺れヤンキー', 'банда фляя'].map((n) => normalizeTeamName(n)));
+        expect(ids.size).toBe(4);
+    });
+});
+// searchName mirrors the `players.search_name` generated column byte for byte. Splitting
+// the fold out of it must not change a single result — a drift here mints a duplicate
+// player id and drops that player's stats on every ingest cycle (ENG-232).
+describe('searchName', () => {
+    it('still matches immutable_unaccent + [^a-z0-9] removal', () => {
+        expect(searchName('Frøslev')).toBe('froslev');
+        expect(searchName('schnellÆ')).toBe('schnellae');
+        expect(searchName('Luis García Jr.')).toBe('luisgarciajr');
+        expect(searchName('José Ramírez')).toBe('joseramirez');
+        expect(searchName("Shai Gilgeous-Alexander")).toBe('shaigilgeousalexander');
+    });
+    it('strips non-Latin scripts entirely, unlike normalizeTeamName', () => {
+        expect(searchName('剑来！')).toBe('');
     });
 });
 describe('normalizePlayerName', () => {

@@ -2,10 +2,24 @@
  * Name normalization utilities for cross-source entity matching.
  */
 
-/** Normalize a team name for matching: lowercase, strip common noise */
+/**
+ * Normalize a team name for matching: fold diacritics, lowercase, strip common noise.
+ *
+ * The fold is what makes `Grêmio` and `Gremio` one team instead of two. huddle-data reads
+ * HLTV, which spells clubs with their native diacritics; the DFS platforms huddle-odds
+ * reads mostly do not. Both services derive team ids from this function — huddle-data via
+ * `deterministicTeamId`, huddle-odds via `TeamRegistry.autoRegister` — so before the fold
+ * one club got two ids, and the composite `canonical_event_id` built from them disagreed
+ * across services for the same fixture.
+ *
+ * It folds diacritics and nothing else. `searchName` finishes by deleting every character
+ * outside `[a-z0-9]`, which is correct there because it must match a Postgres generated
+ * column byte for byte. Applied to team names it would fold every CJK and Cyrillic name to
+ * the empty string and collapse all of them onto one id — measured, 7 dota and 3 valorant
+ * teams reduce to '' that way.
+ */
 export function normalizeTeamName(name: string): string {
-  return name
-    .toLowerCase()
+  return foldDiacritics(name)
     .replace(/['']/g, '')
     .replace(/\./g, '')
     .replace(/\s+/g, ' ')
@@ -107,12 +121,19 @@ const UNACCENT_NON_DECOMPOSABLE: Record<string, string> = {
  *
  * Lives in huddle-core because huddle-data and huddle-odds both need it and
  * both previously kept their own copy, which is how they drifted.
+ *
+ * Split in two so `normalizeTeamName` can share the fold without the final
+ * `[^a-z0-9]` strip — see the note on that function for why the strip is wrong
+ * for team names.
  */
-export function searchName(name: string): string {
+function foldDiacritics(name: string): string {
   return name
     .normalize('NFD')
     .replace(/[̀-ͯ]/g, '')
     .toLowerCase()
-    .replace(/[æœøðþßđħıĸłŋŧƒȷẞŉ]/g, (c) => UNACCENT_NON_DECOMPOSABLE[c] ?? c)
-    .replace(/[^a-z0-9]/g, '');
+    .replace(/[æœøðþßđħıĸłŋŧƒȷẞŉ]/g, (c) => UNACCENT_NON_DECOMPOSABLE[c] ?? c);
+}
+
+export function searchName(name: string): string {
+  return foldDiacritics(name).replace(/[^a-z0-9]/g, '');
 }
