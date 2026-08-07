@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { normalizeTeamName, normalizePlayerName, searchName, slugify } from '../normalize.js';
+import { normalizeTeamName, stripOrgSuffix, normalizePlayerName, searchName, slugify } from '../normalize.js';
 
 describe('normalizeTeamName', () => {
   it('lowercases', () => {
@@ -135,5 +135,47 @@ describe('slugify', () => {
 
   it('handles empty string', () => {
     expect(slugify('')).toBe('');
+  });
+});
+
+/**
+ * Added after one scoped CS2 poll created 18 teams, 15 of which were decorations of clubs
+ * already in the table. Lives in core because both huddle-odds and huddle-data write
+ * `teams` and both would otherwise mint the duplicates independently.
+ */
+describe('stripOrgSuffix', () => {
+  it('strips the org-type words the sources actually append', () => {
+    expect(stripOrgSuffix('nrg esports')).toBe('nrg');
+    expect(stripOrgSuffix('sashi esport')).toBe('sashi');
+    expect(stripOrgSuffix('lph gaming')).toBe('lph');
+    expect(stripOrgSuffix('dendele cs')).toBe('dendele');
+    expect(stripOrgSuffix('ww team')).toBe('ww');
+    expect(stripOrgSuffix('inner circle esports')).toBe('inner circle');
+  });
+
+  it('refuses roster-tier words, which name separately-competing teams', () => {
+    // Imperial / Imperial Academy / Imperial Valkyries are three real clubs. Collapsing
+    // this class is the wrong-bridge defect that took a 47-canonical migration to undo.
+    for (const n of ['imperial academy', 'imperial valkyries', 'mouz nxt', 'natus vincere junior',
+                     'pain academy', 'mibr fe', 'spirit hu', 'ence prospects']) {
+      expect(stripOrgSuffix(n), n).toBeNull();
+    }
+  });
+
+  it('strips trailing only, so Team Liquid survives', () => {
+    expect(stripOrgSuffix('team liquid')).toBeNull();
+    expect(stripOrgSuffix('team spirit')).toBeNull();
+    expect(stripOrgSuffix('team vitality')).toBeNull();
+  });
+
+  it('returns null for a single token, including a bare suffix word', () => {
+    expect(stripOrgSuffix('astral')).toBeNull();
+    expect(stripOrgSuffix('esports')).toBeNull();
+    expect(stripOrgSuffix('')).toBeNull();
+  });
+
+  it('composes with normalizeTeamName, including the diacritic fold', () => {
+    // The caller normalizes first, so the stripped key is comparable to a lookup key.
+    expect(stripOrgSuffix(normalizeTeamName('Grêmio Esports'))).toBe('gremio');
   });
 });
