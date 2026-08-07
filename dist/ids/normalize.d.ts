@@ -1,7 +1,22 @@
 /**
  * Name normalization utilities for cross-source entity matching.
  */
-/** Normalize a team name for matching: lowercase, strip common noise */
+/**
+ * Normalize a team name for matching: fold diacritics, lowercase, strip common noise.
+ *
+ * The fold is what makes `Grêmio` and `Gremio` one team instead of two. huddle-data reads
+ * HLTV, which spells clubs with their native diacritics; the DFS platforms huddle-odds
+ * reads mostly do not. Both services derive team ids from this function — huddle-data via
+ * `deterministicTeamId`, huddle-odds via `TeamRegistry.autoRegister` — so before the fold
+ * one club got two ids, and the composite `canonical_event_id` built from them disagreed
+ * across services for the same fixture.
+ *
+ * It folds diacritics and nothing else. `searchName` finishes by deleting every character
+ * outside `[a-z0-9]`, which is correct there because it must match a Postgres generated
+ * column byte for byte. Applied to team names it would fold every CJK and Cyrillic name to
+ * the empty string and collapse all of them onto one id — measured, 7 dota and 3 valorant
+ * teams reduce to '' that way.
+ */
 export declare function normalizeTeamName(name: string): string;
 /**
  * Normalize a player name for matching.
@@ -14,23 +29,5 @@ export declare function normalizePlayerName(name: string): string;
  * "Natus Vincere" → "natus-vincere"
  */
 export declare function slugify(name: string): string;
-/**
- * JS mirror of the `players.search_name` generated column:
- *
- *   regexp_replace(public.immutable_unaccent(name), '[^a-z0-9]', '', 'g')
- *
- * where `immutable_unaccent(x) = lower(unaccent(x))`.
- *
- * This has to agree with Postgres **exactly**. `players` carries a partial
- * UNIQUE index on `(sport, search_name)`, and the auto-create path derives a
- * deterministic UUIDv5 from the same key. If JS computes a different key than
- * the column does, `resolvePlayerByName` misses an existing player, the
- * auto-create mints a fresh id, and the INSERT then collides with the row it
- * failed to find — a duplicate-key violation that drops the player's stats on
- * every ingest cycle (ENG-232).
- *
- * Lives in huddle-core because huddle-data and huddle-odds both need it and
- * both previously kept their own copy, which is how they drifted.
- */
 export declare function searchName(name: string): string;
 //# sourceMappingURL=normalize.d.ts.map
