@@ -6,6 +6,9 @@ export const SPORTRADAR_GAME_STATUSES = [
     'inprogress',
     'halftime',
     'delayed',
+    'wdelay',
+    'fdelay',
+    'suspended',
     'complete',
     'closed',
     'canceled',
@@ -51,8 +54,18 @@ export function mapSportradarStatus(status, opts) {
     switch (status) {
         case 'inprogress':
         case 'halftime':
-        case 'delayed':
             return 'live';
+        // `delayed`, `wdelay` and `fdelay` all mean "not playing right now, expected to resume".
+        // They map to `live` because that is what every huddle-live translator has always done,
+        // and changing it silently would be a behaviour change smuggled inside a refactor. It is
+        // also not obviously right — see the note above about `delayed` being unresolved. The
+        // three are kept together so whatever settles one settles all of them.
+        case 'delayed':
+        case 'wdelay':
+        case 'fdelay':
+            return 'live';
+        case 'suspended':
+            return 'suspended';
         case 'complete':
         case 'closed':
             return 'final';

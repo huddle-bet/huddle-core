@@ -73,6 +73,21 @@ describe('mapSportradarStatus', () => {
     expect(mapSportradarStatus('delayed')).toBe('live');
   });
 
+  /**
+   * MLB's weather and field delays. They never appear in a schedule payload — a scan of 5,308
+   * games returned only closed, scheduled, inprogress, postponed and unnecessary — so these
+   * are known from huddle-live's MLB translators, which have carried them since they were
+   * written. Mapping them anywhere but `live` would regress a delayed game to `scheduled`.
+   */
+  it('keeps MLB weather and field delays on live, as the live translators always did', () => {
+    expect(mapSportradarStatus('wdelay')).toBe('live');
+    expect(mapSportradarStatus('fdelay')).toBe('live');
+  });
+
+  it('maps a suspended game to suspended, not final', () => {
+    expect(mapSportradarStatus('suspended')).toBe('suspended');
+  });
+
   describe('unknown values', () => {
     it('falls back to scheduled rather than throwing', () => {
       // A status shipped mid-season must not take a whole schedule poll down over one fixture.
@@ -133,6 +148,7 @@ describe('the wire union', () => {
   it('is exhaustive against the type', () => {
     const fromType: SportradarGameStatus[] = [
       'scheduled', 'created', 'inprogress', 'halftime', 'delayed',
+      'wdelay', 'fdelay', 'suspended',
       'complete', 'closed', 'canceled', 'postponed', 'if_necessary', 'unnecessary',
     ];
     expect([...SPORTRADAR_GAME_STATUSES].sort()).toEqual(fromType.sort());
