@@ -10,6 +10,7 @@ export * from './config/leagues.js';
 export * from './config/registry.js';
 export * from './sportradar/player-stats.js';
 export * from './sportradar/nfl-player-stats.js';
+export * from './sportradar/game-status.js';
 export * from './config/dota2-leagues.js';
 export * from './config/lolesports-api.js';
 export * from './reducers/index.js';

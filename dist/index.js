@@ -17,6 +17,9 @@ export * from './config/leagues.js';
 export * from './config/registry.js';
 export * from './sportradar/player-stats.js';
 export * from './sportradar/nfl-player-stats.js';
+// Sportradar status → EventStatus. Shared because it was duplicated nine times across
+// huddle-data and huddle-live, and every copy carried the same two bugs (ENG-521).
+export * from './sportradar/game-status.js';
 // Per-sport curated allowlists (pro leagues we ingest).
 export * from './config/dota2-leagues.js';
 // Shared lolesports (Riot) public API key + self-harvest.
