@@ -15,6 +15,8 @@ export const SPORTRADAR_GAME_STATUSES = [
     'postponed',
     'if_necessary',
     'unnecessary',
+    'flex-schedule',
+    'time-tbd',
 ];
 /**
  * Map a Sportradar game status onto our canonical `EventStatus`.
@@ -78,6 +80,11 @@ export function mapSportradarStatus(status, opts) {
         case 'created':
         case 'if_necessary':
         case 'unnecessary':
+        // An unsettled kickoff slot is still an unplayed game. Both already fell here via the
+        // default arm, so this changes no behaviour — it makes the mapping intentional and stops
+        // the guard reporting a value we have now seen and understood.
+        case 'flex-schedule':
+        case 'time-tbd':
             return 'scheduled';
         default:
             return 'scheduled';

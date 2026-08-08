@@ -31,6 +31,23 @@ describe('mapSportradarStatus', () => {
         expect(mapSportradarStatus('if_necessary')).toBe('scheduled');
         expect(mapSportradarStatus('unnecessary')).toBe('scheduled');
     });
+    /**
+     * Found by the guard itself, five seconds into the first live run of the worker after it
+     * shipped — NFL scheduling placeholders nobody had written down. Both already fell to
+     * `scheduled` through the default arm, so no data was ever wrong; naming them makes the
+     * mapping intentional and stops the guard reporting a value we now understand.
+     */
+    it('treats NFL scheduling placeholders as scheduled', () => {
+        expect(mapSportradarStatus('flex-schedule')).toBe('scheduled');
+        expect(mapSportradarStatus('time-tbd')).toBe('scheduled');
+    });
+    it('no longer warns for the NFL placeholders, now that they are known', () => {
+        _resetAssertKnownVariantCache();
+        const log = vi.fn();
+        mapSportradarStatus('flex-schedule', { log });
+        mapSportradarStatus('time-tbd', { log });
+        expect(log).not.toHaveBeenCalled();
+    });
     it('treats a missing status as scheduled without throwing', () => {
         expect(mapSportradarStatus(undefined)).toBe('scheduled');
         expect(mapSportradarStatus(null)).toBe('scheduled');
@@ -126,6 +143,7 @@ describe('the wire union', () => {
             'scheduled', 'created', 'inprogress', 'halftime', 'delayed',
             'wdelay', 'fdelay', 'suspended',
             'complete', 'closed', 'canceled', 'postponed', 'if_necessary', 'unnecessary',
+            'flex-schedule', 'time-tbd',
         ];
         expect([...SPORTRADAR_GAME_STATUSES].sort()).toEqual(fromType.sort());
     });
