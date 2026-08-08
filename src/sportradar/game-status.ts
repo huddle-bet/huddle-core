@@ -41,7 +41,13 @@ export type SportradarGameStatus =
   | 'canceled'
   | 'postponed'
   | 'if_necessary'
-  | 'unnecessary';
+  | 'unnecessary'
+  // NFL scheduling placeholders, observed live on 2026-08-08 the first time the
+  // unknown-variant guard ran. Both mean the fixture exists but its slot is not settled:
+  // `flex-schedule` is a game whose window may move under flex scheduling, `time-tbd` one
+  // with a date but no kickoff time.
+  | 'flex-schedule'
+  | 'time-tbd';
 
 /** Every wire value the mapper claims to understand. Anything else warns, once. */
 export const SPORTRADAR_GAME_STATUSES = [
@@ -59,6 +65,8 @@ export const SPORTRADAR_GAME_STATUSES = [
   'postponed',
   'if_necessary',
   'unnecessary',
+  'flex-schedule',
+  'time-tbd',
 ] as const satisfies readonly SportradarGameStatus[];
 
 /** As above, for `SPORTRADAR_GAME_STATUSES` — adding to the union must add to the array. */
@@ -146,6 +154,11 @@ export function mapSportradarStatus(
     case 'created':
     case 'if_necessary':
     case 'unnecessary':
+    // An unsettled kickoff slot is still an unplayed game. Both already fell here via the
+    // default arm, so this changes no behaviour — it makes the mapping intentional and stops
+    // the guard reporting a value we have now seen and understood.
+    case 'flex-schedule':
+    case 'time-tbd':
       return 'scheduled';
 
     default:
