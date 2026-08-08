@@ -23,23 +23,32 @@ USER root
 COPY entrypoint.sh /entrypoint.sh
 RUN chmod +x /entrypoint.sh
 
-# Patch out Camoufox's geoip lookup (Byparr passes geoip=True to
-# AsyncCamoufox in src/utils.py:92). With geoip=True, every browser
-# launch fires an extra request to api.ipify.org *through the proxy*
-# just to detect locale — doubling our Webshare CONNECT-tunnel rate
-# for no benefit (cf_clearance binds to actual egress IP, not
-# whatever locale Camoufox infers). Under load this trips Webshare's
-# 429 Too Many Requests at the proxy gateway and the browser fails
-# to launch with InvalidProxy before HLTV is even contacted.
+# The Camoufox geoip patch that lived here is gone, because Camoufox is.
 #
-# The sed targets the literal `geoip=True,` line — single occurrence
-# in utils.py, unambiguous. Verified against ThePhaseless/byparr@main
-# 2026-04-28. If a future image bump renames the kwarg or removes
-# the comma, the build fails loud (RUN exits non-zero) instead of
-# silently regressing.
-RUN grep -q '        geoip=True,' /app/src/utils.py \
-    && sed -i 's|        geoip=True,|        geoip=False,|' /app/src/utils.py \
-    && grep -q '        geoip=False,' /app/src/utils.py
+# It rewrote `geoip=True,` to `geoip=False,` in src/utils.py, so that every
+# browser launch stopped firing an extra api.ipify.org request *through the
+# proxy* purely to infer locale — which under load tripped Webshare's 429 at
+# the gateway and failed the launch with InvalidProxy before HLTV was even
+# contacted.
+#
+# Upstream replaced the whole browser stack: Camoufox is no longer installed,
+# `AsyncCamoufox` has no call sites, and src/utils.py now drives
+# `invisible_playwright` + `playwright_captcha`. There is no `geoip` kwarg left
+# to patch, which is why the build broke on 2026-08-08 — the guard fired
+# exactly as its comment promised, rather than regressing in silence.
+#
+# Nothing replaces it. `invisible_core.ensure_geoip_mmdb` resolves locale from
+# a local MaxMind file instead of an HTTP round trip, so the behaviour the patch
+# existed to prevent is now upstream's default.
+#
+# One consequence worth knowing rather than patching: `ensure_geoip_mmdb` does a
+# permalink HEAD to GitHub on **every** call, and no .mmdb is baked into the
+# image — so a cold container downloads one on first launch. That egresses from
+# the container, not through PROXY_SERVER (which configures the browser, not
+# Python's HTTP client), so it does not consume Webshare tunnels. If GitHub is
+# ever unreachable from Render with a cold cache, `ensure_geoip_mmdb` raises and
+# the launch fails; `STEALTHFOX_GEOIP_MMDB` can point at a baked-in file if that
+# ever bites.
 
 USER 1000
 ENTRYPOINT ["/entrypoint.sh"]
