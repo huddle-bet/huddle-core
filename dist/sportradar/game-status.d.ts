@@ -18,9 +18,9 @@ import type { EventStatus } from '../types/events.js';
  * Do not "correct" this to the British spelling. `mapSportradarStatus` is the one place the
  * two spellings are allowed to meet.
  */
-export type SportradarGameStatus = 'scheduled' | 'created' | 'inprogress' | 'halftime' | 'delayed' | 'complete' | 'closed' | 'canceled' | 'postponed' | 'if_necessary' | 'unnecessary';
+export type SportradarGameStatus = 'scheduled' | 'created' | 'inprogress' | 'halftime' | 'delayed' | 'wdelay' | 'fdelay' | 'suspended' | 'complete' | 'closed' | 'canceled' | 'postponed' | 'if_necessary' | 'unnecessary';
 /** Every wire value the mapper claims to understand. Anything else warns, once. */
-export declare const SPORTRADAR_GAME_STATUSES: readonly ["scheduled", "created", "inprogress", "halftime", "delayed", "complete", "closed", "canceled", "postponed", "if_necessary", "unnecessary"];
+export declare const SPORTRADAR_GAME_STATUSES: readonly ["scheduled", "created", "inprogress", "halftime", "delayed", "wdelay", "fdelay", "suspended", "complete", "closed", "canceled", "postponed", "if_necessary", "unnecessary"];
 export interface MapSportradarStatusOptions {
     /** Where the value came from, for triage — `{ sport: 'mlb', gameId }`. */
     context?: Record<string, unknown>;
