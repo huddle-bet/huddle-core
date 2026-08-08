@@ -50,5 +50,35 @@ RUN chmod +x /entrypoint.sh
 # the launch fails; `STEALTHFOX_GEOIP_MMDB` can point at a baked-in file if that
 # ever bites.
 
+# Move the interpreter out of /tmp, because Render mounts over it.
+#
+# Byparr 3.0.0 installs its Python with uv under $HOME, and upstream sets
+# HOME=/tmp. So the 107MB CPython tree lives at /tmp/.local/share/uv/python/...,
+# /app/.venv/bin/python is a symlink into it, and pyvenv.cfg's `home` points
+# there too.
+#
+# Render mounts an ephemeral /tmp over the image's, which masks that tree. The
+# symlink dangles and the container dies before serving anything:
+#
+#   /entrypoint.sh: 33: exec: /app/.venv/bin/python: not found
+#   ==> Exited with status 127
+#
+# Reproduced locally with `docker run --tmpfs /tmp` against the upstream image.
+# Without that flag the symlink resolves fine — which is why a plain `docker run`
+# passes and Render does not, and why the first fix looked verified when it was
+# only verified against the wrong environment.
+#
+# /opt is ordinary image filesystem that nothing mounts over. python3 and
+# python3.14 are symlinks to `python`, so repointing the one fixes all three.
+RUN set -eux; \
+    target="$(readlink -f /app/.venv/bin/python)"; \
+    cp -a /tmp/.local/share/uv/python /opt/uv-python; \
+    relocated="/opt/uv-python${target#/tmp/.local/share/uv/python}"; \
+    test -x "$relocated"; \
+    ln -sfn "$relocated" /app/.venv/bin/python; \
+    sed -i 's|^home = /tmp/.local/share/uv/python|home = /opt/uv-python|' /app/.venv/pyvenv.cfg; \
+    grep -q '^home = /opt/uv-python' /app/.venv/pyvenv.cfg; \
+    /app/.venv/bin/python -c 'import sys, fastapi; assert sys.prefix == "/app/.venv"; print("relocated:", sys.executable)'
+
 USER 1000
 ENTRYPOINT ["/entrypoint.sh"]
