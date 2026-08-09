@@ -17,68 +17,54 @@
 # work (cf_clearance is bound to the source IP; Byparr captures it,
 # cycletls replays it).
 
-FROM ghcr.io/thephaseless/byparr:latest
+# Pinned to the v2.1.0 release by digest, because `:latest` floated to 3.0.0 and
+# 3.0.0 does not solve HLTV.
+#
+# 3.0.0 replaced Camoufox with `invisible_playwright` + `playwright_captcha`.
+# Measured on the same proxy, the same Webshare account and the same URLs, either
+# side of the 2026-08-08 19:38 cutover when the new image went live:
+#
+#   Byparr 2.1.0   08-03 22:49 → 08-08 19:38   167 challenges   170x HTTP 200    6 timeouts
+#   Byparr 3.0.0   08-08 19:38 → 08-09 16:10    95 challenges     0x HTTP 200   78 timeouts
+#
+# Not one solve in 95 attempts, each burning ~95s before timing out. Downstream
+# that is total: huddle-data captured zero cf-sessions in 20.5 hours, so every
+# CS2 demo fetch threw `cf-session-cache empty` and `cs2_round_player_stats` and
+# `match_round_economy` took zero rows for the whole run.
+#
+# A tag is not a pin — `2.1.0` could be re-pushed. The digest cannot, which is
+# the actual lesson of the 3.0.0 incident: nothing here changed on our side, and
+# the solver still stopped working.
+#
+# Moving forward again means proving a candidate image solves before it ships,
+# not reading its release notes. `test-local.sh` is that proof.
+FROM ghcr.io/thephaseless/byparr@sha256:01a46a2865d9a6db5eb8ead04ec0dd33b8fbe233e8565ae70b50d4cc0af4cfb0
 
 USER root
 COPY entrypoint.sh /entrypoint.sh
 RUN chmod +x /entrypoint.sh
 
-# The Camoufox geoip patch that lived here is gone, because Camoufox is.
+# Patch out Camoufox's geoip lookup (Byparr passes geoip=True to AsyncCamoufox in
+# src/utils.py:97). With geoip=True, every browser launch fires an extra request
+# to api.ipify.org *through the proxy* just to detect locale — doubling our
+# Webshare CONNECT-tunnel rate for no benefit (cf_clearance binds to the actual
+# egress IP, not whatever locale Camoufox infers). Under load this trips
+# Webshare's 429 at the proxy gateway and the browser fails to launch with
+# InvalidProxy before HLTV is even contacted.
 #
-# It rewrote `geoip=True,` to `geoip=False,` in src/utils.py, so that every
-# browser launch stopped firing an extra api.ipify.org request *through the
-# proxy* purely to infer locale — which under load tripped Webshare's 429 at
-# the gateway and failed the launch with InvalidProxy before HLTV was even
-# contacted.
-#
-# Upstream replaced the whole browser stack: Camoufox is no longer installed,
-# `AsyncCamoufox` has no call sites, and src/utils.py now drives
-# `invisible_playwright` + `playwright_captcha`. There is no `geoip` kwarg left
-# to patch, which is why the build broke on 2026-08-08 — the guard fired
-# exactly as its comment promised, rather than regressing in silence.
-#
-# Nothing replaces it. `invisible_core.ensure_geoip_mmdb` resolves locale from
-# a local MaxMind file instead of an HTTP round trip, so the behaviour the patch
-# existed to prevent is now upstream's default.
-#
-# One consequence worth knowing rather than patching: `ensure_geoip_mmdb` does a
-# permalink HEAD to GitHub on **every** call, and no .mmdb is baked into the
-# image — so a cold container downloads one on first launch. That egresses from
-# the container, not through PROXY_SERVER (which configures the browser, not
-# Python's HTTP client), so it does not consume Webshare tunnels. If GitHub is
-# ever unreachable from Render with a cold cache, `ensure_geoip_mmdb` raises and
-# the launch fails; `STEALTHFOX_GEOIP_MMDB` can point at a baked-in file if that
-# ever bites.
+# The sed targets the literal `geoip=True,` line — single occurrence in utils.py,
+# unambiguous. Re-verified against the pinned digest 2026-08-09. If the pin ever
+# moves to an image that renames the kwarg, the build fails loud (RUN exits
+# non-zero) instead of silently regressing. That guard is what caught 3.0.0.
+RUN grep -q '        geoip=True,' /app/src/utils.py \
+    && sed -i 's|        geoip=True,|        geoip=False,|' /app/src/utils.py \
+    && grep -q '        geoip=False,' /app/src/utils.py
 
-# Move the interpreter out of /tmp, because Render mounts over it.
-#
-# Byparr 3.0.0 installs its Python with uv under $HOME, and upstream sets
-# HOME=/tmp. So the 107MB CPython tree lives at /tmp/.local/share/uv/python/...,
-# /app/.venv/bin/python is a symlink into it, and pyvenv.cfg's `home` points
-# there too.
-#
-# Render mounts an ephemeral /tmp over the image's, which masks that tree. The
-# symlink dangles and the container dies before serving anything:
-#
-#   /entrypoint.sh: 33: exec: /app/.venv/bin/python: not found
-#   ==> Exited with status 127
-#
-# Reproduced locally with `docker run --tmpfs /tmp` against the upstream image.
-# Without that flag the symlink resolves fine — which is why a plain `docker run`
-# passes and Render does not, and why the first fix looked verified when it was
-# only verified against the wrong environment.
-#
-# /opt is ordinary image filesystem that nothing mounts over. python3 and
-# python3.14 are symlinks to `python`, so repointing the one fixes all three.
-RUN set -eux; \
-    target="$(readlink -f /app/.venv/bin/python)"; \
-    cp -a /tmp/.local/share/uv/python /opt/uv-python; \
-    relocated="/opt/uv-python${target#/tmp/.local/share/uv/python}"; \
-    test -x "$relocated"; \
-    ln -sfn "$relocated" /app/.venv/bin/python; \
-    sed -i 's|^home = /tmp/.local/share/uv/python|home = /opt/uv-python|' /app/.venv/pyvenv.cfg; \
-    grep -q '^home = /opt/uv-python' /app/.venv/pyvenv.cfg; \
-    /app/.venv/bin/python -c 'import sys, fastapi; assert sys.prefix == "/app/.venv"; print("relocated:", sys.executable)'
+# No interpreter relocation here, and that is deliberate. The /opt/uv-python move
+# added for 3.0.0 exists because 3.0.0 sets HOME=/tmp and Render mounts an
+# ephemeral /tmp over the image's, masking the CPython tree. 2.1.0 installs to
+# /home/ubuntu/.local/share/uv/python, which nothing mounts over — confirmed
+# against the pinned digest, including under `docker run --tmpfs /tmp`.
 
 USER 1000
 ENTRYPOINT ["/entrypoint.sh"]
