@@ -50,7 +50,7 @@ All services attach to the `huddle-shared` env var group, so shared values (Supa
 Two things about `flaresolverr` that the name hides:
 
 - It **no longer runs the FlareSolverr image.** It builds `huddle-core/byparr-wrapper/Dockerfile` and runs **Byparr**. The service name was deliberately kept so `FLARESOLVERR_URL` didn't have to change across consumers. To revert: set `runtime: image` with `image.url`, and remove `BYPARR_MODE` from huddle-data and huddle-reconciler.
-- Its entrypoint parses the first entry of `FLARESOLVERR_PROXY_URL` deterministically, so its egress IP matches the one huddle-data's cycletls process pins. `cf_clearance` is bound to source IP — mismatched IPs mean no session reuse.
+- Its entrypoint fetches the Webshare list (`WEBSHARE_PROXY_LIST_URL`, falling back to the `FLARESOLVERR_PROXY_URL` CSV) and parses the first entry deterministically, so its egress IP matches the one huddle-data's cycletls process pins. `cf_clearance` is bound to source IP — mismatched IPs mean no session reuse. Upstream order is preserved rather than sorted so both sides pick the same entry from the same bytes.
 
 **There is no Redis.** Earlier versions of this doc said huddle-api used Redis for rate limiting. It does not: there is no `redis` dependency in any service, and `@fastify/rate-limit` runs with its default **in-memory** store. Limits are therefore per-process — if huddle-api is ever scaled past one instance, the effective limit multiplies by the instance count.
 
@@ -71,7 +71,8 @@ Set once on the group; every service inherits it. All marked `sync: false` in th
 | `STRIPE_PRICE_ID` | api | Price the Checkout session subscribes to |
 | `HUDDLE_INTERNAL_SECRET` | api, live | Shared secret for the huddle-api ↔ huddle-live fanout WS (any 256-bit hex string). **huddle-live will not start without it.** |
 | `HUDDLE_LIVE_URL` | api | Internal URL of huddle-live: `http://huddle-live:8081` (Render private DNS). Locally this must be `http://127.0.0.1:8085` — the Render hostname does not resolve off-platform. |
-| `FLARESOLVERR_PROXY_URL` | data, reconciler, live, flaresolverr | Comma-separated residential proxy pool. Cycletls pins one entry per process for HLTV cookie/IP affinity; the Byparr entrypoint parses the first entry. Contains credentials. |
+| `WEBSHARE_PROXY_LIST_URL` | data, reconciler, live, odds, flaresolverr | **Primary** source of the residential proxy pool. Every consumer fetches it hourly. Webshare rotates endpoints under the plan and a hand-kept CSV does not follow — 11 of 20 rotated in nine days, costing a measured 38% request failure rate (ENG-668). Carries a long-lived account token. |
+| `FLARESOLVERR_PROXY_URL` | data, reconciler, live, odds, flaresolverr | **Fallback** for the above, used when Webshare is unreachable. Comma-separated pool; cycletls pins one entry per process for HLTV cookie/IP affinity. A point-in-time snapshot, so it drifts — that is acceptable for a fallback. Contains credentials. |
 | `HLTV_TRANSPORT` | live | Selects the HLTV scorebot transport (`headless` drove the huddle-live starter→standard upgrade). |
 
 **`HUDDLE_LIVE_URL` and `HUDDLE_INTERNAL_SECRET` are the highest-consequence pair here.** If either is unset, huddle-api serves REST normally and every live room stays permanently empty — the service looks healthy from outside. It now logs a loud startup error and reports `status: degraded` on `/health`.
