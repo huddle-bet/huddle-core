@@ -32,6 +32,7 @@ echo "==> Starting container (proxy=${FLARESOLVERR_PROXY_URL:-NONE})..."
 docker run -d --name byparr-test \
   -p "${PORT}:8191" \
   -e "FLARESOLVERR_PROXY_URL=${FLARESOLVERR_PROXY_URL:-}" \
+  -e "WEBSHARE_PROXY_LIST_URL=${WEBSHARE_PROXY_LIST_URL:-}" \
   "$IMG"
 
 echo "==> Waiting for /v1 to be reachable..."

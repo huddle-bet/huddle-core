@@ -46,6 +46,17 @@ envVarGroups:
       # a random value at process start for sticky-session proxies.
       - key: FLARESOLVERR_PROXY_URL
         sync: false
+      # Webshare's proxy-list download URL. This is now the PRIMARY source of the
+      # pool — every consumer fetches it hourly and falls back to the CSV above.
+      #
+      # Webshare rotates the endpoints under the plan and the CSV does not follow:
+      # 11 of 20 rotated in nine days, twice presenting as flaky proxies and once
+      # costing a measured 38% request failure rate (ENG-491, ENG-668).
+      #
+      # Carries a long-lived account token in the path, so it is as sensitive as the
+      # CSV itself — rotate both together.
+      - key: WEBSHARE_PROXY_LIST_URL
+        sync: false
       # HLTV scorebot transport selector — consumed only by huddle-live's
       # HltvAdapter at fixture spawn time:
       #   - 'polling' (or unset): cycletls Engine.IO long-poll. Lightweight
@@ -344,8 +355,8 @@ services:
     #
     # We wrap Byparr's image with a tiny entrypoint at byparr-wrapper/
     # that auto-derives Byparr's PROXY_SERVER / PROXY_USERNAME /
-    # PROXY_PASSWORD from FLARESOLVERR_PROXY_URL (the existing CSV pool
-    # of Webshare residential IPs in huddle-shared). Picks the first
+    # PROXY_PASSWORD from the Webshare list (WEBSHARE_PROXY_LIST_URL,
+    # falling back to the FLARESOLVERR_PROXY_URL CSV). Picks the first
     # entry deterministically so this container's egress IP matches the
     # one huddle-data's cycletls process pins to — required for
     # cf-session cache reuse, since cf_clearance is bound to source IP.
@@ -359,7 +370,7 @@ services:
     envVars:
       - key: PORT
         value: "8191"
-      # Inherits FLARESOLVERR_PROXY_URL — the entrypoint script parses
-      # it and exports PROXY_SERVER / PROXY_USERNAME / PROXY_PASSWORD
-      # before launching Byparr.
+      # Inherits WEBSHARE_PROXY_LIST_URL and FLARESOLVERR_PROXY_URL — the
+      # entrypoint fetches the former, falls back to the latter, and exports
+      # PROXY_SERVER / PROXY_USERNAME / PROXY_PASSWORD before launching Byparr.
       - fromGroup: huddle-shared
