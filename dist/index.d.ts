@@ -14,4 +14,5 @@ export * from './sportradar/game-status.js';
 export * from './config/dota2-leagues.js';
 export * from './config/lolesports-api.js';
 export * from './reducers/index.js';
+export * from './proxy/pool.js';
 //# sourceMappingURL=index.d.ts.map

@@ -29,4 +29,6 @@ export * from './config/lolesports-api.js';
 // endpoint — both fold the same EsportsLiveEvent stream through the
 // same reducer to keep state-machine behavior identical.
 export * from './reducers/index.js';
+// Residential proxy pool, resolved from Webshare at runtime (ENG-668).
+export * from './proxy/pool.js';
 //# sourceMappingURL=index.js.map
