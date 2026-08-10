@@ -31,4 +31,14 @@ export * from './config/lolesports-api.js';
 export * from './reducers/index.js';
 // Residential proxy pool, resolved from Webshare at runtime (ENG-668).
 export * from './proxy/pool.js';
+// Betting arithmetic — odds conversion, devig, EV, Kelly, and the interactive
+// calculators. Pure functions over supplied numbers, so they belong in every consumer
+// rather than behind an HTTP endpoint: the client computes a parlay payout without a
+// round trip, and huddle-api serves the engine's output instead of arithmetic.
+//
+// `parseAmericanOdds` is the string path. huddle-engine holds two private copies of that
+// conversion which return 1.91 on a parse failure — 83 ev_opportunities rows carry a
+// payout-tier word in the price column and are silently sized as -110 (ENG-601).
+export * from './betting/odds.js';
+export * from './betting/calculators.js';
 //# sourceMappingURL=index.js.map
