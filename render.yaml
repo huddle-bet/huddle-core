@@ -270,22 +270,10 @@ services:
     # Both are green today, so widening the gate does not make this cron red on its first
     # run. That matters — a permanently red alert is one nobody reads, which is how the
     # old 24h freshness ceiling slept through a 7.5h outage.
-    # Wrapped rather than bare. A red cron surfaces in the Render dashboard and nowhere else,
-    # so a failure at 02:00 is seen whenever somebody next opens that tab. The wrapper opens a
-    # GitHub issue on failure, comments on that same issue while it stays broken, and closes it
-    # on the first green run — one issue per check, because 15-minute cadence is 96 runs a day
-    # and anything per-run gets the repo muted.
-    #
-    # It exits with the check's own code whatever happens to the reporting, so a missing token
-    # or a GitHub outage degrades to exactly what this line did before: a red cron. ENG-666.
-    startCommand: npm run check:gated:reported
+    startCommand: npm run check:gated
     envVars:
       - key: NODE_ENV
         value: production
-      # Needs `issues: write` on huddle-engine and nothing else. Without it the wrapper says so
-      # on every failing run and still exits non-zero.
-      - key: GITHUB_TOKEN
-        sync: false
       - fromGroup: huddle-shared
       # - key: INGEST_PAUSED_UNTIL
       #   value: 2026-08-02T18:00:00Z   # uncomment + set while ingestion is suspended
