@@ -485,7 +485,14 @@ services:
   # cycletls and never touches this service.
   #
   # pserv = private service, no external ingress. Only reachable from
-  # other Render services in the same workspace via http://flaresolverr:8191.
+  # other Render services in the same workspace via http://flaresolverr-qrfy:8191.
+  #
+  # The -qrfy suffix is not decoration. Render appends one when the requested
+  # service name is already taken globally, and it becomes part of the private
+  # DNS name. `flaresolverr` alone does not resolve. The dashboard also reports
+  # this service's url as `flaresolverr-qrfy:10000`; 10000 is not the port to
+  # use, 8191 is — that is what the container listens on and what
+  # FLARESOLVERR_URL is set to (ENG-689).
   #
   # runtime=image + image.url pulls the official upstream build.
   #

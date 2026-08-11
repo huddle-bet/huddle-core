@@ -108,7 +108,7 @@ These are baked into the yaml; no action needed. Documented for reference.
 | `PORT` | huddle-live | `8081` |
 | `PORT` | flaresolverr | `8191` |
 | `BYPARR_MODE` | huddle-data, huddle-reconciler | `true` — routes HLTV `/stats` fetches through the Byparr container |
-| `FLARESOLVERR_URL` | huddle-data, huddle-reconciler, huddle-live | `http://flaresolverr:8191` (Render private DNS) |
+| `FLARESOLVERR_URL` | huddle-data, huddle-reconciler, huddle-live | `http://flaresolverr-qrfy:8191` (Render private DNS — the suffix is part of the name Render assigned, not optional) |
 
 **`FLARESOLVERR_URL` is required by huddle-live, not just huddle-data.** `huddle-live/src/cli.ts:160` gates the entire CS2 live scorebot on its presence — unset, huddle-live logs one warning and CS2 live tracking is off. CS2 is a launch sport, so this is a launch-blocking variable, not an optional one.
 
@@ -118,7 +118,7 @@ The mobile app ships through Expo, not Render or Vercel. Required env (see `hudd
 
 | Variable | Notes |
 |---|---|
-| `EXPO_PUBLIC_API_URL` | Public URL of huddle-api, e.g. `https://huddle-api.onrender.com` |
+| `EXPO_PUBLIC_API_URL` | Public URL of huddle-api — `https://huddle-api-7f9u.onrender.com`. **Not** `huddle-api.onrender.com`: that name was already taken and serves someone else's application. |
 | `EXPO_PUBLIC_SUPABASE_URL` | Supabase project URL |
 
 `EXPO_PUBLIC_*` values are inlined into the JS bundle at build time and are visible to anyone with the app. Never put a secret in one.
@@ -142,7 +142,7 @@ Notes:
 
 ## Verifying the deploy
 
-1. **huddle-api** — `GET https://huddle-api.onrender.com/health` returns 200 **and `status: "ok"`**. `status: "degraded"` with `live_fanout_disconnected` means the huddle-live fanout is down — REST works, live rooms are empty.
+1. **huddle-api** — `GET https://huddle-api-7f9u.onrender.com/health` returns 200 **and `status: "ok"`**. `status: "degraded"` with `live_fanout_disconnected` means the huddle-live fanout is down — REST works, live rooms are empty.
 2. **huddle-live** — Render logs show provider sockets connecting (Sportradar, HLTV polling scorebot via cycletls, etc.); `/health` returns 200 internally
 3. **huddle-odds** — Logs show per-league poll cycles with non-zero odds counts
 4. **huddle-data** — Logs show schedule discovery + stats ingest by sport
