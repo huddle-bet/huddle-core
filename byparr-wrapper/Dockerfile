@@ -60,6 +60,49 @@ RUN grep -q '        geoip=True,' /app/src/utils.py \
     && sed -i 's|        geoip=True,|        geoip=False,|' /app/src/utils.py \
     && grep -q '        geoip=False,' /app/src/utils.py
 
+# Serialise browser launches — one Camoufox at a time (ENG-700).
+#
+# Byparr's `get_camoufox` is a FastAPI dependency with `yield`, so it starts a whole new
+# Firefox on EVERY request. There is no pool, no semaphore and no limit in the image, and
+# `src/consts.py` exposes no knob to add one — LOG_LEVEL, VERSION, PROXY_*, HOST, PORT.
+#
+# Two clients call this service and their requests overlap: huddle-data's CS2 reference
+# cycle on /stats/teams/... and the demo fetcher on /matches/.... Two Firefoxes exceed the
+# 2 GiB the standard plan gives us, and the kernel kills the process.
+#
+# Measured 2026-08-11 from Render's events API, not from the container's logs:
+#
+#     server_failed, 2026-08-10 03:36 → 2026-08-11 18:48
+#       oomKilled {"memoryLimit": "2Gi"}   34
+#       nonZeroExit 137 (SIGKILL)           1
+#       total                              35
+#
+# 35 of 35. The logs show nothing before each death because SIGKILL leaves no chance to
+# write, which is exactly why this looked like an unexplained restart for two days.
+#
+# A larger plan would raise the number of concurrent browsers we survive without bounding
+# it; the same failure returns at the new ceiling. One at a time is a bound. Byparr's job
+# is to mint a cf_clearance cookie that cycletls then replays — that is not a throughput
+# problem, and a queued request beats a refused one. Today the OOM kills the in-flight
+# solve as well as the arriving one, so overlapping requests currently fail BOTH.
+#
+# The sed renames the original; serialise-browsers.py appends a replacement carrying the
+# same explicit signature. Two grep guards, before and after, so a rename upstream fails
+# the build loud rather than appending a wrapper that shadows nothing.
+COPY serialise-browsers.py /tmp/serialise-browsers.py
+RUN grep -q '^async def get_camoufox(' /app/src/utils.py \
+    && sed -i 's|^async def get_camoufox(|async def _hb_inner_get_camoufox(|' /app/src/utils.py \
+    && grep -q '^async def _hb_inner_get_camoufox(' /app/src/utils.py \
+    && ! grep -q '^async def get_camoufox(' /app/src/utils.py \
+    && cat /tmp/serialise-browsers.py >> /app/src/utils.py \
+    && rm /tmp/serialise-browsers.py \
+    && grep -q '_HB_BROWSER_SEM' /app/src/utils.py \
+    && /app/.venv/bin/python -c "import ast; ast.parse(open('/app/src/utils.py').read())"
+# `/app/.venv/bin/python`, not `python3` — there is no python on PATH in this image. The
+# venv symlinks to a uv-managed CPython under /home/ubuntu/.local/share/uv/python, and a
+# bare `python3` here exits 127, which reads as a failed guard rather than a missing
+# interpreter.
+
 # No interpreter relocation here, and that is deliberate. The /opt/uv-python move
 # added for 3.0.0 exists because 3.0.0 sets HOME=/tmp and Render mounts an
 # ephemeral /tmp over the image's, masking the CPython tree. 2.1.0 installs to
