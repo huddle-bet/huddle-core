@@ -389,8 +389,21 @@ services:
   #                          exactly when it will. Needs a non-production target (ENG-443).
   #   check:deep-link-drift  compares this repo against huddle-client on disk. A cron checks
   #                          out one repo, so it would exit 1 every run for the wrong reason.
-  #   check:types-fresh      exits 0 when DATABASE_URL is absent. ENG-526. Not until it fails
-  #                          loud the way the three scheduled below do.
+  #   check:types-fresh      still not scheduled, and the note that used to sit here named
+  #                          only half the reason. Yes, it exits 0 without DATABASE_URL. It
+  #                          also shells out to the `supabase` CLI, which is NOT an npm
+  #                          dependency — package.json carries @supabase/supabase-js, not the
+  #                          CLI — so `npm install` on this cron leaves it failing ENOENT
+  #                          whatever the credential does. Anyone acting on the old note alone
+  #                          would have fixed the exit code, scheduled it, and got a job that
+  #                          was red every day for an unrelated reason.
+  #
+  #                          Generation genuinely needs the CLI: Insert, Update, Relationships
+  #                          and enums are the generator's opinion, not something you can
+  #                          reconstruct from information_schema. Verification does not — it
+  #                          needs a connection, and `pg` is already a dependency. So the two
+  #                          split, and check:types-cover below is the half that can run
+  #                          unattended. ENG-526.
   #   check:probe-routes     static and single-repo. CI already gates it.
   - type: cron
     name: huddle-api-audit
@@ -400,16 +413,26 @@ services:
     repo: https://github.com/huddle-bet/huddle-api
     schedule: "40 13 * * *"
     buildCommand: npm install
-    # All three scripts already fail loud on a missing credential, in these words:
+    # All four scripts already fail loud on a missing credential, in these words:
     #   "This is a failure, not a skip — a check that silently does nothing reads as a pass."
-    # The guard is here anyway. It costs nothing, it names the two variables this job is
-    # useless without, and it means the loop shape is identical in both audit crons rather
-    # than depending on which scripts happen to guard themselves this week.
+    # The guard is here anyway. It costs nothing, it names the variables this job is useless
+    # without, and it means the loop shape is identical in both audit crons rather than
+    # depending on which scripts happen to guard themselves this week.
+    #
+    # DATABASE_URL joins the guard for check:types-cover, which needs a connection rather
+    # than the PostgREST pair the other three use.
+    #
+    # check:types-cover added 2026-08-11 (ENG-526). It asks whether the committed
+    # database.types.ts still describes the relations and columns the database actually has —
+    # the drift that went unnoticed for months because the only check for it exited 0 without
+    # a credential and was then removed from CI. Green on arrival at 123 relations and 1,424
+    # columns, so this job does not go red on its first run with it.
     startCommand: >-
       : "${SUPABASE_URL:?is not set — refusing to report a pass}" ;
       : "${SUPABASE_SERVICE_KEY:?is not set — refusing to report a pass}" ;
+      : "${DATABASE_URL:?is not set — refusing to report a pass}" ;
       rc=0 ;
-      for s in check:schema-drift check:row-cap check:surface ; do echo "── $s" ; npm run --silent "$s" || rc=1 ; done ;
+      for s in check:schema-drift check:row-cap check:surface check:types-cover ; do echo "── $s" ; npm run --silent "$s" || rc=1 ; done ;
       exit $rc
     envVars:
       - key: NODE_ENV
