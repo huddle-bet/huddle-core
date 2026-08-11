@@ -221,11 +221,63 @@ services:
   # job would have failed within the hour.
   #
   # A failing cron is the alert — Render notifies on non-zero exit, so this needs
-  # no new alerting stack. That is also why it runs `check:freshness` and not
-  # `check:output`: three content assertions fail today with issues open
-  # (ENG-460, ENG-420), and a job that is red from its first run is one nobody
-  # reads. `--gate=freshness` still prints those failures, it just does not alert
-  # on them. Widen the gate as they close.
+  # no new alerting stack. Measured 2026-08-11 rather than assumed, because this
+  # line has been read both ways and reverted on the strength of it (ENG-666):
+  #
+  #   /v1/notification-settings/owners/tea-d70n6…   emailEnabled true,
+  #                                                 notificationsToSend "failure"
+  #   this service                                  notifyOnFail "default" — inherits
+  #   render.com/docs/notifications                 "A cron job execution fails" is
+  #                                                 a failure-level event
+  #   /v1/owners/tea-d70n6…/members                 Skyler@huddle.bet, cam@huddle.bet
+  #   /v1/webhooks                                  [] — no webhook, and Slack is off
+  #
+  # So email to those two addresses is the entire alerting surface, and it delivers.
+  #
+  # Until this afternoon it was delivering nothing readable. This job ended
+  # `unsuccessful` on 305 of its 466 runs from 2026-08-01 — 65%, and 84 of 96 on
+  # 2026-08-10 — and almost all of it was one chronic failure: `freshness:feeds`, with
+  # cs2/leaders past its ceiling while its loop kept turning, which is this file's own
+  # signature for a feed that runs and never succeeds. ENG-667's duplicate CS2 teams
+  # went red inside that window and were found by accident a day later.
+  #
+  # ENG-657 fixed the cause in huddle-data#110 — the CS2 reference cycle solved once
+  # per request rather than once per cycle, and was tripping over solver restarts that
+  # its own request density caused. Measured 14:30 on 2026-08-11: `freshness:feeds`
+  # green across 48 feed/league pairs, 76/78 assertions holding.
+  #
+  # What is left is the entire point of this cron. The one gated failure now is:
+  #
+  #     ✗ teams:duplicates  1 book-minted duplicate team(s) on the live board:
+  #                         cs2 "Team Falcons" vs K27 2026-08-12
+  #
+  # That is ENG-666's done-when, unprompted. The assertion this job exists for is the
+  # only thing making it red, on a channel finally quiet enough to carry it. Nobody had
+  # to mint a test duplicate — the board produced one.
+  #
+  # It runs `check:gated`, not `check:output`: assertions fail today with issues open
+  # (ENG-671 joinable:nfl, nulls:cs2_player_features), and a job that is red from its
+  # first run is one nobody reads. The gate still prints those failures, it just does
+  # not alert on them. Widen it as they close.
+  #
+  # db-security and dead-letters run here rather than on a daily cron of their own.
+  # They are light queries against the database this job already has open, and folding
+  # them in costs no notification at all — same service, same run, one email per failed
+  # run either way. A separate service would have created a second failing email stream
+  # that does not exist today, which is the opposite of what this issue is about. If
+  # they are red they should be red on every run. Both green on 2026-08-11: 47/47 views
+  # carry security_invoker, 76/76 tables have RLS, actionable dead-letter backlog 0.
+  #
+  # Read dead-letters with one eye open. It reports "0 of 0 unresolved" — the table is
+  # empty, not merely drained of retryables, against a header describing a ~1,150-row
+  # permanent floor. A check that cannot currently fail is not a passing check. This is
+  # the job that will notice it refilling, and that it reads 0 today is recorded here so
+  # the first non-zero run is read as news.
+  #
+  # Not folded in, each for a reason rather than an oversight:
+  #   check:output --self-test    asserts the assertions. This repo's own code, so CI.
+  #   check:projection-quality    never run against production from this workspace. Add
+  #                               it once someone has seen it pass, not before.
   #
   # Free plan: one query every 15 minutes, no persistent process.
   #
@@ -250,11 +302,14 @@ services:
     # the whole blueprint invalid — `render blueprints validate` rejects it with
     # "free not a valid plan for service type cron".
     #
-    # That is why huddle-verify does not exist. It was not an un-synced blueprint waiting
-    # on someone to press a button; it could never have been created. Verified 2026-08-01
-    # against the Render API: 0 services of type=cron_job, 0 matching the name, while ten
-    # other services from this same file exist — an invalid entry blocks itself, not the
-    # file.
+    # That is why huddle-verify did not exist before 2026-08-01. It was not an un-synced
+    # blueprint waiting on someone to press a button; it could never have been created —
+    # 0 services of type=cron_job that day, while ten other services from this same file
+    # existed. An invalid entry blocks itself, not the file.
+    #
+    # It exists now, and the note above said otherwise for ten days after it stopped being
+    # true. crn-d9n7kh5aeets73bc86tg, created 2026-08-01T22:59Z, 466 runs through
+    # 2026-08-11T13:15Z.
     plan: starter
     repo: https://github.com/huddle-bet/huddle-engine
     schedule: "*/15 * * * *"
@@ -270,13 +325,111 @@ services:
     # Both are green today, so widening the gate does not make this cron red on its first
     # run. That matters — a permanently red alert is one nobody reads, which is how the
     # old 24h freshness ceiling slept through a 7.5h outage.
-    startCommand: npm run check:gated
+    # The `${VAR:?}` guard is not decoration. check:gated exits 2 without a credential,
+    # but the two folded in after it do this instead:
+    #
+    #     if (!url) { console.log('[db-security] DATABASE_URL not set — skipping.'); process.exit(0); }
+    #
+    # Measured: this same loop with the guard removed and DATABASE_URL unset prints two
+    # green ticks and exits 0. That is ENG-526 rebuilt — a job reporting success forever
+    # while checking nothing, which is worse than no job and is the exact failure ENG-666
+    # exists to stop. The guard exits 127 before npm starts and names the variable.
+    #
+    # A loop rather than `&&`, because `&&` stops at the first failure and this job's
+    # whole value is reporting everything it found in the run a person is looking at.
+    startCommand: >-
+      : "${DATABASE_URL:?is not set — refusing to report a pass}" ;
+      rc=0 ;
+      for s in check:gated check:db-security check:dead-letters ; do echo "── $s" ; npm run --silent "$s" || rc=1 ; done ;
+      exit $rc
     envVars:
       - key: NODE_ENV
         value: production
       - fromGroup: huddle-shared
       # - key: INGEST_PAUSED_UNTIL
       #   value: 2026-08-02T18:00:00Z   # uncomment + set while ingestion is suspended
+
+  # ── huddle-api-audit (Cron — API invariants, daily) ──────
+  # A second service only because the repo boundary forces one. A Render cron checks out
+  # one repo, and these three scripts live in huddle-api, so they cannot run from the
+  # huddle-engine service above however much one would prefer a single job.
+  #
+  # Daily rather than */15, and here the cadence argument does hold: this is a new email
+  # stream either way, so its rate is a real choice. All three assert invariants whose
+  # answer cannot change without a commit, a migration, or a slow drift in row counts —
+  # none of which move on a fifteen-minute clock. Daily costs at most 24h of latency on
+  # a defect that needs a human commit to clear.
+  #
+  # Green against production 2026-08-11, all three:
+  #   schema-drift   128 select sites and 329 filter/order columns all resolve
+  #   row-cap        30 unbounded sites, none over the 1000-row cap; 10 baselined, all live
+  #   surface        43 probes, every one returning usable rows; 7 baselined, 1 unrunnable
+  #
+  # row-cap and surface both go red with no commit anywhere, which is the case for a
+  # scheduler rather than CI. row-cap compares code against live row counts, and `events`
+  # at 11,706 and `player_game_stats` at 230,780 say which way those move — the next
+  # relation to cross 1,000 fails this job on its own. surface re-seeds from the live board
+  # every run and asserts the rows are actually usable, which is the gap ENG-669 names.
+  #
+  # schema-drift is the opposite shape and still belongs here: both its inputs are
+  # artefacts, but one of them is a migration in the supabase repo that this repo's CI
+  # never sees.
+  #
+  # surface is the flappiest of the three, and it was red this morning — GET
+  # /api/v1/game-log/h2h returned nothing until ENG-697 landed at 08:28 and fixed the seed.
+  # It is in because it is green on the current master, not because it is quiet. When it
+  # goes red for a reason that is the board rather than the code, the answer is a
+  # .surface-baseline.json entry naming a measurement — the mechanism the check already
+  # has — and not dropping it from this line.
+  #
+  # Not scheduled, each with a reason:
+  #   check:rls              creates three real auth.users accounts and updates profiles and
+  #                          profile_reputation on every run, cleaning up in afterAll. A run
+  #                          that dies mid-suite leaves that in production, and unattended is
+  #                          exactly when it will. Needs a non-production target (ENG-443).
+  #   check:deep-link-drift  compares this repo against huddle-client on disk. A cron checks
+  #                          out one repo, so it would exit 1 every run for the wrong reason.
+  #   check:types-fresh      exits 0 when DATABASE_URL is absent. ENG-526. Not until it fails
+  #                          loud the way the three scheduled below do.
+  #   check:probe-routes     static and single-repo. CI already gates it.
+  - type: cron
+    name: huddle-api-audit
+    runtime: node
+    region: oregon
+    plan: starter
+    repo: https://github.com/huddle-bet/huddle-api
+    schedule: "40 13 * * *"
+    buildCommand: npm install
+    # All three scripts already fail loud on a missing credential, in these words:
+    #   "This is a failure, not a skip — a check that silently does nothing reads as a pass."
+    # The guard is here anyway. It costs nothing, it names the two variables this job is
+    # useless without, and it means the loop shape is identical in both audit crons rather
+    # than depending on which scripts happen to guard themselves this week.
+    startCommand: >-
+      : "${SUPABASE_URL:?is not set — refusing to report a pass}" ;
+      : "${SUPABASE_SERVICE_KEY:?is not set — refusing to report a pass}" ;
+      rc=0 ;
+      for s in check:schema-drift check:row-cap check:surface ; do echo "── $s" ; npm run --silent "$s" || rc=1 ; done ;
+      exit $rc
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - fromGroup: huddle-shared
+
+  # ── huddle-data has no audit cron, and that is a decision ─
+  # `check:conflict-targets` earns one on every measure that matters: 0.48s, green at
+  # 25/25 on 2026-08-11, and it fails loud twice over — exit 2 on a missing DATABASE_URL
+  # and exit 2 again if its regex parses zero targets, so it cannot pass vacuously. It
+  # guards a defect that presents as `0 written`, indistinguishable from a healthy quiet
+  # batch, and that has cost two total write failures in a week.
+  #
+  # The obstacle is the repo, not the check. huddle-data ships as Docker with playwright,
+  # cycletls and a Go replay parser, so a cron there pays a full image build to run a
+  # half-second query. Its two inputs are src/db/writer.ts and pg_index — one commit in
+  # huddle-data, one migration in supabase — so a migration-triggered CI job with a
+  # database is the better home than a timer. Same for check:orphans and check:unresolved,
+  # which additionally exit 0 on a missing DATABASE_URL and would need the guard above.
+  # Left open on ENG-666 rather than solved badly here.
 
   # ── huddle-live (Web Service — exposes fanout WS) ─────────
   # Flipped from worker → web so huddle-api can open an internal WS to
