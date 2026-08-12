@@ -60,6 +60,46 @@ RUN grep -q '        geoip=True,' /app/src/utils.py \
     && sed -i 's|        geoip=True,|        geoip=False,|' /app/src/utils.py \
     && grep -q '        geoip=False,' /app/src/utils.py
 
+# Make Byparr's own timeout handler reachable (ENG-748).
+#
+# `endpoints.py` already returns the right thing when a solve runs out of time:
+#
+#     except TimeoutError as e:
+#         logger.error("Timed out while solving the challenge")
+#         raise HTTPException(status_code=408, detail="Timed out while solving the challenge")
+#
+# That branch never runs. `except TimeoutError` binds the *builtin*, and the only timeouts
+# that actually fire inside the try are Playwright's — `page.goto`, two
+# `wait_for_load_state` calls — which raise `playwright._impl._errors.TimeoutError`.
+# Verified against the pinned digest:
+#
+#     MRO: TimeoutError -> Error -> Exception -> BaseException -> object
+#     issubclass(playwright TimeoutError, builtins.TimeoutError) == False
+#
+# So the exception escapes the handler, FastAPI turns it into an unhandled ASGI exception,
+# and the caller gets a **500 with a traceback** instead of a 408. Measured 2026-08-12:
+# 19 such 500s in 16 minutes, every terminal exception a Playwright TimeoutError.
+#
+# The cost is not the status code. A 500 says "this service is broken" and a 408 says "this
+# page did not finish in time" — so a routine unsolved challenge is indistinguishable from a
+# dead solver, and every caller has to treat both as a transport fault. That ambiguity cost
+# real diagnosis time twice in one day: ENG-742 had to infer solve health from downstream
+# write counts, and these 500s were first read as a cold-start spell after a restart that
+# had happened an hour earlier.
+#
+# Only the builtin is left in place for `asyncio.wait_for` around the captcha solve, which
+# genuinely does raise it — so both are caught rather than one swapped for the other.
+#
+# Guarded both ways like the geoip patch: if the pin moves to an image that rewords this
+# handler, the build fails loud rather than silently shipping the unreachable branch again.
+RUN grep -q '^from playwright_captcha import CaptchaType$' /app/src/endpoints.py \
+    && sed -i 's|^from playwright_captcha import CaptchaType$|from playwright.async_api import TimeoutError as PlaywrightTimeoutError\nfrom playwright_captcha import CaptchaType|' /app/src/endpoints.py \
+    && grep -q '^    except TimeoutError as e:$' /app/src/endpoints.py \
+    && sed -i 's|^    except TimeoutError as e:$|    except (TimeoutError, PlaywrightTimeoutError) as e:|' /app/src/endpoints.py \
+    && grep -q '^    except (TimeoutError, PlaywrightTimeoutError) as e:$' /app/src/endpoints.py \
+    && grep -q '^from playwright.async_api import TimeoutError as PlaywrightTimeoutError$' /app/src/endpoints.py \
+    && /app/.venv/bin/python -c "import ast,sys; ast.parse(open('/app/src/endpoints.py').read())"
+
 # Serialise browser launches — one Camoufox at a time (ENG-700).
 #
 # Byparr's `get_camoufox` is a FastAPI dependency with `yield`, so it starts a whole new
