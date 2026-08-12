@@ -57,3 +57,4 @@ export * from './betting/odds.js';
 export * from './betting/calculators.js';
 export * from './betting/win-probability.js';
 export * from './betting/parlay-correlation.js';
+export * from './betting/parlay-pricing.js';
