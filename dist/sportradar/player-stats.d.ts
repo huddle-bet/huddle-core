@@ -36,8 +36,30 @@ export type SummaryStatsSport = 'nba' | 'nhl' | 'mlb';
 export type PlayerStatMap = Record<string, string | number>;
 /** NBA: `player.statistics` is a flat object of totals. */
 export declare function nbaPlayerStats(s: any): PlayerStatMap;
-/** NHL: totals live under `player.statistics.total`. */
-export declare function nhlPlayerStats(total: any): PlayerStatMap;
+/**
+ * The two player-level groups that sit **beside** `statistics`, not inside it.
+ *
+ * This is the whole of ENG-576. `nhlPlayerStats` took `statistics.total` and nothing
+ * else, so a goalie was written as fourteen skater zeros: 68,522 NHL rows, not one
+ * carrying a save. The saves were always in the payload we already fetch — one key up
+ * the tree. `time_on_ice` was lost the same way, which is why the NHL backtest could
+ * not gate on minutes played.
+ */
+export interface NhlPlayerGroups {
+    /** `player.goaltending` — absent on skaters. */
+    goaltending?: any;
+    /** `player.time_on_ice` — present on everyone who took a shift. */
+    timeOnIce?: any;
+}
+/**
+ * NHL: skater totals live under `player.statistics.total`; goaltending and time on ice
+ * are siblings of `statistics` on the player.
+ *
+ * `groups` is optional so a caller that has only the statistics object still gets the
+ * skater line it always got. Callers with the player should pass it — a goalie without
+ * it is a row of zeros that reads as a real performance.
+ */
+export declare function nhlPlayerStats(total: any, groups?: NhlPlayerGroups): PlayerStatMap;
 /** MLB batting line, from `player.statistics.hitting.overall`. */
 export declare function mlbBatterStats(o: any): PlayerStatMap;
 /** MLB pitching line, from `player.statistics.pitching.overall`. */
@@ -50,7 +72,11 @@ export declare function mlbPlayerStats(statistics: any): PlayerStatMap;
  * Returns `null` when there is nothing to flatten, so a caller can distinguish "this
  * player has no stats" from "this player has all-zero stats" — writing a row of zeros
  * for someone who never appeared is its own kind of wrong data.
+ *
+ * `groups` carries the NHL player-level blocks that sit beside `statistics`. Optional,
+ * so an existing caller keeps working; without it an NHL goalie is fourteen zeros
+ * (ENG-576).
  */
-export declare function sportradarPlayerStats(sport: SummaryStatsSport, statistics: any): PlayerStatMap | null;
+export declare function sportradarPlayerStats(sport: SummaryStatsSport, statistics: any, groups?: NhlPlayerGroups): PlayerStatMap | null;
 export declare function isSummaryStatsSport(sport: string): sport is SummaryStatsSport;
 //# sourceMappingURL=player-stats.d.ts.map

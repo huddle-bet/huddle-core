@@ -62,9 +62,32 @@ export function nbaPlayerStats(s: any): PlayerStatMap {
   };
 }
 
-/** NHL: totals live under `player.statistics.total`. */
-export function nhlPlayerStats(total: any): PlayerStatMap {
-  return {
+/**
+ * The two player-level groups that sit **beside** `statistics`, not inside it.
+ *
+ * This is the whole of ENG-576. `nhlPlayerStats` took `statistics.total` and nothing
+ * else, so a goalie was written as fourteen skater zeros: 68,522 NHL rows, not one
+ * carrying a save. The saves were always in the payload we already fetch — one key up
+ * the tree. `time_on_ice` was lost the same way, which is why the NHL backtest could
+ * not gate on minutes played.
+ */
+export interface NhlPlayerGroups {
+  /** `player.goaltending` — absent on skaters. */
+  goaltending?: any;
+  /** `player.time_on_ice` — present on everyone who took a shift. */
+  timeOnIce?: any;
+}
+
+/**
+ * NHL: skater totals live under `player.statistics.total`; goaltending and time on ice
+ * are siblings of `statistics` on the player.
+ *
+ * `groups` is optional so a caller that has only the statistics object still gets the
+ * skater line it always got. Callers with the player should pass it — a goalie without
+ * it is a row of zeros that reads as a real performance.
+ */
+export function nhlPlayerStats(total: any, groups?: NhlPlayerGroups): PlayerStatMap {
+  const stats: PlayerStatMap = {
     G: total.goals ?? 0,
     A: total.assists ?? 0,
     SOG: total.shots ?? 0,
@@ -80,6 +103,25 @@ export function nhlPlayerStats(total: any): PlayerStatMap {
     FL: total.faceoffs_lost ?? 0,
     'FO%': total.faceoff_win_pct ?? 0,
   };
+
+  // `"18:44"`, the same mm:ss the ESPN feed used, so existing readers parse it unchanged.
+  const toi = groups?.timeOnIce?.total;
+  if (typeof toi === 'string' && toi.length > 0) {
+    stats.TOI = toi;
+    stats.SHFT = groups?.timeOnIce?.shifts ?? 0;
+  }
+
+  // Only on a player who actually tended goal. A skater carrying SV: 0 would settle a
+  // saves prop at zero instead of declining to settle it, which is worse than absent.
+  const g = groups?.goaltending?.total;
+  if (g) {
+    stats.SV = g.saves ?? 0;
+    stats.GA = g.goals_against ?? 0;
+    stats.SA = g.shots_against ?? 0;
+    stats['SV%'] = g.saves_pct ?? 0;
+  }
+
+  return stats;
 }
 
 /** MLB batting line, from `player.statistics.hitting.overall`. */
@@ -139,17 +181,22 @@ export function mlbPlayerStats(statistics: any): PlayerStatMap {
  * Returns `null` when there is nothing to flatten, so a caller can distinguish "this
  * player has no stats" from "this player has all-zero stats" — writing a row of zeros
  * for someone who never appeared is its own kind of wrong data.
+ *
+ * `groups` carries the NHL player-level blocks that sit beside `statistics`. Optional,
+ * so an existing caller keeps working; without it an NHL goalie is fourteen zeros
+ * (ENG-576).
  */
 export function sportradarPlayerStats(
   sport: SummaryStatsSport,
   statistics: any,
+  groups?: NhlPlayerGroups,
 ): PlayerStatMap | null {
   if (!statistics || typeof statistics !== 'object') return null;
   switch (sport) {
     case 'nba':
       return nbaPlayerStats(statistics);
     case 'nhl':
-      return statistics.total ? nhlPlayerStats(statistics.total) : null;
+      return statistics.total ? nhlPlayerStats(statistics.total, groups) : null;
     case 'mlb': {
       const stats = mlbPlayerStats(statistics);
       return Object.keys(stats).length > 0 ? stats : null;

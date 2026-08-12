@@ -80,6 +80,68 @@ describe('missing values become zero, not undefined', () => {
         expect(flat.G).toBe(0);
     });
 });
+/**
+ * ENG-576 — an NHL goalie was written as fourteen skater zeros.
+ *
+ * Every one of 68,522 NHL rows in `player_game_stats` carried the same skater keys and
+ * no `SV`, `GA`, `SA` or `TOI`. Connor Hellebuyck's rows read `SOG 0, G 0`, which is a
+ * true statement about his shooting and says nothing about the game he played.
+ *
+ * The cause was one key up the tree: `goaltending` and `time_on_ice` are siblings of
+ * `statistics` on the player object, and this took `statistics.total` alone. The values
+ * below are verbatim from huddle-data's committed `nhl-game-summary.json` — Dustin
+ * Tokarski, 21 saves on 24 shots, 57:43 — so this fails against any payload shape we
+ * have not actually seen.
+ */
+describe('nhl goaltending and time on ice', () => {
+    const TOKARSKI_TOTAL = {
+        goals: 0, assists: 0, shots: 0, missed_shots: 0, blocked_shots: 0, hits: 0,
+        takeaways: 0, giveaways: 0, plus_minus: 0, penalty_minutes: 0, penalties: 0,
+        faceoffs_won: 0, faceoffs_lost: 0, faceoff_win_pct: 0,
+    };
+    const TOKARSKI_GROUPS = {
+        goaltending: { total: { shots_against: 24, goals_against: 3, saves: 21, credit: 'loss', saves_pct: 0.875 } },
+        timeOnIce: { shifts: 5, total: '57:43', avg: '11:32', evenstrength: '49:43' },
+    };
+    // A real skater from the same fixture: time on ice, no goaltending block.
+    const DAHLIN_GROUPS = {
+        timeOnIce: { shifts: 25, total: '21:23', avg: '00:51', evenstrength: '19:30' },
+    };
+    it('carries the save line the props market prices', () => {
+        const flat = nhlPlayerStats(TOKARSKI_TOTAL, TOKARSKI_GROUPS);
+        expect(flat.SV).toBe(21);
+        expect(flat.SA).toBe(24);
+        expect(flat.GA).toBe(3);
+        expect(flat['SV%']).toBe(0.875);
+    });
+    it('carries time on ice for a skater, in the mm:ss the old feed used', () => {
+        const flat = nhlPlayerStats({ ...TOKARSKI_TOTAL, goals: 1 }, DAHLIN_GROUPS);
+        expect(flat.TOI).toBe('21:23');
+        expect(flat.SHFT).toBe(25);
+    });
+    it('gives a skater no save keys at all', () => {
+        // `SV: 0` on a skater would settle a saves prop at zero rather than decline to
+        // settle it, which is worse than the key being absent.
+        const flat = nhlPlayerStats(TOKARSKI_TOTAL, DAHLIN_GROUPS);
+        expect(flat).not.toHaveProperty('SV');
+        expect(flat).not.toHaveProperty('SA');
+        expect(flat).not.toHaveProperty('GA');
+    });
+    it('leaves the skater line byte-identical when no groups are passed', () => {
+        // The two existing callers pass nothing until they are updated, and neither may
+        // change shape in the meantime — that would put two vocabularies in one table again.
+        expect(nhlPlayerStats(TOKARSKI_TOTAL)).toEqual(nhlPlayerStats(TOKARSKI_TOTAL, {}));
+        expect(Object.keys(nhlPlayerStats(TOKARSKI_TOTAL))).toHaveLength(14);
+    });
+    it('reaches the goalie through sportradarPlayerStats too', () => {
+        const flat = sportradarPlayerStats('nhl', { total: TOKARSKI_TOTAL }, TOKARSKI_GROUPS);
+        expect(flat.SV).toBe(21);
+        expect(flat.TOI).toBe('57:43');
+    });
+    it('still returns null for a player who never appeared, groups or not', () => {
+        expect(sportradarPlayerStats('nhl', {}, TOKARSKI_GROUPS)).toBeNull();
+    });
+});
 describe('isSummaryStatsSport', () => {
     it('accepts the three sports with a summary feed', () => {
         expect(['nba', 'nhl', 'mlb'].every(isSummaryStatsSport)).toBe(true);
