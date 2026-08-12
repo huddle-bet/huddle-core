@@ -41,4 +41,6 @@ export * from './proxy/pool.js';
 // payout-tier word in the price column and are silently sized as -110 (ENG-601).
 export * from './betting/odds.js';
 export * from './betting/calculators.js';
+export * from './betting/win-probability.js';
+export * from './betting/parlay-correlation.js';
 //# sourceMappingURL=index.js.map

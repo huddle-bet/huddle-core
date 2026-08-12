@@ -17,4 +17,6 @@ export * from './reducers/index.js';
 export * from './proxy/pool.js';
 export * from './betting/odds.js';
 export * from './betting/calculators.js';
+export * from './betting/win-probability.js';
+export * from './betting/parlay-correlation.js';
 //# sourceMappingURL=index.d.ts.map
