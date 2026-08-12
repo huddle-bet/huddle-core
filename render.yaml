@@ -571,6 +571,18 @@ services:
     repo: https://github.com/huddle-bet/huddle-core
     dockerfilePath: ./byparr-wrapper/Dockerfile
     dockerContext: ./byparr-wrapper
+    # ENG-745. Without a filter, EVERY huddle-core merge rebuilt and restarted
+    # this service — two of the three restarts on 2026-08-11/12 came from merges
+    # that touched nothing solver-related, and each restart drops the warm
+    # browser plus any cf-session state, mid-scrape. Scope rebuilds to the
+    # wrapper AND this blueprint: render.yaml must stay in the list, because a
+    # filter of only byparr-wrapper/** turns a genuine change to this service's
+    # own stanza (plan bump, env var) into a silently-stale deploy — the
+    # opposite failure of the one being fixed.
+    buildFilter:
+      paths:
+        - byparr-wrapper/**
+        - render.yaml
     envVars:
       - key: PORT
         value: "8191"
