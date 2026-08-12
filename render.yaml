@@ -337,15 +337,36 @@ services:
     #
     # A loop rather than `&&`, because `&&` stops at the first failure and this job's
     # whole value is reporting everything it found in the run a person is looking at.
+    #
+    # check:health gets no `${VAR:?}` guard and does not need one — it exits 2 when
+    # HEALTH_API_URL or HEALTH_LIVE_URL is unset, which is the behaviour the guard above
+    # exists to compensate for in the two that exit 0 instead. Adding a guard would only
+    # move the same refusal earlier and cost the run its other three checks.
+    #
+    # It is the first entry here that reads no database. Until it landed, every degraded
+    # field the two web services publish was written to nobody: `healthCheckPath` reads
+    # the status code, and both services return 200 while degraded on purpose, because
+    # Render cycles a service on a failing check and a restart fixes neither a rotated
+    # Sportradar key nor a disconnected fanout (ENG-264).
     startCommand: >-
       : "${DATABASE_URL:?is not set — refusing to report a pass}" ;
       rc=0 ;
-      for s in check:gated check:db-security check:dead-letters ; do echo "── $s" ; npm run --silent "$s" || rc=1 ; done ;
+      for s in check:gated check:db-security check:dead-letters check:health ; do echo "── $s" ; npm run --silent "$s" || rc=1 ; done ;
       exit $rc
     envVars:
       - key: NODE_ENV
         value: production
       - fromGroup: huddle-shared
+      # Public hostnames, and they carry Render's collision suffix. The unsuffixed names
+      # are NOT ours — `huddle-api.onrender.com` is a live third-party Express app that
+      # answers 404, which is why Render assigned us `-7f9u` (ENG-689). Not the private
+      # `http://huddle-live:8081` either: whether a cron in this region can reach private
+      # DNS was never verified, and the public URL moots the question while exercising the
+      # edge a client actually hits rather than only the process.
+      - key: HEALTH_API_URL
+        value: https://huddle-api-7f9u.onrender.com/health
+      - key: HEALTH_LIVE_URL
+        value: https://huddle-live-fyo6.onrender.com/health
       # - key: INGEST_PAUSED_UNTIL
       #   value: 2026-08-02T18:00:00Z   # uncomment + set while ingestion is suspended
 
