@@ -16,6 +16,48 @@ describe('canonicalEventId', () => {
     );
   });
 
+  /*
+    ENG-769. Sorting the team ids discards home/away and the date is one-day granular, so
+    `(sport, date, pair)` cannot separate an MLB doubleheader or an NHL home-and-home
+    played on one date. 30 canonical ids covered two real fixtures each when measured
+    2026-08-13.
+
+    The load-bearing property is the FIRST test below: omitting `sequence` must reproduce
+    the previous id byte for byte. That is what lets this land without migrating a single
+    existing row — every id in the database today is a first meeting.
+  */
+  it('is unchanged when sequence is omitted — no existing id may move', () => {
+    expect(canonicalEventId(baseKey)).toBe(
+      'nba:event:2026-03-17:nba:team:heat:nba:team:hornets',
+    );
+  });
+
+  it('treats sequence 1 as the same fixture as no sequence at all', () => {
+    expect(canonicalEventId({ ...baseKey, sequence: 1 })).toBe(canonicalEventId(baseKey));
+  });
+
+  it('separates the second meeting of the same pair on the same date', () => {
+    const game1 = canonicalEventId(baseKey);
+    const game2 = canonicalEventId({ ...baseKey, sequence: 2 });
+    expect(game2).toBe(`${game1}:g2`);
+    expect(game2).not.toBe(game1);
+  });
+
+  it('separates a home-and-home, which sorting would otherwise hide', () => {
+    // Same pair, same date, home and away swapped — the sort makes these identical.
+    const away = canonicalEventId({ ...baseKey, teamIdA: baseKey.teamIdB, teamIdB: baseKey.teamIdA });
+    expect(away).toBe(canonicalEventId(baseKey));
+    // ...so the second fixture must be numbered rather than relying on team order.
+    expect(canonicalEventId({ ...baseKey, teamIdA: baseKey.teamIdB, teamIdB: baseKey.teamIdA, sequence: 2 }))
+      .not.toBe(away);
+  });
+
+  it('rejects a sequence that is not a positive integer, rather than minting a dead id', () => {
+    for (const bad of [0, -1, 1.5, NaN]) {
+      expect(() => canonicalEventId({ ...baseKey, sequence: bad })).toThrow(/positive integer/);
+    }
+  });
+
   it('is deterministic across calls', () => {
     expect(canonicalEventId(baseKey)).toBe(canonicalEventId(baseKey));
   });
