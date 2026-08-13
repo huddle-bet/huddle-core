@@ -77,4 +77,27 @@ export interface CanonicalEventKey {
   teamIdA: string;
   /** Canonical team ID for team B (resolved via huddle-core TeamRegistry). */
   teamIdB: string;
+  /**
+   * Which meeting of these two teams on this date — 1 (or omitted) for the only or first
+   * game, 2 for the second, and so on.
+   *
+   * The identity is `(sport, Eastern date, sorted team pair)`, which cannot separate two
+   * fixtures that share all three. Two real cases do:
+   *
+   *   - an **MLB doubleheader** — same teams, same date, same home team
+   *   - an **NHL home-and-home** resolved on one date — same teams, home and away swapped,
+   *     and the team ids are sorted so the swap is invisible
+   *
+   * Measured 2026-08-13: 30 canonical ids each covered two real fixtures (mlb 23 + 1,
+   * nhl 1 + 5). Every colliding pair differs by start time, hours apart.
+   *
+   * **Omitting this reproduces the previous id exactly**, so no existing id moves and
+   * nothing needs migrating. Only a second-or-later meeting gets a new form.
+   *
+   * The caller supplies it because deciding it needs knowledge of the *other* fixtures on
+   * that date, and this function is pure by design — it takes no database. A writer that
+   * has the day's schedule can order same-pair fixtures by start time and number them;
+   * one that cannot should omit it and accept the collision rather than guess.
+   */
+  sequence?: number;
 }

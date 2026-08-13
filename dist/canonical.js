@@ -47,7 +47,27 @@ export function canonicalEventId(key) {
     }
     const dateStr = toEasternDate(key.startTime);
     const [a, b] = [key.teamIdA, key.teamIdB].sort();
-    return `${key.sport}:event:${dateStr}:${a}:${b}`;
+    const base = `${key.sport}:event:${dateStr}:${a}:${b}`;
+    // A second meeting of the same pair on the same date gets a suffix; the first does not.
+    //
+    // Sorting the team ids discards home/away, and the date has one-day granularity, so
+    // `(sport, date, pair)` cannot separate an MLB doubleheader or an NHL home-and-home
+    // played on one date. Both exist: 30 ids covered two real fixtures each when measured
+    // 2026-08-13.
+    //
+    // Suffixing only the second-and-later meeting is what makes this safe to land without a
+    // migration — every id in the database today is a first meeting and keeps its exact
+    // current value. `sequence` of 1 or undefined must therefore produce a byte-identical
+    // string to the pre-change function, and the tests assert that rather than assuming it.
+    //
+    // Guarded rather than trusted: a non-integer or sub-1 sequence is a caller bug, and
+    // silently coercing it would mint an id that looks right and joins to nothing.
+    if (key.sequence === undefined || key.sequence === 1)
+        return base;
+    if (!Number.isInteger(key.sequence) || key.sequence < 1) {
+        throw new Error(`canonicalEventId: sequence must be a positive integer — got ${String(key.sequence)}`);
+    }
+    return `${base}:g${key.sequence}`;
 }
 /** Convert an ISO timestamp to a YYYY-MM-DD date string in US Eastern time. */
 export function toEasternDate(isoTime) {
