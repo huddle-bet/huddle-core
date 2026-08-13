@@ -87,6 +87,51 @@ services:
         value: "8080"
       - fromGroup: huddle-shared
 
+  # ── huddle-notify (Background Worker) — ENG-429 ───────────
+  # The producer and delivery loops. Same repo and same entrypoint as
+  # huddle-api above; `--mode=notify` takes the branch in server.ts that
+  # starts startProducerLoop() + startDeliveryLoop() and binds no port.
+  #
+  # Until this existed, that code was deployed and never executed: the web
+  # service runs the HTTP branch, and nothing else runs huddle-api at all.
+  # Two finished issues sat inert behind it — ENG-285 (follow-request
+  # notifications) and ENG-287 (preference re-check at delivery) — and the
+  # queue proved it, holding messages with read_ct = 0 for four days.
+  #
+  # Why a second service rather than loops inside the web process: delivery
+  # is bursty and CPU-spiky, the web service is on the free plan and gets
+  # spun down when idle, and a spun-down web process delivers nothing. A
+  # worker also restarts independently, so a wedged delivery loop cannot
+  # take the API down with it.
+  #
+  # `plan: starter` — Render has no free worker tier, so this is the
+  # cheapest option and the first paid line item for notifications
+  # (ENG-683 tracks huddle-api's own plan separately). Sized deliberately
+  # small: both loops are IO-bound, poll on 2s/interval timers, and bound
+  # every batch (SCAN_LIMIT 200, BATCH per drain). Revisit only if
+  # v_notification_queue_health shows depth growing between drains.
+  #
+  # First-pass safety, measured 2026-08-13 before this landed: every
+  # producer scans a bounded recent window (game events 5 min, follows and
+  # settled picks 60 min), not all history — and at that moment the windows
+  # held 0 critical plays, 0 approved follows and 0 settled picks, with
+  # tracked_entities empty so the game-event producer had no audience at
+  # all. The "backlog of notifications for every historical row" this issue
+  # worried about cannot happen: the windows are what prevent it, and the
+  # first run had nothing to emit regardless.
+  - type: worker
+    name: huddle-notify
+    runtime: node
+    region: oregon
+    plan: starter
+    repo: https://github.com/huddle-bet/huddle-api
+    buildCommand: npm install
+    startCommand: node --import tsx src/server.ts --mode=notify
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - fromGroup: huddle-shared
+
   # ── huddle-odds (Background Worker — Docker) ─────────────
   # Consolidated from huddle-odds-sports + huddle-odds-esports — per-league
   # per-book pollers run independently on their own timers (see poller.ts),
