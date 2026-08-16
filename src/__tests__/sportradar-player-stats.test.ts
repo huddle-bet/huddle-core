@@ -22,6 +22,18 @@ import { SUMMARY_PLAYER_STATS, type GoldenPair } from '../sportradar/__fixtures_
  * huddle-data writes; a test whose expectations came from the new code would prove
  * nothing about that. If a port here drifts from what the backfill produces, the two
  * writers put two vocabularies in one table again, which is the defect (ENG-460).
+ *
+ * **The independence above no longer holds, and saying so matters more than the fixture.**
+ * huddle-data's `normalize/mlb.ts` now imports `mlbPlayerStats` from this package — there is
+ * one implementation, not two, so the golden is a historical snapshot rather than an
+ * independent oracle. It is still a real regression guard: it pins the exact output shape,
+ * and it caught the 2026-08-16 change that added 1B/2B/3B/TB/SB to `mlbBatterStats`.
+ *
+ * The five values added to `expected` for that change were read from each pair's raw
+ * `statistics.hitting.overall` — `onbase.{s,d,t,tb}` and `steal.stolen` — and not from
+ * `mlbBatterStats`, precisely because an expectation computed by the code under test proves
+ * nothing about it. That is the only property this file's provenance rule was protecting, and
+ * it is preserved even though its original mechanism is gone.
  */
 type Pair = GoldenPair;
 const golden = SUMMARY_PLAYER_STATS as Record<SummaryStatsSport, Pair[]>;
@@ -45,7 +57,10 @@ describe('the vocabulary is the one projections.ts reads', () => {
   it.each([
     ['nba', ['PTS', 'REB', 'AST', 'STL', 'BLK', 'TO', '3PT', 'MIN']],
     ['nhl', ['G', 'A', 'SOG', 'BS', 'HT', 'FW', '+/-']],
-    ['mlb', ['H', 'HR', 'RBI', 'R', 'K', 'AB']],
+    // 1B/2B/3B/SB were missing here while five books priced all four markets — 5,872 live
+    // odds rows the engine could not project (2026-08-16). TB rides along because the
+    // provider states it and `total_bases` currently derives it as SLG x AB.
+    ['mlb', ['H', 'HR', 'RBI', 'R', 'K', 'AB', '1B', '2B', '3B', 'TB', 'SB']],
   ] as const)('%s exposes the keys the engine looks up', (sport, keys) => {
     const first = golden[sport][0]!;
     const flat = sportradarPlayerStats(sport, first.statistics)!;
