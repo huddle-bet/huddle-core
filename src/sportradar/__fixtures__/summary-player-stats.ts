@@ -3008,7 +3008,12 @@ export const SUMMARY_PLAYER_STATS = {
         "OBP": 0,
         "SLG": 0,
         "#P": 12,
-        "H-AB": "0-2"
+        "H-AB": "0-2",
+        "1B": 0,
+        "2B": 0,
+        "3B": 0,
+        "TB": 0,
+        "SB": 0
       }
     },
     {
@@ -3195,7 +3200,12 @@ export const SUMMARY_PLAYER_STATS = {
         "OBP": 0,
         "SLG": 0,
         "#P": 15,
-        "H-AB": "0-4"
+        "H-AB": "0-4",
+        "1B": 0,
+        "2B": 0,
+        "3B": 0,
+        "TB": 0,
+        "SB": 0
       }
     },
     {
@@ -3382,7 +3392,12 @@ export const SUMMARY_PLAYER_STATS = {
         "OBP": 0.25,
         "SLG": 0,
         "#P": 17,
-        "H-AB": "0-3"
+        "H-AB": "0-3",
+        "1B": 0,
+        "2B": 0,
+        "3B": 0,
+        "TB": 0,
+        "SB": 0
       }
     },
     {
@@ -3569,7 +3584,12 @@ export const SUMMARY_PLAYER_STATS = {
         "OBP": 0.25,
         "SLG": 0.25,
         "#P": 12,
-        "H-AB": "1-4"
+        "H-AB": "1-4",
+        "1B": 1,
+        "2B": 0,
+        "3B": 0,
+        "TB": 1,
+        "SB": 0
       }
     },
     {
@@ -3756,7 +3776,12 @@ export const SUMMARY_PLAYER_STATS = {
         "OBP": 1,
         "SLG": 0,
         "#P": 8,
-        "H-AB": "0-0"
+        "H-AB": "0-0",
+        "1B": 0,
+        "2B": 0,
+        "3B": 0,
+        "TB": 0,
+        "SB": 0
       }
     }
   ]

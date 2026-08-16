@@ -60,7 +60,29 @@ export interface NhlPlayerGroups {
  * it is a row of zeros that reads as a real performance.
  */
 export declare function nhlPlayerStats(total: any, groups?: NhlPlayerGroups): PlayerStatMap;
-/** MLB batting line, from `player.statistics.hitting.overall`. */
+/**
+ * MLB batting line, from `player.statistics.hitting.overall`.
+ *
+ * `1B`, `2B`, `3B`, `TB` and `SB` were absent here while the board priced all of them.
+ * Measured 2026-08-16: **5,872 live odds rows across 1,279 player-markets on four markets the
+ * engine could not project** — singles 2,100 rows / 5 books, doubles 1,894 / 5,
+ * stolen_bases 1,310 / 5, triples 568 / 3 — and 0 of 2,693 MLB stat rows from the previous
+ * week carried any of the keys.
+ *
+ * The provider was always sending them. `hitting.overall.onbase` carries `s, d, t, hr, tb, bb,
+ * ibb, hbp, fc, roe, h, ci, rov, cycle` and `hitting.overall.steal` carries `stolen, caught,
+ * pickoff, pct` — both present in the committed fixture. This function read `h`, `hr` and `bb`
+ * from `onbase` and discarded the rest of the object.
+ *
+ * **Not recoverable downstream, which is why it had to be fixed here rather than derived.**
+ * `TB` and `H` give two equations in three unknowns (1B, 2B, 3B), so no amount of arithmetic on
+ * what was already stored produces a singles or doubles line.
+ *
+ * `TB` is now taken from the provider even though `total_bases` already projects, because that
+ * projection derives it as `SLG x AB` — a derivation added on the stated grounds that
+ * "Sportradar writes no TB key", which is false. The derivation is left in place as the
+ * fallback for rows written before this change; the direct value is simply better.
+ */
 export declare function mlbBatterStats(o: any): PlayerStatMap;
 /** MLB pitching line, from `player.statistics.pitching.overall`. */
 export declare function mlbPitcherStats(o: any): PlayerStatMap;
