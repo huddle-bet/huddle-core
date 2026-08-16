@@ -18,7 +18,10 @@ describe('the vocabulary is the one projections.ts reads', () => {
     it.each([
         ['nba', ['PTS', 'REB', 'AST', 'STL', 'BLK', 'TO', '3PT', 'MIN']],
         ['nhl', ['G', 'A', 'SOG', 'BS', 'HT', 'FW', '+/-']],
-        ['mlb', ['H', 'HR', 'RBI', 'R', 'K', 'AB']],
+        // 1B/2B/3B/SB were missing here while five books priced all four markets — 5,872 live
+        // odds rows the engine could not project (2026-08-16). TB rides along because the
+        // provider states it and `total_bases` currently derives it as SLG x AB.
+        ['mlb', ['H', 'HR', 'RBI', 'R', 'K', 'AB', '1B', '2B', '3B', 'TB', 'SB']],
     ])('%s exposes the keys the engine looks up', (sport, keys) => {
         const first = golden[sport][0];
         const flat = sportradarPlayerStats(sport, first.statistics);
