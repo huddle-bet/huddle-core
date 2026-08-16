@@ -20,7 +20,7 @@ Huddle deploys from **two** Render blueprints:
   - `huddle-bet/huddle-live`
   - `huddle-bet/huddle-core` — hosts `render.yaml` and the Byparr wrapper image
 - A Supabase project with the huddle schema applied (see `supabase/migrations`)
-- Provider API keys (Sportradar, ThunderPicks, Groq, Steam, etc.) — see env table below
+- Provider API keys (Sportradar, ThunderPicks, OpenAI, Steam, etc.) — see env table below
 
 ## Quick Start (Blueprint)
 
@@ -69,6 +69,7 @@ Set once on the group; every service inherits it. All marked `sync: false` in th
 | `STRIPE_SECRET_KEY` | api | Stripe secret key. **Absent = nothing can grant Pro**; all gated routes 403 |
 | `STRIPE_WEBHOOK_SECRET` | api | Signing secret for the endpoint targeting `/api/v1/webhooks/stripe` |
 | `STRIPE_PRICE_ID` | api | Price the Checkout session subscribes to |
+| `OPENAI_API_KEY` | api | The assistant's model provider (ENG-436, which replaced Groq). Read only by `huddle-api`, in `domains/ai/provider.ts`. **Absent = `/api/v1/chat` and `/api/v1/chat/stream` answer 503** naming this variable; every other route is unaffected and the service still boots. Optional companions, all read from the environment at call time: `OPENAI_MODEL` (defaults to `gpt-4.1-mini`), `OPENAI_TEMPERATURE`, `OPENAI_MAX_TOKENS`, `OPENAI_BASE_URL`. Note that o-series and gpt-5 reasoning models reject a temperature other than 1. |
 | `HUDDLE_INTERNAL_SECRET` | api, live | Shared secret for the huddle-api ↔ huddle-live fanout WS (any 256-bit hex string). **huddle-live will not start without it.** |
 | `HUDDLE_LIVE_URL` | api | Internal URL of huddle-live: `http://huddle-live:8081` (Render private DNS). Locally this must be `http://127.0.0.1:8085` — the Render hostname does not resolve off-platform. |
 | `WEBSHARE_PROXY_LIST_URL` | data, reconciler, live, odds, flaresolverr | **Primary** source of the residential proxy pool. Every consumer fetches it hourly. Webshare rotates endpoints under the plan and a hand-kept CSV does not follow — 11 of 20 rotated in nine days, costing a measured 38% request failure rate (ENG-668). Carries a long-lived account token. |
@@ -91,11 +92,12 @@ These are not in the shared group because not every service needs them. Add them
 | `THUNDERPICKS_API_KEY` | huddle-engine | Esports book. **huddle-odds no longer reads this** — its Thunderpick client was removed on 2026-08-05 when the key stopped authenticating (401 on the documented header and unauthenticated alike) and CS2 was already covered by PrizePicks and Underdog. The legacy alias `TP_APIKEY` went with it. huddle-engine still fetches Thunderpick directly (ENG-438), so the key stays set — but if it is the same dead credential, that path is failing silently too. |
 | `BETRIVERS_BRAND` | huddle-odds | Optional, defaults to `rsiuspa`. Selects which state's Kambi offering to read. Measured 2026-08-04: the per-league boards this client reads are byte-identical across PA, NJ, IL, MI and NY, so it currently changes nothing for any polled league — it is the sport/league *menu* that differs by state. |
 | `FANDUEL_API_KEY` | huddle-odds | Optional. This is a **public client key**, not a secret — the same value appears as the `_ak` query param in FanDuel's web app. Falls back to that public value if unset; pin it in prod. |
-| `GROQ_API_KEY` | huddle-engine | LLM features (slip narratives, AI picks) |
 | `LOLESPORTS_API_KEY` | huddle-live, huddle-data | LoL Esports feed |
 | `OPENDOTA_API_KEY` | huddle-data | Dota stats backfill |
 
 `GENIUS_API_KEY` / `GENIUS_CLIENT_ID` / `GENIUS_CLIENT_SECRET` were removed — the Genius Sports feed was retired in 2026-05 and no code references `GENIUS_*`. `GSK_TOKEN` was removed in ENG-233 along with the last GameScorekeeper caller. Delete all four from Render if still set.
+
+`GROQ_API_KEY` went the same way in ENG-436, and the row that used to sit above attributed it to **huddle-engine**, which never read it — the only consumer was huddle-api's chat route, and it now reads `OPENAI_API_KEY`. Measured 2026-08-16: across all eight repos, `GROQ_API_KEY` appears in no source file, no `package.json` and no `render.yaml` — only in the workspace `.env`, where it is a dead credential. Delete it from Render if still set.
 
 ### Service-scoped non-secrets (set in `render.yaml`)
 

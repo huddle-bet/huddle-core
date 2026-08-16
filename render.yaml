@@ -23,6 +23,20 @@ envVarGroups:
         sync: false
       - key: STRIPE_PRICE_ID
         sync: false
+      # The assistant's model provider (ENG-436). Read only by huddle-api, in
+      # domains/ai/provider.ts; it is in the shared group rather than on the
+      # service for the same reason the Stripe keys are — one place to set the
+      # secrets, and nothing else reads it.
+      #
+      # Declared here with no value because the key has not been issued yet.
+      # That is deliberate: without it huddle-api still boots and serves every
+      # other route, and only /api/v1/chat and /api/v1/chat/stream answer 503
+      # naming this variable. The point of the entry is that the blueprint
+      # records the dependency — otherwise it exists only in the dashboard, and
+      # the migration off Groq reads as finished while the deployed service has
+      # no provider credential at all.
+      - key: OPENAI_API_KEY
+        sync: false
       - key: HUDDLE_LIVE_URL
         sync: false
       # FlareSolverr URL — consumed only by huddle-data, and only for the
