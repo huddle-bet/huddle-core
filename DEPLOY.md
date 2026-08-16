@@ -97,7 +97,11 @@ These are not in the shared group because not every service needs them. Add them
 
 `GENIUS_API_KEY` / `GENIUS_CLIENT_ID` / `GENIUS_CLIENT_SECRET` were removed — the Genius Sports feed was retired in 2026-05 and no code references `GENIUS_*`. `GSK_TOKEN` was removed in ENG-233 along with the last GameScorekeeper caller. Delete all four from Render if still set.
 
-`GROQ_API_KEY` went the same way in ENG-436, and the row that used to sit above attributed it to **huddle-engine**, which never read it — the only consumer was huddle-api's chat route, and it now reads `OPENAI_API_KEY`. Measured 2026-08-16: across all eight repos, `GROQ_API_KEY` appears in no source file, no `package.json` and no `render.yaml` — only in the workspace `.env`, where it is a dead credential. Delete it from Render if still set.
+`GROQ_API_KEY` went the same way in ENG-436, and the row that used to sit above attributed it to **huddle-engine**, which never read it — the only consumer was huddle-api's chat route, and it now reads `OPENAI_API_KEY`. Measured 2026-08-16: across all eight repos, `GROQ_API_KEY` appears in no source file, no `package.json` and no `render.yaml`.
+
+**It is nonetheless still set in Render**, in the `huddle-shared` group, where it has never been declared by this file — queried through the Render API on 2026-08-16, alongside the confirmation that no `OPENAI_API_KEY` exists on the platform at all. So every service in the group currently inherits a credential nothing reads, and the one service that needs a provider key does not have one. Delete `GROQ_API_KEY`; the assistant will not notice, because nothing has read it since 2026-08-08.
+
+That query also showed the deployed `huddle-shared` group carrying **24 keys against the 14 declared here**, and `huddle-api` carrying a `REDIS_URL` that no service reads and that this document explicitly says does not exist. The blueprint is the source of truth by intent, not in fact — worth a reconciliation pass that is out of scope for ENG-436.
 
 ### Service-scoped non-secrets (set in `render.yaml`)
 
