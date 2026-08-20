@@ -118,6 +118,27 @@ export function nhlPlayerStats(total, groups) {
  * projection derives it as `SLG x AB` — a derivation added on the stated grounds that
  * "Sportradar writes no TB key", which is false. The derivation is left in place as the
  * fallback for rows written before this change; the direct value is simply better.
+ *
+ * ## `HBP`, added 2026-08-20 — the same field one over
+ *
+ * The paragraph above lists everything `onbase` carries, `hbp` included, and this function
+ * still read past it. huddle-engine's `UNPRICED` map meanwhile refuses PrizePicks' MLB hitter
+ * fantasy score with the reason *"PrizePicks' needs HBP, which appears on no MLB row we
+ * store"* — true about our rows, and true only because of this line.
+ *
+ * That is the identical shape as the 1B/2B/3B/TB/SB miss: a claim about the provider, correct
+ * about what we stored, standing in for a claim about what the provider sends. `UNPRICED`'s own
+ * comment says it outright — "Nothing belongs in this map on the strength of an unverified
+ * claim about the provider."
+ *
+ * Verified in the committed fixture: `hbp` sits inside `onbase` immediately beside `bb`, which
+ * this function already reads. **All five occurrences there are 0**, so the fixture cannot
+ * distinguish reading the field from defaulting it, and the test for this uses a synthetic
+ * non-zero value instead.
+ *
+ * This unblocks the DATA half of hitter fantasy only. The scoring formula is still unresolved
+ * and still a reason to refuse the market — see `UNPRICED`. Adding a guessed formula on top of
+ * a secondhand description is how a wrong number reaches a pick.
  */
 export function mlbBatterStats(o) {
     return {
@@ -132,6 +153,7 @@ export function mlbBatterStats(o) {
         HR: o.onbase?.hr ?? 0,
         RBI: o.rbi ?? 0,
         BB: o.onbase?.bb ?? 0,
+        HBP: o.onbase?.hbp ?? 0,
         K: o.outs?.ktotal ?? 0,
         AVG: o.avg ?? '',
         OBP: o.obp ?? '',

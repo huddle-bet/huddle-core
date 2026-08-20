@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { isSummaryStatsSport, mlbPlayerStats, nbaPlayerStats, nhlPlayerStats, sportradarPlayerStats, } from '../sportradar/player-stats.js';
+import { isSummaryStatsSport, mlbBatterStats, mlbPlayerStats, nbaPlayerStats, nhlPlayerStats, sportradarPlayerStats, } from '../sportradar/player-stats.js';
 import { SUMMARY_PLAYER_STATS } from '../sportradar/__fixtures__/summary-player-stats.js';
 const golden = SUMMARY_PLAYER_STATS;
 describe.each(['nba', 'nhl', 'mlb'])('%s matches huddle-data byte for byte', (sport) => {
@@ -153,6 +153,38 @@ describe('isSummaryStatsSport', () => {
         // summary.json returns 404 for NFL; its box scores come from statistics.json and are
         // organised by category at team level. It cannot share this interface (ENG-463).
         expect(isSummaryStatsSport('nfl')).toBe(false);
+    });
+});
+/**
+ * `hbp` was in `onbase` all along, next to the `bb` this function already read.
+ *
+ * huddle-engine's `UNPRICED` map refuses PrizePicks' MLB hitter fantasy score because "HBP
+ * appears on no MLB row we store" — true about our rows, and true only because `mlbBatterStats`
+ * read past the field. That is the same shape as the 1B/2B/3B/TB/SB miss this file was written
+ * for: a claim about what we stored standing in for a claim about what the provider sends.
+ *
+ * **The committed fixture cannot test this.** All five of its `hbp` values are 0, so a fixture
+ * assertion passes identically whether the field is read or defaulted — the exact "expectation
+ * computed by the code under test" this file's header warns about. Hence a synthetic value.
+ */
+describe('MLB hit-by-pitch', () => {
+    it('reads hbp from onbase rather than defaulting it', () => {
+        const flat = mlbBatterStats({
+            ab: 3,
+            onbase: { h: 1, hr: 0, bb: 1, hbp: 2, s: 1, d: 0, t: 0, tb: 1 },
+            runs: { total: 1 },
+            outs: { ktotal: 0 },
+        });
+        expect(flat.HBP).toBe(2);
+        // Its neighbour must not be disturbed — hbp and bb are adjacent keys in the same object
+        // and both feed a fantasy score, so a transposition would be silent.
+        expect(flat.BB).toBe(1);
+    });
+    it('is 0, not undefined, when the provider omits it', () => {
+        // Every other key in this map defaults rather than vanishing; a missing key would read
+        // downstream as "stat not collected" rather than "no hit-by-pitch".
+        const flat = mlbBatterStats({ ab: 4, onbase: { h: 2 } });
+        expect(flat.HBP).toBe(0);
     });
 });
 //# sourceMappingURL=sportradar-player-stats.test.js.map
