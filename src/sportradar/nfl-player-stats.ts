@@ -47,7 +47,29 @@ export function nflTeamPlayerStats(team: any): NflPlayerLine[] {
   for (const [category, group] of Object.entries(team)) {
     // `summary` is the team's own totals, not a player group.
     if (IDENTITY_FIELDS.has(category) || category === 'summary') continue;
-    const players = (group as any)?.players;
+
+    // Most categories are `{ totals, players[] }`. `extra_points` is not: it nests one level
+    // deeper as `{ kicks: {players[]}, conversions: {players[]} }`, so a `group.players` read
+    // finds nothing and the whole category was skipped in silence — no error, no empty array,
+    // just an absent branch. A player appearing ONLY there therefore got no row at all
+    // (Evan Svoboda, a 2-point conversion receiver on SF@LAC 2026-08-21), and every kicker
+    // and conversion participant lost those stats.
+    //
+    // Flattening one level down rather than special-casing `extra_points` by name: the shape
+    // is "a group whose entries are themselves player groups", and keying on the shape means
+    // a second such category does not have to be discovered the same way this one was.
+    //
+    // `check:provider-boxscore` is structurally blind to this — it re-normalizes both sides,
+    // so a field the normalizer never reads is absent from its "provider" side too and the
+    // comparison agrees. Only reading the raw payload finds it.
+    const subGroups: Array<[string, any]> = Array.isArray((group as any)?.players)
+      ? [[category, group]]
+      : Object.entries((group as any) ?? {})
+          .filter(([, sub]) => Array.isArray((sub as any)?.players))
+          .map(([sub, v]) => [`${category}_${sub}`, v] as [string, any]);
+
+    for (const [prefix, holder] of subGroups) {
+    const players = (holder as any)?.players;
     if (!Array.isArray(players)) continue;
 
     for (const p of players) {
@@ -65,8 +87,9 @@ export function nflTeamPlayerStats(team: any): NflPlayerLine[] {
         // Nested objects are per-category breakdowns we do not flatten, and null means
         // the stat does not apply to this player in this category.
         if (value === null || typeof value === 'object') continue;
-        entry.stats[`${category}_${field}`] = value as string | number;
+        entry.stats[`${prefix}_${field}`] = value as string | number;
       }
+    }
     }
   }
 

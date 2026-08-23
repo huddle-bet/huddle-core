@@ -136,3 +136,45 @@ describe('nflGamePlayerStats', () => {
     expect(nflGamePlayerStats(payload).home).toHaveLength(1);
   });
 });
+
+/**
+ * The golden fixture alone would NOT catch a revert of the `extra_points` descent: it is
+ * regenerated from huddle-data, so if both homes regressed together it would simply be
+ * regenerated without those keys and stay green. These assert the shape directly.
+ */
+describe('extra_points nests one level deeper and is still flattened', () => {
+  const players = nflTeamPlayerStats(NFL_TEAM_STATISTICS);
+  const byName = new Map(players.map((p) => [p.name, p]));
+
+  it('captures the kicker from extra_points.kicks.players', () => {
+    expect(byName.get('Andy Borregales')?.stats['extra_points_kicks_made']).toBe(1);
+    expect(byName.get('Andy Borregales')?.stats['extra_points_kicks_attempts']).toBe(1);
+  });
+
+  it('captures 2-point conversion participants from extra_points.conversions.players', () => {
+    expect(byName.get('Drake Maye')?.stats['extra_points_conversions_attempts']).toBe(1);
+    expect(byName.get('Hunter Henry')?.stats['extra_points_conversions_attempts']).toBe(1);
+  });
+
+  it('a player appearing ONLY under extra points still gets a row', () => {
+    // The rows actually being lost. On this payload all three extra-point players also
+    // appear elsewhere, so presence has to be tested on a payload where one does not —
+    // otherwise the assertion passes for a reason unrelated to the fix.
+    const team: any = {
+      id: 't', name: 'T', market: 'M',
+      extra_points: {
+        conversions: { players: [{ id: 'p9', name: 'Conversion Only', position: 'WR', attempts: 1, successes: 1 }] },
+      },
+    };
+    const got = nflTeamPlayerStats(team);
+    expect(got.map((p) => p.name)).toEqual(['Conversion Only']);
+    expect(got[0].stats['extra_points_conversions_successes']).toBe(1);
+  });
+
+  it('does not flatten a nested group that holds no players array', () => {
+    // `efficiency` is `{goaltogo:{...}, redzone:{...}}` — same two-level shape, no players.
+    // Descending indiscriminately would mint rows out of team efficiency buckets.
+    const team: any = { efficiency: { redzone: { attempts: 1, successes: 1, pct: 100 } } };
+    expect(nflTeamPlayerStats(team)).toEqual([]);
+  });
+});
