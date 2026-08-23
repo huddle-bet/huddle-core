@@ -110,6 +110,17 @@ describe('nhl goaltending and time on ice', () => {
     const DAHLIN_GROUPS = {
         timeOnIce: { shifts: 25, total: '21:23', avg: '00:51', evenstrength: '19:30' },
     };
+    /**
+     * Verbatim from `63c632c4`'s Jeff Petry — a real `time_on_ice` block with every split
+     * the provider sends. `shorthanded` and `overtime` are `"00:00"`, which is a REAL zero
+     * (he took no shorthanded shift) and must still be written, unlike an absent key.
+     */
+    const PETRY_TOI = {
+        timeOnIce: {
+            shifts: 32, total: '26:54', avg: '00:50',
+            powerplay: '18:10', shorthanded: '00:56', evenstrength: '7:48', overtime: '00:00',
+        },
+    };
     it('carries the save line the props market prices', () => {
         const flat = nhlPlayerStats(TOKARSKI_TOTAL, TOKARSKI_GROUPS);
         expect(flat.SV).toBe(21);
@@ -134,6 +145,8 @@ describe('nhl goaltending and time on ice', () => {
         // The two existing callers pass nothing until they are updated, and neither may
         // change shape in the meantime — that would put two vocabularies in one table again.
         expect(nhlPlayerStats(TOKARSKI_TOTAL)).toEqual(nhlPlayerStats(TOKARSKI_TOTAL, {}));
+        // 14 skater keys. A bare `total` block carries no strength siblings, so a legacy
+        // caller that hands one over still gets exactly what it always got.
         expect(Object.keys(nhlPlayerStats(TOKARSKI_TOTAL))).toHaveLength(14);
     });
     it('reaches the goalie through sportradarPlayerStats too', () => {
@@ -143,6 +156,94 @@ describe('nhl goaltending and time on ice', () => {
     });
     it('still returns null for a player who never appeared, groups or not', () => {
         expect(sportradarPlayerStats('nhl', {}, TOKARSKI_GROUPS)).toBeNull();
+    });
+    it('carries every time-on-ice split, including a real 00:00', () => {
+        const flat = nhlPlayerStats({ total: TOKARSKI_TOTAL }, PETRY_TOI);
+        expect(flat.TOI).toBe('26:54');
+        expect(flat.SHFT).toBe(32);
+        // PP time on ice is the denominator a power-play-points projection needs.
+        expect(flat.PPTOI).toBe('18:10');
+        expect(flat.SHTOI).toBe('00:56');
+        expect(flat.ESTOI).toBe('7:48');
+        expect(flat.ATOI).toBe('00:50');
+        // "00:00" is a string of length 4, so it is written. An absent split is not.
+        expect(flat.OTTOI).toBe('00:00');
+    });
+    it('writes no split the provider did not send', () => {
+        // DAHLIN_GROUPS has evenstrength and nothing else. A `PPTOI` of 0 or '' here would
+        // read as "he took no power-play shift" when the truth is that we were not told.
+        const flat = nhlPlayerStats({ total: TOKARSKI_TOTAL }, DAHLIN_GROUPS);
+        expect(flat.ESTOI).toBe('19:30');
+        expect(flat).not.toHaveProperty('PPTOI');
+        expect(flat).not.toHaveProperty('SHTOI');
+        expect(flat).not.toHaveProperty('OTTOI');
+    });
+});
+/**
+ * The power-play blocks, which this function read past for four months.
+ *
+ * `statistics.powerplay` is a SIBLING of `statistics.total`, exactly as `goaltending` is a
+ * sibling of `statistics` (ENG-576, one level up). It is present on 49 of 49 players in
+ * `66a45031` and 125 of 125 in `63c632c4` — and in this package's own committed golden
+ * fixture, which is where it should have been noticed.
+ *
+ * The absence was then recorded as a fact about the provider in huddle-engine's `UNPRICED`
+ * map. It was a fact about our rows. Values below are verbatim from `63c632c4`.
+ */
+describe('nhl strength-state scoring', () => {
+    // Jeff Petry: 1 PP goal, 2 PP assists, 2 PP shots. Even strength 1 shot, nothing else.
+    const PETRY = {
+        total: { goals: 1, assists: 2, shots: 3, missed_shots: 2, blocked_shots: 2, hits: 3,
+            takeaways: 0, giveaways: 2, plus_minus: 0, penalty_minutes: 0, penalties: 0,
+            faceoffs_won: 0, faceoffs_lost: 0, faceoff_win_pct: 0 },
+        powerplay: { shots: 2, goals: 1, missed_shots: 2, assists: 2 },
+        shorthanded: { shots: 0, goals: 0, missed_shots: 0, assists: 0 },
+        evenstrength: { shots: 1, goals: 0, missed_shots: 0, assists: 0 },
+    };
+    it('reads power-play scoring from its own block, not from the total', () => {
+        const flat = nhlPlayerStats(PETRY);
+        expect(flat.PPG).toBe(1);
+        expect(flat.PPA).toBe(2);
+        expect(flat.PPSOG).toBe(2);
+        // The market is named after the sum. Stored once here rather than re-added by every
+        // reader, which is how one number acquires two spellings (ENG-628).
+        expect(flat.PPP).toBe(3);
+    });
+    it('does not confuse a strength block with the total', () => {
+        // This is the assertion that fails if someone "simplifies" the loop back onto `total`.
+        // Petry's ES line is 1 shot and no points against a total of 3 shots and 3 points.
+        const flat = nhlPlayerStats(PETRY);
+        expect(flat.ESSOG).toBe(1);
+        expect(flat.ESP).toBe(0);
+        expect(flat.SOG).toBe(3);
+        expect(flat.G).toBe(1);
+    });
+    it('writes a real zero for a skater who never took a power play', () => {
+        // Unlike SV, this key must be present at 0: every dressed skater has the block, and
+        // "no power-play point" is a settled fact rather than an absent measurement.
+        const flat = nhlPlayerStats(PETRY);
+        expect(flat.SHG).toBe(0);
+        expect(flat.SHP).toBe(0);
+    });
+    it('omits the keys entirely when the provider sent no block', () => {
+        const flat = nhlPlayerStats({ total: PETRY.total });
+        expect(flat).not.toHaveProperty('PPG');
+        expect(flat).not.toHaveProperty('ESSOG');
+    });
+    it('reaches the blocks through sportradarPlayerStats', () => {
+        // The whole point of widening the parameter: this is the call huddle-live makes, and
+        // before 2026-08-23 it handed `statistics.total` down and lost the siblings.
+        const flat = sportradarPlayerStats('nhl', PETRY);
+        expect(flat.PPP).toBe(3);
+        expect(flat.PPTOI).toBeUndefined();
+    });
+    it('still accepts a bare total block from a caller that has not moved', () => {
+        // `total.total` is undefined on every payload we have seen, so the fallback cannot
+        // misfire for a caller passing the whole `statistics` object.
+        const flat = nhlPlayerStats(PETRY.total);
+        expect(flat.G).toBe(1);
+        expect(flat.SOG).toBe(3);
+        expect(flat).not.toHaveProperty('PPG');
     });
 });
 describe('isSummaryStatsSport', () => {

@@ -48,18 +48,40 @@ export declare function nbaPlayerStats(s: any): PlayerStatMap;
 export interface NhlPlayerGroups {
     /** `player.goaltending` — absent on skaters. */
     goaltending?: any;
-    /** `player.time_on_ice` — present on everyone who took a shift. */
+    /**
+     * `player.time_on_ice` — present on everyone who took a shift.
+     *
+     * Carries `total`, `shifts`, `avg` and the three strength splits
+     * `powerplay` / `shorthanded` / `evenstrength`, plus `overtime`. All of them are
+     * `"mm:ss"` strings. Only `total` and `shifts` were read until now; power-play TOI
+     * is the denominator a power-play-points projection needs, and it was one key over
+     * from one this function already read.
+     */
     timeOnIce?: any;
 }
 /**
- * NHL: skater totals live under `player.statistics.total`; goaltending and time on ice
- * are siblings of `statistics` on the player.
+ * NHL: skater totals live under `player.statistics.total`; the strength splits are its
+ * siblings under `statistics`; goaltending and time on ice are siblings of `statistics`
+ * itself on the player.
  *
- * `groups` is optional so a caller that has only the statistics object still gets the
- * skater line it always got. Callers with the player should pass it — a goalie without
- * it is a row of zeros that reads as a real performance.
+ * ## The argument is `statistics`, not `statistics.total`
+ *
+ * It took `total` until 2026-08-23 and that shape is what hid the power-play blocks: a
+ * caller holding the whole player has no way to hand over a sibling of the thing the
+ * signature asks for. `groups` was added for exactly that reason on ENG-576 and it only
+ * moved the trap one level up. Widening the parameter removes it rather than papering
+ * over it — there is one object, and everything this function reads is reachable from it.
+ *
+ * A caller that still passes the bare `total` block keeps working and gets what it always
+ * got (the fallback below), minus the strength keys it never had. There are two callers in
+ * the workspace, huddle-data's `normalize/nhl.ts` and huddle-live's `player-stats.ts`, and
+ * both move with this change.
+ *
+ * `groups` stays optional so an existing caller still gets the skater line. Callers with
+ * the player should pass it — a goalie without it is a row of zeros that reads as a real
+ * performance.
  */
-export declare function nhlPlayerStats(total: any, groups?: NhlPlayerGroups): PlayerStatMap;
+export declare function nhlPlayerStats(statistics: any, groups?: NhlPlayerGroups): PlayerStatMap;
 /**
  * MLB batting line, from `player.statistics.hitting.overall`.
  *

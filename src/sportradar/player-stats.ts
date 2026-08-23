@@ -74,19 +74,78 @@ export function nbaPlayerStats(s: any): PlayerStatMap {
 export interface NhlPlayerGroups {
   /** `player.goaltending` — absent on skaters. */
   goaltending?: any;
-  /** `player.time_on_ice` — present on everyone who took a shift. */
+  /**
+   * `player.time_on_ice` — present on everyone who took a shift.
+   *
+   * Carries `total`, `shifts`, `avg` and the three strength splits
+   * `powerplay` / `shorthanded` / `evenstrength`, plus `overtime`. All of them are
+   * `"mm:ss"` strings. Only `total` and `shifts` were read until now; power-play TOI
+   * is the denominator a power-play-points projection needs, and it was one key over
+   * from one this function already read.
+   */
   timeOnIce?: any;
 }
 
 /**
- * NHL: skater totals live under `player.statistics.total`; goaltending and time on ice
- * are siblings of `statistics` on the player.
+ * The strength states Sportradar reports beside `total`, and the prefix each gets.
  *
- * `groups` is optional so a caller that has only the statistics object still gets the
- * skater line it always got. Callers with the player should pass it — a goalie without
- * it is a row of zeros that reads as a real performance.
+ * All three are **siblings of `total` inside `statistics`** — verified against live
+ * `summary.json` on 2026-08-23, present on 49 of 49 players in `66a45031` and on 125 of
+ * 125 in `63c632c4`. They are also in this package's own committed golden fixture, which
+ * is where this should have been caught: `statistics.powerplay` sits immediately beside
+ * `statistics.total` in every one of the five NHL pairs in `__fixtures__`, and this
+ * function read past it for four months.
+ *
+ * That absence was then written down as fact in huddle-engine's `UNPRICED` map — "no
+ * provider key (nothing power-play in the payload)", justified as "verified across 20,000
+ * NHL stat rows". The rows were counted correctly and the conclusion did not follow: it is
+ * a claim about what WE STORE standing in for a claim about what the PROVIDER SENDS. That
+ * is the third time in this file's history (goaltending, HBP, and now this) and the reason
+ * the map's own header says nothing may be listed there on an unverified provider claim.
+ *
+ * `penalty` and `shootout` are deliberately not here. `penalty` is penalty-shot scoring,
+ * which no board prices; `shootout` goals are not credited to the player in any official
+ * NHL total (the shootout decider is a TEAM goal — see huddle-data's `nhlTeamStats`), so
+ * writing them as `G`-adjacent keys would put a number in the table that settles nothing.
  */
-export function nhlPlayerStats(total: any, groups?: NhlPlayerGroups): PlayerStatMap {
+const NHL_STRENGTH_BLOCKS = [
+  ['powerplay', 'PP'],
+  ['shorthanded', 'SH'],
+  ['evenstrength', 'ES'],
+] as const;
+
+/** `"mm:ss"` when the provider sent one, else undefined — never `0`, which reads as a real shift. */
+function toi(v: unknown): string | undefined {
+  return typeof v === 'string' && v.length > 0 ? v : undefined;
+}
+
+/**
+ * NHL: skater totals live under `player.statistics.total`; the strength splits are its
+ * siblings under `statistics`; goaltending and time on ice are siblings of `statistics`
+ * itself on the player.
+ *
+ * ## The argument is `statistics`, not `statistics.total`
+ *
+ * It took `total` until 2026-08-23 and that shape is what hid the power-play blocks: a
+ * caller holding the whole player has no way to hand over a sibling of the thing the
+ * signature asks for. `groups` was added for exactly that reason on ENG-576 and it only
+ * moved the trap one level up. Widening the parameter removes it rather than papering
+ * over it — there is one object, and everything this function reads is reachable from it.
+ *
+ * A caller that still passes the bare `total` block keeps working and gets what it always
+ * got (the fallback below), minus the strength keys it never had. There are two callers in
+ * the workspace, huddle-data's `normalize/nhl.ts` and huddle-live's `player-stats.ts`, and
+ * both move with this change.
+ *
+ * `groups` stays optional so an existing caller still gets the skater line. Callers with
+ * the player should pass it — a goalie without it is a row of zeros that reads as a real
+ * performance.
+ */
+export function nhlPlayerStats(statistics: any, groups?: NhlPlayerGroups): PlayerStatMap {
+  // A pre-2026-08-23 caller hands over the `total` block itself. `total.total` is undefined
+  // on every payload we have seen, so this cannot misfire for a caller passing `statistics`.
+  const total = statistics?.total ?? statistics ?? {};
+
   const stats: PlayerStatMap = {
     G: total.goals ?? 0,
     A: total.assists ?? 0,
@@ -104,11 +163,47 @@ export function nhlPlayerStats(total: any, groups?: NhlPlayerGroups): PlayerStat
     'FO%': total.faceoff_win_pct ?? 0,
   };
 
+  /**
+   * Strength-state scoring. Written unconditionally when the block is there, because a
+   * skater with no power-play goal is a REAL zero — the block is present on every player
+   * who dressed, scorers and healthy scratches alike — unlike `SV`, which is absent
+   * because the player never tended goal.
+   *
+   * `PPP` is stored rather than left to the reader to add up. It is the quantity the market
+   * is actually named after, and the alternative is every consumer writing `PPG + PPA` by
+   * hand — a second home for one number, spelled differently in each, which is ENG-628.
+   * It is a sum of two provider fields in one expression and cannot desync from them.
+   */
+  for (const [block, prefix] of NHL_STRENGTH_BLOCKS) {
+    const b = statistics?.[block];
+    if (!b || typeof b !== 'object') continue;
+    const g = b.goals ?? 0;
+    const a = b.assists ?? 0;
+    stats[`${prefix}G`] = g;
+    stats[`${prefix}A`] = a;
+    stats[`${prefix}P`] = Number(g) + Number(a);
+    stats[`${prefix}SOG`] = b.shots ?? 0;
+  }
+
   // `"18:44"`, the same mm:ss the ESPN feed used, so existing readers parse it unchanged.
-  const toi = groups?.timeOnIce?.total;
-  if (typeof toi === 'string' && toi.length > 0) {
-    stats.TOI = toi;
-    stats.SHFT = groups?.timeOnIce?.shifts ?? 0;
+  const t = groups?.timeOnIce;
+  const totalToi = toi(t?.total);
+  if (totalToi) {
+    stats.TOI = totalToi;
+    stats.SHFT = t?.shifts ?? 0;
+    // The splits are separate keys rather than a nested object: `player_game_stats.stats`
+    // is a flat map and every existing reader indexes it directly.
+    const splits: Array<[string, unknown]> = [
+      ['PPTOI', t?.powerplay],
+      ['SHTOI', t?.shorthanded],
+      ['ESTOI', t?.evenstrength],
+      ['OTTOI', t?.overtime],
+      ['ATOI', t?.avg],
+    ];
+    for (const [key, v] of splits) {
+      const s = toi(v);
+      if (s) stats[key] = s;
+    }
   }
 
   // Only on a player who actually tended goal. A skater carrying SV: 0 would settle a
@@ -245,7 +340,9 @@ export function sportradarPlayerStats(
     case 'nba':
       return nbaPlayerStats(statistics);
     case 'nhl':
-      return statistics.total ? nhlPlayerStats(statistics.total, groups) : null;
+      // The whole `statistics` object, not `statistics.total` — the powerplay,
+      // shorthanded and evenstrength blocks are its siblings (2026-08-23).
+      return statistics.total ? nhlPlayerStats(statistics, groups) : null;
     case 'mlb': {
       const stats = mlbPlayerStats(statistics);
       return Object.keys(stats).length > 0 ? stats : null;

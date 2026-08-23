@@ -9,6 +9,28 @@
  * running vitest, so the compiled copy of the test executes too, and from there a path
  * relative to `import.meta.dirname` points into `dist/` — where tsc never copies JSON.
  * The first version of this passed locally and failed in CI for exactly that reason.
+ *
+ * ## The two extra NHL pairs, added 2026-08-23
+ *
+ * `Tyler Motte` and `Evan Rodrigues` come from a DIFFERENT game — `63c632c4` — and are here
+ * because the original five cannot test what was added. Every one of them has
+ * `powerplay.goals = 0` and `powerplay.assists = 0`, so they cannot distinguish reading the
+ * block from defaulting it. That is the same hole the HBP fixture had, and the note in
+ * `mlbBatterStats` says so; this time the fixture is fixed instead of the test working
+ * around it.
+ *
+ * They discriminate in both directions:
+ *
+ *   Motte      total A 2, SOG 3   but PPA 1, PPSOG 0, ESA 1, ESSOG 3
+ *   Rodrigues  PPG 3, PPA 1, PPP 4, PPSOG 6
+ *
+ * so an implementation that read `total` for the power-play keys fails on Motte, and one
+ * that defaulted them to zero fails on Rodrigues.
+ *
+ * Their `expected` maps were read off the raw `statistics.{total,powerplay,shorthanded,
+ * evenstrength}` blocks by hand, not produced by the code under test — the one property the
+ * original provenance rule was protecting. `statistics.periods` is stripped: it is a
+ * per-period repeat of the same blocks, nothing reads it, and it is 40 KB per player.
  */
 export interface GoldenPair {
   player: string;
@@ -1839,7 +1861,19 @@ export const SUMMARY_PLAYER_STATS = {
         "PN": 0,
         "FW": 0,
         "FL": 0,
-        "FO%": 0
+        "FO%": 0,
+        "PPG": 0,
+        "PPA": 0,
+        "PPP": 0,
+        "PPSOG": 0,
+        "SHG": 0,
+        "SHA": 0,
+        "SHP": 0,
+        "SHSOG": 0,
+        "ESG": 0,
+        "ESA": 0,
+        "ESP": 0,
+        "ESSOG": 0
       }
     },
     {
@@ -2084,7 +2118,19 @@ export const SUMMARY_PLAYER_STATS = {
         "PN": 0,
         "FW": 0,
         "FL": 0,
-        "FO%": 0
+        "FO%": 0,
+        "PPG": 0,
+        "PPA": 0,
+        "PPP": 0,
+        "PPSOG": 0,
+        "SHG": 0,
+        "SHA": 0,
+        "SHP": 0,
+        "SHSOG": 0,
+        "ESG": 0,
+        "ESA": 0,
+        "ESP": 0,
+        "ESSOG": 0
       }
     },
     {
@@ -2329,7 +2375,19 @@ export const SUMMARY_PLAYER_STATS = {
         "PN": 0,
         "FW": 0,
         "FL": 0,
-        "FO%": 0
+        "FO%": 0,
+        "PPG": 0,
+        "PPA": 0,
+        "PPP": 0,
+        "PPSOG": 1,
+        "SHG": 0,
+        "SHA": 0,
+        "SHP": 0,
+        "SHSOG": 0,
+        "ESG": 0,
+        "ESA": 0,
+        "ESP": 0,
+        "ESSOG": 5
       }
     },
     {
@@ -2574,7 +2632,19 @@ export const SUMMARY_PLAYER_STATS = {
         "PN": 0,
         "FW": 0,
         "FL": 0,
-        "FO%": 0
+        "FO%": 0,
+        "PPG": 0,
+        "PPA": 0,
+        "PPP": 0,
+        "PPSOG": 2,
+        "SHG": 0,
+        "SHA": 0,
+        "SHP": 0,
+        "SHSOG": 0,
+        "ESG": 0,
+        "ESA": 0,
+        "ESP": 0,
+        "ESSOG": 0
       }
     },
     {
@@ -2819,7 +2889,229 @@ export const SUMMARY_PLAYER_STATS = {
         "PN": 0,
         "FW": 0,
         "FL": 0,
-        "FO%": 0
+        "FO%": 0,
+        "PPG": 0,
+        "PPA": 0,
+        "PPP": 0,
+        "PPSOG": 0,
+        "SHG": 0,
+        "SHA": 0,
+        "SHP": 0,
+        "SHSOG": 0,
+        "ESG": 0,
+        "ESA": 0,
+        "ESP": 0,
+        "ESSOG": 0
+      }
+    },
+    {
+      "player": "Tyler Motte",
+      "statistics": {
+        "total": {
+          "goals": 0,
+          "assists": 2,
+          "penalties": 0,
+          "penalty_minutes": 0,
+          "shots": 3,
+          "blocked_att": 3,
+          "missed_shots": 0,
+          "hits": 0,
+          "giveaways": 0,
+          "takeaways": 1,
+          "blocked_shots": 0,
+          "faceoffs_won": 7,
+          "faceoffs_lost": 6,
+          "plus_minus": 1,
+          "shooting_pct": 0.0,
+          "faceoff_win_pct": 53.8,
+          "faceoffs": 13,
+          "points": 2,
+          "emptynet_goals": 0,
+          "first_star": 0,
+          "overtime_assists": 0,
+          "overtime_goals": 0,
+          "overtime_shots": 0,
+          "penalties_major": 0,
+          "penalties_match": 0,
+          "penalties_minor": 0,
+          "penalty_minutes_additional": 0,
+          "penalties_misconduct": 0,
+          "second_star": 0,
+          "third_star": 0
+        },
+        "powerplay": {
+          "shots": 0,
+          "goals": 0,
+          "missed_shots": 0,
+          "assists": 1,
+          "faceoffs": 6,
+          "faceoffs_won": 3,
+          "faceoffs_lost": 3,
+          "faceoff_win_pct": 50.0
+        },
+        "shorthanded": {
+          "shots": 0,
+          "goals": 0,
+          "missed_shots": 0,
+          "assists": 0,
+          "faceoffs": 3,
+          "faceoffs_won": 1,
+          "faceoffs_lost": 2,
+          "faceoff_win_pct": 33.3
+        },
+        "evenstrength": {
+          "shots": 3,
+          "goals": 0,
+          "missed_shots": 0,
+          "assists": 1,
+          "faceoffs": 4,
+          "faceoffs_won": 3,
+          "faceoffs_lost": 1,
+          "faceoff_win_pct": 75.0
+        },
+        "penalty": {
+          "shots": 0,
+          "goals": 0,
+          "missed_shots": 0
+        },
+        "shootout": {
+          "shots": 0,
+          "goals": 0,
+          "missed_shots": 0
+        }
+      },
+      "expected": {
+        "G": 0,
+        "A": 2,
+        "SOG": 3,
+        "SM": 0,
+        "BS": 0,
+        "HT": 0,
+        "TK": 1,
+        "GV": 0,
+        "+/-": 1,
+        "PIM": 0,
+        "PN": 0,
+        "FW": 7,
+        "FL": 6,
+        "FO%": 53.8,
+        "PPG": 0,
+        "PPA": 1,
+        "PPP": 1,
+        "PPSOG": 0,
+        "SHG": 0,
+        "SHA": 0,
+        "SHP": 0,
+        "SHSOG": 0,
+        "ESG": 0,
+        "ESA": 1,
+        "ESP": 1,
+        "ESSOG": 3
+      }
+    },
+    {
+      "player": "Evan Rodrigues",
+      "statistics": {
+        "total": {
+          "goals": 3,
+          "assists": 1,
+          "penalties": 0,
+          "penalty_minutes": 0,
+          "shots": 6,
+          "blocked_att": 0,
+          "missed_shots": 3,
+          "hits": 1,
+          "giveaways": 1,
+          "takeaways": 0,
+          "blocked_shots": 0,
+          "faceoffs_won": 4,
+          "faceoffs_lost": 4,
+          "plus_minus": 0,
+          "shooting_pct": 50.0,
+          "faceoff_win_pct": 50.0,
+          "faceoffs": 8,
+          "points": 4,
+          "emptynet_goals": 0,
+          "first_star": 1,
+          "overtime_assists": 0,
+          "overtime_goals": 0,
+          "overtime_shots": 0,
+          "penalties_major": 0,
+          "penalties_match": 0,
+          "penalties_minor": 0,
+          "penalty_minutes_additional": 0,
+          "penalties_misconduct": 0,
+          "second_star": 0,
+          "third_star": 0
+        },
+        "powerplay": {
+          "shots": 6,
+          "goals": 3,
+          "missed_shots": 1,
+          "assists": 1,
+          "faceoffs": 2,
+          "faceoffs_won": 1,
+          "faceoffs_lost": 1,
+          "faceoff_win_pct": 50.0
+        },
+        "shorthanded": {
+          "shots": 0,
+          "goals": 0,
+          "missed_shots": 0,
+          "assists": 0,
+          "faceoffs": 0,
+          "faceoffs_won": 0,
+          "faceoffs_lost": 0,
+          "faceoff_win_pct": 0.0
+        },
+        "evenstrength": {
+          "shots": 0,
+          "goals": 0,
+          "missed_shots": 2,
+          "assists": 0,
+          "faceoffs": 6,
+          "faceoffs_won": 3,
+          "faceoffs_lost": 3,
+          "faceoff_win_pct": 50.0
+        },
+        "penalty": {
+          "shots": 0,
+          "goals": 0,
+          "missed_shots": 0
+        },
+        "shootout": {
+          "shots": 0,
+          "goals": 0,
+          "missed_shots": 0
+        }
+      },
+      "expected": {
+        "G": 3,
+        "A": 1,
+        "SOG": 6,
+        "SM": 3,
+        "BS": 0,
+        "HT": 1,
+        "TK": 0,
+        "GV": 1,
+        "+/-": 0,
+        "PIM": 0,
+        "PN": 0,
+        "FW": 4,
+        "FL": 4,
+        "FO%": 50.0,
+        "PPG": 3,
+        "PPA": 1,
+        "PPP": 4,
+        "PPSOG": 6,
+        "SHG": 0,
+        "SHA": 0,
+        "SHP": 0,
+        "SHSOG": 0,
+        "ESG": 0,
+        "ESA": 0,
+        "ESP": 0,
+        "ESSOG": 0
       }
     }
   ],
