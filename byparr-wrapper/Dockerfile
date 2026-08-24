@@ -100,6 +100,70 @@ RUN grep -q '^from playwright_captcha import CaptchaType$' /app/src/endpoints.py
     && grep -q '^from playwright.async_api import TimeoutError as PlaywrightTimeoutError$' /app/src/endpoints.py \
     && /app/.venv/bin/python -c "import ast,sys; ast.parse(open('/app/src/endpoints.py').read())"
 
+# Bound the `networkidle` wait, and make it non-fatal (2026-08-24).
+#
+# THE SOLVER WAS NOT FAILING TO SOLVE CHALLENGES. It was timing out before it ever looked for
+# one. `endpoints.py` runs, in order:
+#
+#     await dep.page.goto(request.url, timeout=timer.remaining() * 1000)
+#     await dep.page.wait_for_load_state("domcontentloaded", timeout=timer.remaining() * 1000)
+#     await dep.page.wait_for_load_state("networkidle",      timeout=timer.remaining() * 1000)
+#     ...
+#     if await dep.page.title() in CHALLENGE_TITLES:
+#         logger.info("Challenge detected, attempting to solve...")
+#
+# The networkidle wait is handed the ENTIRE remaining budget, and challenge detection happens
+# after it. hltv.org match pages carry ads and trackers that keep connections open, so
+# networkidle never fires, the budget drains, and the request 408s having never read the title.
+#
+# The logs say exactly that. Over 2026-08-24 04:00-09:00 UTC, every one of the 6 failures
+# logged `Timed out while solving the challenge` with NO `Challenge detected` line before it.
+# The single request that DID log `Challenge detected` succeeded, in 20.43s.
+#
+# It also explains the shape that made the budget look irrelevant. Measured over the 16.5h
+# after the `max_timeout` field fix landed:
+#
+#   succeeded  n=6    11.8 20.2 20.4 20.4 21.7 27.8s      — page settled, challenge read
+#   failed     n=12   153.1 ... 157.0s                    — networkidle never fired
+#
+# 66.7% failure on a 150s budget against 63.8% on 60s. Bimodal, because the failing branch is
+# not racing the clock at all — it is waiting on an event that will never arrive, so it
+# consumes whatever budget it is given. That is why 2.5x more time recovered nothing.
+#
+# `domcontentloaded` has already returned one line above, which is all `page.title()` needs, so
+# nothing downstream depends on networkidle having settled. Bounded to 5s and suppressed: a
+# page that settles quickly still gets the benefit, and one that never settles costs 5s instead
+# of the entire budget.
+#
+# Patched in Python rather than sed because the call spans three lines and sed is line-oriented.
+# Guarded both ways like the patches above: the build FAILS if the pattern is absent, so a
+# moved pin cannot silently ship the unbounded wait again.
+RUN /app/.venv/bin/python - <<'PATCH'
+import re, sys, ast
+p = "/app/src/endpoints.py"
+src = open(p).read()
+pat = re.compile(
+    r"([ \t]*)await dep\.page\.wait_for_load_state\(\s*\n?\s*[\"']networkidle[\"'],\s*timeout=timer\.remaining\(\) \* 1000,?\s*\n?\s*\)",
+    re.M,
+)
+m = pat.search(src)
+if not m:
+    sys.exit("byparr-wrapper: networkidle wait not found — pin moved, refusing to build")
+indent = m.group(1)
+repl = (
+    f"{indent}try:\n"
+    f"{indent}    await dep.page.wait_for_load_state(\"networkidle\", timeout=5000)\n"
+    f"{indent}except Exception:\n"
+    f"{indent}    pass  # huddle: never block challenge detection on an event hltv never emits\n"
+)
+src = src[:m.start()] + repl.rstrip("\n") + src[m.end():]
+ast.parse(src)
+open(p, "w").write(src)
+if "timeout=5000" not in open(p).read():
+    sys.exit("byparr-wrapper: networkidle patch did not apply")
+print("byparr-wrapper: networkidle wait bounded to 5s and suppressed")
+PATCH
+
 # Serialise browser launches — one Camoufox at a time (ENG-700).
 #
 # Byparr's `get_camoufox` is a FastAPI dependency with `yield`, so it starts a whole new
