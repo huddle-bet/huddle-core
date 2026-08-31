@@ -187,4 +187,11 @@ This is roughly **2× the ~$71/mo** the previous version of this table showed. T
 - **huddle-data's repo backs two services.** Editing its Dockerfile or entrypoint affects `huddle-data` and `huddle-reconciler` both.
 - All Render services run in **Oregon** to minimize cross-service latency. Pair with a us-west Supabase project (the prod project is in `us-west-2`).
 - Render auto-deploys on push to the connected branch (usually `main`). Suspend a service from the dashboard if you need to pause without deleting.
-- The huddle-api ↔ huddle-live fanout uses Render's internal DNS (`http://huddle-live:8081`) — no public ingress required for that path. The `HUDDLE_INTERNAL_SECRET` header is the only auth on it; rotate if leaked.
+- The huddle-api ↔ huddle-live fanout uses Render's internal DNS (`http://huddle-live:8081`), so no
+  public ingress is *required* for that path — but huddle-live is declared `type: web`, so it has a
+  public hostname anyway and `/fanout` answers on it. Measured 2026-08-31 (ENG-253): an
+  unauthenticated upgrade to `https://huddle-live-fyo6.onrender.com/fanout` returns `401`, over
+  HTTP/1.1. So the `HUDDLE_INTERNAL_SECRET` header is not a second layer behind the private
+  network — it is the **only** control on a reachable endpoint. Blast radius is read-only live
+  fixture state and no user data. Rotation procedure and the zero-downtime mechanism:
+  `huddle-api/RUNBOOK-key-rotation.md`.
