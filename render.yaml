@@ -37,8 +37,23 @@ envVarGroups:
       # no provider credential at all.
       - key: OPENAI_API_KEY
         sync: false
+      # Derived, not typed. `sync: false` meant no file ever held this value, so the
+      # documented one drifted unchallenged — DEPLOY.md said `http://huddle-live:8081`
+      # for months and Render addresses services by SLUG, so the real host is
+      # `huddle-live-fyo6` and the bare name does not resolve. Re-entering the
+      # documented value on 2026-09-02 broke the fanout: every retry logged 1006 and
+      # "closed before the connection was established", which reads as a network fault
+      # rather than a wrong hostname.
+      #
+      # `hostport` makes Render compute it, so nobody has to know the slug and it cannot
+      # drift. It yields a bare `huddle-live-fyo6:8081` with no scheme — huddle-api's
+      # `fanoutUrl()` accepts that form, and huddle-api#227 had to land BEFORE this entry
+      # for exactly that reason.
       - key: HUDDLE_LIVE_URL
-        sync: false
+        fromService:
+          type: web
+          name: huddle-live
+          property: hostport
       # FlareSolverr URL — consumed only by huddle-data, and only for the
       # /stats/matches/* HLTV path during backfill (CS2 per-map player
       # stats). Every other HLTV fetch goes through cycletls + the
