@@ -71,7 +71,7 @@ Set once on the group; every service inherits it. All marked `sync: false` in th
 | `STRIPE_PRICE_ID` | api | Price the Checkout session subscribes to |
 | `OPENAI_API_KEY` | api | The assistant's model provider (ENG-436, which replaced Groq). Read only by `huddle-api`, in `domains/ai/provider.ts`. **Absent = `/api/v1/chat` and `/api/v1/chat/stream` answer 503** naming this variable; every other route is unaffected and the service still boots. Optional companions, all read from the environment at call time: `OPENAI_MODEL` (defaults to `gpt-4.1-mini`), `OPENAI_TEMPERATURE`, `OPENAI_MAX_TOKENS`, `OPENAI_BASE_URL`. Note that o-series and gpt-5 reasoning models reject a temperature other than 1. |
 | `HUDDLE_INTERNAL_SECRET` | api, live | Shared secret for the huddle-api ↔ huddle-live fanout WS (any 256-bit hex string). **huddle-live will not start without it.** |
-| `HUDDLE_LIVE_URL` | api | Internal URL of huddle-live: `http://huddle-live:8081` (Render private DNS). Locally this must be `http://127.0.0.1:8085` — the Render hostname does not resolve off-platform. |
+| `HUDDLE_LIVE_URL` | api | Internal URL of huddle-live. **The host is the service SLUG, not its name** — see the note below; `http://huddle-live:8081` is wrong and this table said it until 2026-09-02. Locally it must be `http://127.0.0.1:8085`; no Render hostname resolves off-platform. |
 | `WEBSHARE_PROXY_LIST_URL` | data, reconciler, live, odds, flaresolverr | **Primary** source of the residential proxy pool. Every consumer fetches it hourly. Webshare rotates endpoints under the plan and a hand-kept CSV does not follow — 11 of 20 rotated in nine days, costing a measured 38% request failure rate (ENG-668). Carries a long-lived account token. |
 | `FLARESOLVERR_PROXY_URL` | data, reconciler, live, odds, flaresolverr | **Fallback** for the above, used when Webshare is unreachable. Comma-separated pool; cycletls pins one entry per process for HLTV cookie/IP affinity. A point-in-time snapshot, so it drifts — that is acceptable for a fallback. Contains credentials. |
 | `HLTV_TRANSPORT` | live | Selects the HLTV scorebot transport (`headless` drove the huddle-live starter→standard upgrade). |
@@ -187,6 +187,27 @@ This is roughly **2× the ~$71/mo** the previous version of this table showed. T
 - **huddle-data's repo backs two services.** Editing its Dockerfile or entrypoint affects `huddle-data` and `huddle-reconciler` both.
 - All Render services run in **Oregon** to minimize cross-service latency. Pair with a us-west Supabase project (the prod project is in `us-west-2`).
 - Render auto-deploys on push to the connected branch (usually `main`). Suspend a service from the dashboard if you need to pause without deleting.
+### Render's internal hostname is the slug, not the service name
+
+This table told everyone `http://huddle-live:8081` for months and it does not resolve. On
+2026-09-02 the fanout broke the moment `HUDDLE_LIVE_URL` was re-entered from that value, and
+huddle-api logged `1006` / "WebSocket was closed before the connection was established" on
+every retry — the shape a hostname that does not exist produces, not an auth failure.
+
+Render's own service list gives the rule away: `flaresolverr` (service **name**) is addressed
+internally as **`flaresolverr-qrfy:10000`** — the slug, with its collision suffix. huddle-live's
+slug is `huddle-live-fyo6`.
+
+**Nothing in this repo records the working value**, and that is the deeper problem:
+`render.yaml` marks `HUDDLE_LIVE_URL` `sync: false`, so it is dashboard-managed and no file has
+ever held it. The documented value was therefore never exercised by a deploy — it was only ever
+read by a human, and it was wrong. `sync: false` on a value this load-bearing means the only
+copy of it lives somewhere with no history and no review.
+
+Diagnosing it is cheap and worth writing down: a `101 Switching Protocols` from the PUBLIC host
+with the shared secret proves the service and the secret are both fine, which leaves the
+internal address as the only remaining variable.
+
 - The huddle-api ↔ huddle-live fanout uses Render's internal DNS (`http://huddle-live:8081`), so no
   public ingress is *required* for that path — but huddle-live is declared `type: web`, so it has a
   public hostname anyway and `/fanout` answers on it. Measured 2026-08-31 (ENG-253): an
