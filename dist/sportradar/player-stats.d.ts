@@ -129,7 +129,21 @@ export declare function nhlPlayerStats(statistics: any, groups?: NhlPlayerGroups
 export declare function mlbBatterStats(o: any): PlayerStatMap;
 /** MLB pitching line, from `player.statistics.pitching.overall`. */
 export declare function mlbPitcherStats(o: any): PlayerStatMap;
-/** MLB: a two-way player carries both lines; batting wins on key collisions. */
+/**
+ * MLB: a two-way player carries both lines, and BOTH survive.
+ *
+ * Batting wins the plain keys on a collision (`H`, `R`, `BB`, `K`, `HR`, `#P`) — that is what
+ * every stored row already means and a flip would change every two-way player's batting line.
+ * The pitching line is ALSO written, always, under `P_<key>`: `P_K`, `P_H`, `P_BB`, `P_R`,
+ * `P_HR`, `P_#P` and the rest. A pure pitcher's row therefore holds both `K` and `P_K` with the
+ * same value, and a reader that wants the pitching number takes `P_K ?? K` — right on a row
+ * written today, right on a row written before this existed, and right on Shohei Ohtani's.
+ *
+ * Measured 2026-09-08 before this: Ohtani had 11 two-way rows this season (4–6.2 IP, real
+ * starts) and every one held his BATTING strikeouts under `K`, with the pitching strikeouts —
+ * the market every book prices — not in the row at all. Settlement refused rather than graded
+ * (huddle-engine#209) because the number could not be recovered; now it can.
+ */
 export declare function mlbPlayerStats(statistics: any): PlayerStatMap;
 /**
  * Flatten one player's `statistics` for a summary-feed sport.
