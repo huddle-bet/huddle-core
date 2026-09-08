@@ -59,6 +59,13 @@ envVarGroups:
       # stats). Every other HLTV fetch goes through cycletls + the
       # residential proxy below. Kept in the shared group for blueprint
       # simplicity; nothing else reads it.
+      # Sportradar REST credential. Read by huddle-live, huddle-data and huddle-api.
+      # Declared here for the reason the OPENAI_API_KEY note above gives: undeclared, it
+      # exists only in the dashboard, and a fresh blueprint apply creates services that
+      # boot without it. The per-service SPORTRADAR_ACCESS_LEVEL keys are deliberately
+      # NOT in this group — see huddle-live's copy.
+      - key: SPORTRADAR_API_KEY
+        sync: false
       - key: FLARESOLVERR_URL
         sync: false
       # Residential / non-banned HTTP(S) proxy pool for HLTV traffic.
@@ -114,6 +121,9 @@ services:
         value: production
       - key: PORT
         value: "8080"
+      # `trial` today, deliberately — see the note on huddle-live's copy of this key.
+      - key: SPORTRADAR_ACCESS_LEVEL
+        sync: false
       - fromGroup: huddle-shared
 
   # ── huddle-notify (Background Worker) — ENG-429 ───────────
@@ -217,6 +227,9 @@ services:
       # original FlareSolverr code path.
       - key: BYPARR_MODE
         value: "true"
+      # `trial` today, deliberately — see the note on huddle-live's copy of this key.
+      - key: SPORTRADAR_ACCESS_LEVEL
+        sync: false
       - fromGroup: huddle-shared
 
   # ── huddle-reconciler (Background Worker — Docker) ───────
@@ -589,6 +602,31 @@ services:
       # preserves node_modules but not ~/.cache, so browsers must live
       # inside the project directory to survive build → runtime. Set this
       # env here only to override (e.g. external browser cache mount).
+      # The four league on-switches. `cli.ts` gates on strict `=== '1'`, so any other
+      # value — including unset — starts the process with that league's adapter never
+      # registered and nothing logged about its absence. NHL opens 2026-09-19 and NBA
+      # 2026-10-03; losing one of these reads as an empty calendar, not as an outage.
+      # Undeclared until 2026-09-08, when ENG-842 found them only in the dashboard.
+      - key: SPORTRADAR_NBA
+        sync: false
+      - key: SPORTRADAR_NHL
+        sync: false
+      - key: SPORTRADAR_MLB
+        sync: false
+      - key: SPORTRADAR_NFL
+        sync: false
+      # Push-feed credential, separate from the REST key on Sportradar's side.
+      - key: SPORTRADAR_PUSH_KEY
+        sync: false
+      # **This service runs `production` while huddle-data and huddle-api run `trial`,
+      # and the split is deliberate — measured 2026-09-06.** The trial credits are being
+      # spent first; huddle-live is on the paid tier because it is the service that probes
+      # Sportradar. It is per-service and NOT in the shared group for exactly that reason:
+      # a group entry reads as one value for all three and invites flipping them together,
+      # which spends paid credits while trial ones expire unused. See ENG-221, whose body
+      # still describes the pre-2026-09-06 state.
+      - key: SPORTRADAR_ACCESS_LEVEL
+        sync: false
       # huddle-live no longer hits FlareSolverr — the polling scorebot
       # and matches-harvester both go via cycletls + residential proxy.
       # FLARESOLVERR_URL is inherited from the shared group but unused.
