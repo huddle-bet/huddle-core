@@ -66,6 +66,29 @@ describe('two-way players keep their batting line', () => {
         expect(flat.IP).toBe(6.1);
         expect(flat.ER).toBe(7);
     });
+    it('keeps the pitching line too, under P_ — Ohtani\'s strikeouts thrown are a number again', () => {
+        const stats = {
+            hitting: { overall: { ab: 4, onbase: { h: 3, hr: 1, bb: 0 }, runs: { total: 2 }, outs: { ktotal: 1 } } },
+            pitching: { overall: { ip_2: 6.1, onbase: { h: 9, hr: 4, bb: 5 }, runs: { total: 8, earned: 7 }, outs: { ktotal: 11 }, era: 4.5, pitch_count: 98 } },
+        };
+        const flat = mlbPlayerStats(stats);
+        expect(flat.K).toBe(1); // batting, unchanged
+        expect(flat.P_K).toBe(11); // pitching, recovered
+        expect(flat.P_H).toBe(9);
+        expect(flat.P_BB).toBe(5);
+        expect(flat.P_HR).toBe(4);
+        expect(flat.P_R).toBe(8);
+        expect(flat['P_#P']).toBe(98);
+        expect(flat.P_IP).toBe(6.1);
+    });
+    it('gives a pure pitcher both spellings with one value, so readers can take P_K ?? K everywhere', () => {
+        const flat = mlbPlayerStats({ pitching: { overall: { ip_2: 7, outs: { ktotal: 9 }, onbase: { h: 4 } } } });
+        expect(flat.K).toBe(9);
+        expect(flat.P_K).toBe(9);
+        expect(flat.H).toBe(4);
+        expect(flat.P_H).toBe(4);
+        expect(flat.AB).toBeUndefined();
+    });
 });
 describe('made-attempted pairs', () => {
     it('renders as "made-att", including when the source omits them', () => {
