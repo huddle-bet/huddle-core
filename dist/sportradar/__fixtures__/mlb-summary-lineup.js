@@ -1,0 +1,426 @@
+/**
+ * MIN at DET, 2026-09-08 (`061815ce`), closed — Sportradar's own `summary.json`, slimmed to
+ * ids, names, positions and the lineup. Captured rather than hand-built: the question
+ * `mlbStarterIds` answers is what `inning` means on a substitution, and a fixture without one
+ * cannot answer it. This has seven, plus a starter who changed position and a substitute who
+ * appears twice.
+ *
+ * A `.ts` module rather than a `.json` file because `tsc` does not copy JSON into `dist/`, and
+ * CI runs the compiled tests — a JSON fixture passes locally and fails there with ENOENT.
+ */
+export const MLB_SUMMARY_LINEUP = {
+    "game": {
+        "id": "061815ce-c230-475f-92a4-1bb19fc59832",
+        "status": "closed",
+        "home": {
+            "id": "575c19b7-4052-41c2-9f0a-1c5813d02f99",
+            "abbr": "DET",
+            "market": "Detroit",
+            "name": "Tigers",
+            "starting_pitcher": {
+                "id": "9186e5cf-98cf-4191-b070-282357135748",
+                "full_name": "Drew Anderson"
+            },
+            "lineup": [
+                {
+                    "id": "7bf4c47d-0b2d-4eb2-8cd2-4b0e82994193",
+                    "inning": 0,
+                    "order": 9,
+                    "position": 9,
+                    "sequence": 1
+                },
+                {
+                    "id": "d390fc53-d908-41d8-9a5a-6210c50b59b2",
+                    "inning": 0,
+                    "order": 8,
+                    "position": 5,
+                    "sequence": 2
+                },
+                {
+                    "id": "c3d2ee24-1aa5-409f-90bc-0768e201bfc2",
+                    "inning": 0,
+                    "order": 7,
+                    "position": 8,
+                    "sequence": 3
+                },
+                {
+                    "id": "4ab26465-763e-4a3d-ad8a-8f2140737e0e",
+                    "inning": 0,
+                    "order": 6,
+                    "position": 7,
+                    "sequence": 4
+                },
+                {
+                    "id": "adb0f520-802f-4902-a897-23dfff8e17ca",
+                    "inning": 0,
+                    "order": 5,
+                    "position": 2,
+                    "sequence": 5
+                },
+                {
+                    "id": "c2689320-b989-4bbc-9afb-28e06aa31077",
+                    "inning": 0,
+                    "order": 4,
+                    "position": 10,
+                    "sequence": 6
+                },
+                {
+                    "id": "73cbdd41-98c4-4dec-8c8a-1a6e1be959d9",
+                    "inning": 0,
+                    "order": 3,
+                    "position": 3,
+                    "sequence": 7
+                },
+                {
+                    "id": "781d3396-df55-4b42-bea4-5c9cad9dcad0",
+                    "inning": 0,
+                    "order": 2,
+                    "position": 4,
+                    "sequence": 8
+                },
+                {
+                    "id": "538f0693-6b00-4fba-ad5c-5953aa0c680f",
+                    "inning": 0,
+                    "order": 1,
+                    "position": 6,
+                    "sequence": 9
+                },
+                {
+                    "id": "9186e5cf-98cf-4191-b070-282357135748",
+                    "inning": 0,
+                    "order": 0,
+                    "position": 1,
+                    "sequence": 10
+                },
+                {
+                    "id": "0d9babdc-80b5-40c2-a71d-068219b9337b",
+                    "inning": 6,
+                    "order": 0,
+                    "position": 1,
+                    "sequence": 11
+                },
+                {
+                    "id": "12085747-6898-4d08-9ceb-c6860dd35f6d",
+                    "inning": 6,
+                    "order": 3,
+                    "position": 11,
+                    "sequence": 12
+                },
+                {
+                    "id": "12085747-6898-4d08-9ceb-c6860dd35f6d",
+                    "inning": 7,
+                    "order": 3,
+                    "position": 3,
+                    "sequence": 13
+                },
+                {
+                    "id": "130a605b-20ed-4628-af30-ad53528182c2",
+                    "inning": 7,
+                    "order": 6,
+                    "position": 11,
+                    "sequence": 14
+                },
+                {
+                    "id": "130a605b-20ed-4628-af30-ad53528182c2",
+                    "inning": 8,
+                    "order": 6,
+                    "position": 7,
+                    "sequence": 15
+                },
+                {
+                    "id": "5558a5b1-026b-437e-8ca5-fa431bd53cae",
+                    "inning": 8,
+                    "order": 0,
+                    "position": 1,
+                    "sequence": 16
+                },
+                {
+                    "id": "55de0f7b-e342-4292-a9f2-226b3ed55018",
+                    "inning": 9,
+                    "order": 0,
+                    "position": 1,
+                    "sequence": 17
+                }
+            ],
+            "players": [
+                {
+                    "id": "0d9babdc-80b5-40c2-a71d-068219b9337b",
+                    "full_name": "Beau Brieske",
+                    "position": "P"
+                },
+                {
+                    "id": "12085747-6898-4d08-9ceb-c6860dd35f6d",
+                    "full_name": "Spencer Torkelson",
+                    "position": "IF"
+                },
+                {
+                    "id": "130a605b-20ed-4628-af30-ad53528182c2",
+                    "full_name": "Ben Malgeri",
+                    "position": "OF"
+                },
+                {
+                    "id": "4ab26465-763e-4a3d-ad8a-8f2140737e0e",
+                    "full_name": "Brett Callahan",
+                    "position": "OF"
+                },
+                {
+                    "id": "538f0693-6b00-4fba-ad5c-5953aa0c680f",
+                    "full_name": "Kevin McGonigle",
+                    "position": "IF"
+                },
+                {
+                    "id": "5558a5b1-026b-437e-8ca5-fa431bd53cae",
+                    "full_name": "Brant Hurter",
+                    "position": "P"
+                },
+                {
+                    "id": "55de0f7b-e342-4292-a9f2-226b3ed55018",
+                    "full_name": "Yilber D\u00edaz",
+                    "position": "P"
+                },
+                {
+                    "id": "73cbdd41-98c4-4dec-8c8a-1a6e1be959d9",
+                    "full_name": "Colt Keith",
+                    "position": "IF"
+                },
+                {
+                    "id": "781d3396-df55-4b42-bea4-5c9cad9dcad0",
+                    "full_name": "Gleyber Torres",
+                    "position": "IF"
+                },
+                {
+                    "id": "7bf4c47d-0b2d-4eb2-8cd2-4b0e82994193",
+                    "full_name": "Zach McKinstry",
+                    "position": "OF"
+                },
+                {
+                    "id": "9186e5cf-98cf-4191-b070-282357135748",
+                    "full_name": "Drew Anderson",
+                    "position": "P"
+                },
+                {
+                    "id": "adb0f520-802f-4902-a897-23dfff8e17ca",
+                    "full_name": "Eduardo Valencia",
+                    "position": "DH"
+                },
+                {
+                    "id": "c2689320-b989-4bbc-9afb-28e06aa31077",
+                    "full_name": "Riley Greene",
+                    "position": "OF"
+                },
+                {
+                    "id": "c3d2ee24-1aa5-409f-90bc-0768e201bfc2",
+                    "full_name": "Max Clark",
+                    "position": "OF"
+                },
+                {
+                    "id": "d390fc53-d908-41d8-9a5a-6210c50b59b2",
+                    "full_name": "Hao-Yu Lee",
+                    "position": "IF"
+                }
+            ]
+        },
+        "away": {
+            "id": "aa34e0ed-f342-4ec6-b774-c79b47b60e2d",
+            "abbr": "MIN",
+            "market": "Minnesota",
+            "name": "Twins",
+            "starting_pitcher": {
+                "id": "dba3e740-244b-487e-8122-2adc89c206f1",
+                "full_name": "Dean Kremer"
+            },
+            "lineup": [
+                {
+                    "id": "dba3e740-244b-487e-8122-2adc89c206f1",
+                    "inning": 0,
+                    "order": 0,
+                    "position": 1,
+                    "sequence": 1
+                },
+                {
+                    "id": "00ce18c4-c489-4350-a550-06a6d3948581",
+                    "inning": 0,
+                    "order": 1,
+                    "position": 9,
+                    "sequence": 2
+                },
+                {
+                    "id": "aef9f47e-bd19-419e-9fec-73271850bd39",
+                    "inning": 0,
+                    "order": 2,
+                    "position": 5,
+                    "sequence": 3
+                },
+                {
+                    "id": "a4630a73-2fd8-4558-b4ca-87a6b305497c",
+                    "inning": 0,
+                    "order": 3,
+                    "position": 4,
+                    "sequence": 4
+                },
+                {
+                    "id": "005c0339-91b9-4b00-a373-105e761382eb",
+                    "inning": 0,
+                    "order": 4,
+                    "position": 2,
+                    "sequence": 5
+                },
+                {
+                    "id": "49edaec4-ea7c-455b-ac2c-92961b4261f0",
+                    "inning": 0,
+                    "order": 5,
+                    "position": 10,
+                    "sequence": 6
+                },
+                {
+                    "id": "01776cda-8dd8-465b-8635-d314fb002c1a",
+                    "inning": 0,
+                    "order": 6,
+                    "position": 3,
+                    "sequence": 7
+                },
+                {
+                    "id": "21f3e083-3f20-4890-86bb-c4675415d8d3",
+                    "inning": 0,
+                    "order": 7,
+                    "position": 7,
+                    "sequence": 8
+                },
+                {
+                    "id": "9c6e288c-aa75-4d4b-b4c5-2dd2731908d9",
+                    "inning": 0,
+                    "order": 8,
+                    "position": 6,
+                    "sequence": 9
+                },
+                {
+                    "id": "34849ec2-aafa-4408-96f4-b2c4c780ff7e",
+                    "inning": 0,
+                    "order": 9,
+                    "position": 8,
+                    "sequence": 10
+                },
+                {
+                    "id": "e1cbb2df-986d-4fab-bf1e-7192c54bdae9",
+                    "inning": 6,
+                    "order": 0,
+                    "position": 1,
+                    "sequence": 11
+                },
+                {
+                    "id": "a4630a73-2fd8-4558-b4ca-87a6b305497c",
+                    "inning": 7,
+                    "order": 3,
+                    "position": 7,
+                    "sequence": 12
+                },
+                {
+                    "id": "9ea2890d-ab51-4876-bf64-ec0398bf5f8e",
+                    "inning": 7,
+                    "order": 7,
+                    "position": 4,
+                    "sequence": 13
+                },
+                {
+                    "id": "935a41f8-6267-4a0d-b9cf-623b56da86d6",
+                    "inning": 7,
+                    "order": 0,
+                    "position": 1,
+                    "sequence": 14
+                },
+                {
+                    "id": "d2b49c9d-1c9f-44b4-b9b9-c4222dc0c089",
+                    "inning": 8,
+                    "order": 0,
+                    "position": 1,
+                    "sequence": 15
+                },
+                {
+                    "id": "829b6ae4-4c11-45ec-a364-36650bcda040",
+                    "inning": 9,
+                    "order": 0,
+                    "position": 1,
+                    "sequence": 16
+                }
+            ],
+            "players": [
+                {
+                    "id": "005c0339-91b9-4b00-a373-105e761382eb",
+                    "full_name": "Ryan Jeffers",
+                    "position": "C"
+                },
+                {
+                    "id": "00ce18c4-c489-4350-a550-06a6d3948581",
+                    "full_name": "Luke Keaschall",
+                    "position": "IF"
+                },
+                {
+                    "id": "01776cda-8dd8-465b-8635-d314fb002c1a",
+                    "full_name": "Royce Lewis",
+                    "position": "IF"
+                },
+                {
+                    "id": "21f3e083-3f20-4890-86bb-c4675415d8d3",
+                    "full_name": "Trevor Larnach",
+                    "position": "OF"
+                },
+                {
+                    "id": "34849ec2-aafa-4408-96f4-b2c4c780ff7e",
+                    "full_name": "Walker Jenkins",
+                    "position": "OF"
+                },
+                {
+                    "id": "49edaec4-ea7c-455b-ac2c-92961b4261f0",
+                    "full_name": "Josh Bell",
+                    "position": "DH"
+                },
+                {
+                    "id": "829b6ae4-4c11-45ec-a364-36650bcda040",
+                    "full_name": "Yoendrys G\u00f3mez",
+                    "position": "P"
+                },
+                {
+                    "id": "935a41f8-6267-4a0d-b9cf-623b56da86d6",
+                    "full_name": "Andrew Morris",
+                    "position": "P"
+                },
+                {
+                    "id": "9c6e288c-aa75-4d4b-b4c5-2dd2731908d9",
+                    "full_name": "Kaelen Culpepper",
+                    "position": "IF"
+                },
+                {
+                    "id": "9ea2890d-ab51-4876-bf64-ec0398bf5f8e",
+                    "full_name": "Ryan Kreidler",
+                    "position": "IF"
+                },
+                {
+                    "id": "a4630a73-2fd8-4558-b4ca-87a6b305497c",
+                    "full_name": "Kody Clemens",
+                    "position": "IF"
+                },
+                {
+                    "id": "aef9f47e-bd19-419e-9fec-73271850bd39",
+                    "full_name": "Brooks Lee",
+                    "position": "IF"
+                },
+                {
+                    "id": "d2b49c9d-1c9f-44b4-b9b9-c4222dc0c089",
+                    "full_name": "Jeff Hoffman",
+                    "position": "P"
+                },
+                {
+                    "id": "dba3e740-244b-487e-8122-2adc89c206f1",
+                    "full_name": "Dean Kremer",
+                    "position": "P"
+                },
+                {
+                    "id": "e1cbb2df-986d-4fab-bf1e-7192c54bdae9",
+                    "full_name": "A.J. Minter",
+                    "position": "P"
+                }
+            ]
+        }
+    }
+};
+//# sourceMappingURL=mlb-summary-lineup.js.map
