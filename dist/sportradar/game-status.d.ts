@@ -45,11 +45,19 @@ export interface MapSportradarStatusOptions {
  * - `if_necessary` / `unnecessary` also became `scheduled`. That one is correct, but by
  *   accident rather than intent, so it is written down here.
  *
- * **`delayed` maps to `live` and that is not settled.** Sportradar uses it both for a game
- * stopped mid-play (our `suspended`) and one whose first pitch has not happened (our
- * `scheduled`), and the payload does not distinguish them. Choosing either without observing
- * a real delayed game would replace one bug with its mirror image. Current behaviour is
- * pinned by a test so a change is a decision rather than a drift — ENG-521.
+ * **`delayed`, `wdelay` and `fdelay` map to `delayed`, settled 2026-09-09 (ENG-614).** They
+ * used to map to `live`, and this comment used to say the choice was unresolved: Sportradar
+ * uses the values both for a game stopped mid-play (our `suspended`) and for one whose first
+ * pitch has not happened (our `scheduled`), so picking either would replace one bug with its
+ * mirror image. The way out was not a better guess. `EventStatus` gained a `delayed` member
+ * that is neither, and this returns it.
+ *
+ * The observation that settled it: MLB Minnesota at Detroit, 2026-09-09. Sportradar served
+ * `status: "wdelay"` on BOTH the daily schedule and the game summary at 16:53Z and 16:33Z,
+ * for a 17:10Z first pitch, with `outcome.current_inning: 0` — a game that had not started.
+ * Under the old mapping huddle-data's schedule poller wrote `events.status = 'live'` on it,
+ * huddle-live never saw a play frame so there was no `live_state` row behind it, and the
+ * client had no value to draw but LIVE.
  *
  * Unknown values warn once per process and fall back to `scheduled`. The fallback is
  * deliberate: a status Sportradar ships mid-season must not take a whole schedule poll down
