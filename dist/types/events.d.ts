@@ -12,7 +12,7 @@
  * `events` holds only `final` / `scheduled` / `live`, so the migration did
  * land, and no row has ever carried `cancelled`.
  *
- * The three disrupted states are distinct and not interchangeable:
+ * The four disrupted states are distinct and not interchangeable:
  *
  * - `postponed` — will not be played at its scheduled time; a new start
  *   time may or may not be known. The fixture is still expected to happen.
@@ -20,18 +20,41 @@
  *   client's union was renamed to match the wire value (ENG-517).
  * - `suspended` — started and stopped mid-play, may resume. Distinct from
  *   `postponed`, which never started.
+ * - `delayed` — not being played right now and still expected today, whether
+ *   or not it ever started. Deliberately covers both senses, because the
+ *   provider does not separate them: see `mapSportradarStatus`, where
+ *   `delayed`, `wdelay` and `fdelay` arrive for a late first pitch and for a
+ *   mid-play stoppage alike, and the payload carries nothing to tell them
+ *   apart. A member that is narrower than the evidence would need a
+ *   distinction nobody can make.
+ *
+ * `delayed` was added 2026-09-09, and the evidence is the part that matters.
+ * `game-status.ts` has said since it was written that mapping `delayed` is
+ * unsettled — Sportradar uses it for both senses, and "choosing either without
+ * observing a real delayed game would replace one bug with its mirror image".
+ * A real one was finally observed: MLB Minnesota at Detroit on 2026-09-09 sat
+ * at `status = 'live'` with **no `live_state` row** and a start time still in
+ * the future, while Sportradar reported `wdelay` and MLB called it a weather
+ * delay. The client had no value to draw but LIVE.
+ *
+ * The union member is what makes that mapping settleable, because it is
+ * neither of the two wrong answers. It does **not** settle it here. Three
+ * things must accept the value before `mapSportradarStatus` may return it:
+ * this union, the mobile client's copy, and huddle-data's own narrower
+ * redeclaration (ENG-520/521). Until then the member is inert, and the writer
+ * that put `live` on an unstarted fixture is unchanged.
  *
  * `events.status` is a plain `TEXT` column with no check constraint, so
  * nothing at the database layer rejects a value outside this union. Use
  * `isEventStatus` at any boundary where a provider string becomes a status.
  */
-export type EventStatus = 'scheduled' | 'live' | 'final' | 'postponed' | 'cancelled' | 'suspended';
+export type EventStatus = 'scheduled' | 'live' | 'final' | 'postponed' | 'cancelled' | 'suspended' | 'delayed';
 /**
  * Runtime counterpart to `EventStatus`, for validation at provider and API
  * boundaries — a zod enum, a `Set` membership check, an `assertKnownVariant`
  * allowlist. Kept in one place so the writers and the readers cannot drift.
  */
-export declare const EVENT_STATUSES: readonly ["scheduled", "live", "final", "postponed", "cancelled", "suspended"];
+export declare const EVENT_STATUSES: readonly ["scheduled", "live", "final", "postponed", "cancelled", "suspended", "delayed"];
 /** Narrows an arbitrary string to `EventStatus`. */
 export declare function isEventStatus(value: string): value is EventStatus;
 /**
