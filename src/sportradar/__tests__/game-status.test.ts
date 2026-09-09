@@ -85,22 +85,50 @@ describe('mapSportradarStatus', () => {
   });
 
   /**
-   * `delayed` is deliberately unresolved — Sportradar uses it both for a stoppage mid-play and
-   * for a game that has not started. Pinned so a change is a decision, not a drift.
+   * Settled 2026-09-09 (ENG-614). These pinned `live` while the choice was open, and the
+   * comment then said the choice could not be made without observing a real delayed game.
+   * One was observed — see below — and the answer was a third value rather than either of
+   * the two wrong ones.
    */
-  it('leaves delayed on live, pending a real observation', () => {
-    expect(mapSportradarStatus('delayed')).toBe('live');
+  it('maps a delayed game to delayed, not live', () => {
+    expect(mapSportradarStatus('delayed')).toBe('delayed');
   });
 
   /**
-   * MLB's weather and field delays. They never appear in a schedule payload — a scan of 5,308
-   * games returned only closed, scheduled, inprogress, postponed and unnecessary — so these
-   * are known from huddle-live's MLB translators, which have carried them since they were
-   * written. Mapping them anywhere but `live` would regress a delayed game to `scheduled`.
+   * MLB's weather and field delays, and the case that settled all three.
+   *
+   * This used to assert `live`, on the reasoning that these "never appear in a schedule
+   * payload — a scan of 5,308 games returned only closed, scheduled, inprogress, postponed
+   * and unnecessary". That scan held no delayed game, so it could not say where a delay
+   * appears; it said only that none occurred in it.
+   *
+   * Sportradar served `wdelay` on the DAILY SCHEDULE for MLB Minnesota at Detroit on
+   * 2026-09-09 at 16:53Z, and on the game summary at 16:33Z, for a 17:10Z first pitch with
+   * `outcome.current_inning: 0`. So the schedule does carry it, huddle-data's poller is the
+   * writer that acted on it, and `live` on an unstarted game is what the client drew.
    */
-  it('keeps MLB weather and field delays on live, as the live translators always did', () => {
-    expect(mapSportradarStatus('wdelay')).toBe('live');
-    expect(mapSportradarStatus('fdelay')).toBe('live');
+  it('maps MLB weather and field delays to delayed', () => {
+    expect(mapSportradarStatus('wdelay')).toBe('delayed');
+    expect(mapSportradarStatus('fdelay')).toBe('delayed');
+  });
+
+  /**
+   * The two things a delayed game must NOT become, asserted separately because each is a
+   * live defect rather than a hypothetical. `live` is what shipped and put a LIVE badge on a
+   * game with no `live_state` row behind it. `scheduled` is its mirror: it would drop a game
+   * stopped in the seventh inning back to unplayed and take huddle-live's active game with
+   * it, since the adapter releases on lifecycle.
+   */
+  it('is neither of the two answers it replaced', () => {
+    for (const s of ['delayed', 'wdelay', 'fdelay'] as const) {
+      expect(mapSportradarStatus(s)).not.toBe('live');
+      expect(mapSportradarStatus(s)).not.toBe('scheduled');
+    }
+  });
+
+  /** A delayed game is still expected to resume, so nothing may release or settle it. */
+  it('leaves a delayed game non-terminal', () => {
+    expect(isTerminalStatus('delayed')).toBe(false);
   });
 
   it('maps a suspended game to suspended, not final', () => {
