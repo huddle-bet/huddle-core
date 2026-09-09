@@ -1,8 +1,6 @@
 import { describe, expect, it } from 'vitest';
-import { readFileSync } from 'node:fs';
-import { fileURLToPath } from 'node:url';
-import { dirname, join } from 'node:path';
 import { mlbStarterIds } from '../player-stats.js';
+import { MLB_SUMMARY_LINEUP } from '../__fixtures__/mlb-summary-lineup.js';
 /**
  * ENG-889. The box score's STARTERS split was dark on baseball, and the cause was not a
  * missing writer — five writers set `starter` from the provider. MLB is the one league whose
@@ -13,8 +11,12 @@ import { mlbStarterIds } from '../player-stats.js';
  * names, positions and the lineup. It is used rather than a hand-built one because the whole
  * question is what `inning` means on a substitution, and a fixture with no substitutions
  * cannot answer it. This one has seven.
+ *
+ * It is a `.ts` module and not a `.json` file for a reason worth carrying: `tsc` does not copy
+ * JSON into `dist/`, and CI runs the compiled tests. The JSON version passed locally on every
+ * run and failed in CI with ENOENT — a fixture the build silently drops.
  */
-const SUMMARY = JSON.parse(readFileSync(join(dirname(fileURLToPath(import.meta.url)), '..', '__fixtures__', 'mlb-summary-lineup.json'), 'utf8'));
+const SUMMARY = MLB_SUMMARY_LINEUP;
 const sides = [['home', SUMMARY.game.home], ['away', SUMMARY.game.away]];
 describe('mlbStarterIds', () => {
     it('the fixture is a real game with real substitutions', () => {
