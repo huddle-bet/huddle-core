@@ -10,6 +10,7 @@ export const EVENT_STATUSES = [
     'postponed',
     'cancelled',
     'suspended',
+    'delayed',
 ];
 /** Narrows an arbitrary string to `EventStatus`. */
 export function isEventStatus(value) {
