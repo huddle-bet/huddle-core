@@ -158,4 +158,43 @@ export declare function mlbPlayerStats(statistics: any): PlayerStatMap;
  */
 export declare function sportradarPlayerStats(sport: SummaryStatsSport, statistics: any, groups?: NhlPlayerGroups): PlayerStatMap | null;
 export declare function isSummaryStatsSport(sport: string): sport is SummaryStatsSport;
+/**
+ * The MLB starting lineup, as a set of Sportradar player ids.
+ *
+ * MLB is the one league whose summary carries **no player-level `starter` flag** — measured
+ * 2026-09-09 on a real closed game (MIN at DET, `061815ce`) and on the committed fixture, 0
+ * of 30 players on either side hold the key. nba and nhl send `starter: true` on the starters
+ * and omit it otherwise, so `Boolean(p.starter)` is right for them and always false for mlb.
+ * That is why the box score's STARTERS split was dark on baseball while looking fine
+ * elsewhere (ENG-889).
+ *
+ * The information is in the same payload under a different name. `team.lineup[]` holds one
+ * entry per player who took a lineup slot, and **`inning: 0` is the entry that took the field
+ * at first pitch**; a substitution carries the inning it came in. On that real game:
+ *
+ *     DET  innings {0: 10, 6: 2, 7: 2, 8: 2, 9: 1}   inning-0 positions 1..10, orders 0..9
+ *     MIN  innings {0: 10, 6: 1, 7: 3, 8: 1, 9: 1}   inning-0 positions 1..10, orders 0..9
+ *
+ * Ten a side — the nine fielders plus the DH — with the starting pitcher inside the set on
+ * both. So `starting_pitcher` corroborates and adds nobody, and is deliberately not unioned
+ * in: a starter who is not in the inning-0 lineup would be a contradiction worth seeing
+ * rather than papering over.
+ *
+ * Taking the first entry per `order` instead gives the identical set on that game. `inning`
+ * is preferred because it says what it means; `order` is a lineup index here, not the batting
+ * slot — position 1, the pitcher, sits at order 0 in a DH game.
+ *
+ * **A lineup entry is a (player, role) event, not a player**, and that is the thing to know
+ * before touching this. On the same game Kody Clemens started at position 4 and moved to 7 in
+ * the seventh, keeping order 3 — two entries, and he is a starter. Spencer Torkelson is the
+ * mirror: he entered at inning 6 as position **11**, a pinch hitter, then took position 3 in
+ * the seventh — two entries, and he started nothing. So neither "appears once" nor "appears
+ * more than once" is the rule; holding an inning-0 entry is. The position vocabulary also runs
+ * past the nine fielders and the DH: 11 is a pinch hitter.
+ *
+ * Returns an empty set when there is no lineup, so a caller marks nobody rather than
+ * guessing. An empty set and "everyone is a bench player" are the same row, which is why the
+ * caller should keep the league check rather than relying on this to abstain.
+ */
+export declare function mlbStarterIds(team: unknown): Set<string>;
 //# sourceMappingURL=player-stats.d.ts.map
