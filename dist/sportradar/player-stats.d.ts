@@ -197,4 +197,37 @@ export declare function isSummaryStatsSport(sport: string): sport is SummaryStat
  * caller should keep the league check rather than relying on this to abstain.
  */
 export declare function mlbStarterIds(team: unknown): Set<string>;
+/**
+ * The line score — runs or points by period, in the shape the client already renders.
+ *
+ * `MatchGameData.lineScore` is `{periods: string[], away, home: (number|null)[], awayTotal,
+ * homeTotal}` and until now nothing has ever filled it but the demo fixture, so a live game's
+ * Game tab had no line score to draw (ENG-890). The summary carries it per team under
+ * `scoring[]`, on the same payload huddle-live already polls for player stats — no new fetch.
+ *
+ * Three things about the provider's array decide the implementation, and all three are in the
+ * committed fixture because a hand-built one would have had none of them:
+ *
+ * - **nhl arrives REVERSED** — `number` 3, 2, 1 — so array order is not period order.
+ * - **nba repeats `number`** — 1, 2, 3, 4, 1, where the fifth is overtime. `number` is a
+ *   label WITHIN a period type; only `sequence` is a position. Keying on `number` collides
+ *   OT1 with Q1 and silently loses a quarter.
+ * - **the value key is sport-specific** — `runs` for mlb, `points` for nba and nhl.
+ *
+ * So it sorts by `sequence`, positions by `sequence`, and labels from `type` + `number`.
+ *
+ * **A missing entry is null, never 0.** MLB lists every inning batted, including the scoreless
+ * ones, so absence means the half was not batted — a home side leading after the top of the
+ * ninth never bats, and the client's own test asserts eight home entries against nine away.
+ * Filling those with 0 would say the home team batted and failed to score, which is a
+ * different and wrong claim, and is the `?? 0` mistake this file's neighbours keep recording.
+ */
+export interface SummaryLineScore {
+    periods: string[];
+    away: Array<number | null>;
+    home: Array<number | null>;
+    awayTotal: number;
+    homeTotal: number;
+}
+export declare function summaryLineScore(raw: unknown): SummaryLineScore | null;
 //# sourceMappingURL=player-stats.d.ts.map

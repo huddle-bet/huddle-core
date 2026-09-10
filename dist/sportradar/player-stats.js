@@ -375,4 +375,73 @@ export function mlbStarterIds(team) {
     }
     return ids;
 }
+/** "1".."9" for a numbered regulation period; OT, OT2… for anything past it. */
+function periodLabel(entry, seenOvertime) {
+    const type = (entry.type ?? '').toLowerCase();
+    if (type === 'inning' || type === 'quarter' || type === 'period' || type === 'half') {
+        return String(entry.number ?? '');
+    }
+    if (type === 'shootout')
+        return 'SO';
+    // overtime, and anything else the provider labels past regulation
+    return seenOvertime > 1 ? `OT${seenOvertime}` : 'OT';
+}
+export function summaryLineScore(raw) {
+    if (!raw || typeof raw !== 'object')
+        return null;
+    const s = raw;
+    // Baseball wraps in `game`; basketball and hockey are flat — the same split
+    // `translateSummaryPlayers` handles.
+    const wrapped = (s.game ?? s);
+    const side = (k) => (wrapped[k] ?? {});
+    const entries = (k) => {
+        const raw = side(k).scoring;
+        return Array.isArray(raw) ? raw : [];
+    };
+    const home = entries('home');
+    const away = entries('away');
+    if (home.length === 0 && away.length === 0)
+        return null;
+    const value = (e) => e == null ? null : (typeof e.runs === 'number' ? e.runs : typeof e.points === 'number' ? e.points : null);
+    // The union of positions across the two sides. A half-inning the home team never batted has
+    // no entry, and must stay absent rather than becoming a zero.
+    const bySeq = (list) => {
+        const m = new Map();
+        for (const e of list)
+            if (typeof e.sequence === 'number')
+                m.set(e.sequence, e);
+        return m;
+    };
+    const h = bySeq(home);
+    const a = bySeq(away);
+    const seqs = [...new Set([...h.keys(), ...a.keys()])].sort((x, y) => x - y);
+    if (seqs.length === 0)
+        return null;
+    let overtime = 0;
+    const periods = seqs.map((q) => {
+        const e = a.get(q) ?? h.get(q);
+        const type = (e.type ?? '').toLowerCase();
+        if (type && type !== 'inning' && type !== 'quarter' && type !== 'period' && type !== 'half' && type !== 'shootout') {
+            overtime += 1;
+        }
+        return periodLabel(e, overtime);
+    });
+    const total = (k) => {
+        const t = side(k);
+        const n = typeof t.runs === 'number' ? t.runs : typeof t.points === 'number' ? t.points : null;
+        // Fall back to the column sum rather than to 0: a total the provider omits is recoverable
+        // from the parts, and a 0 beside a non-empty line score is visibly wrong.
+        if (n != null)
+            return n;
+        const m = k === 'home' ? h : a;
+        return seqs.reduce((sum, q) => sum + (value(m.get(q)) ?? 0), 0);
+    };
+    return {
+        periods,
+        away: seqs.map((q) => value(a.get(q))),
+        home: seqs.map((q) => value(h.get(q))),
+        awayTotal: total('away'),
+        homeTotal: total('home'),
+    };
+}
 //# sourceMappingURL=player-stats.js.map

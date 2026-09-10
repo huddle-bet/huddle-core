@@ -417,3 +417,115 @@ export function mlbStarterIds(team: unknown): Set<string> {
   }
   return ids;
 }
+
+/**
+ * The line score — runs or points by period, in the shape the client already renders.
+ *
+ * `MatchGameData.lineScore` is `{periods: string[], away, home: (number|null)[], awayTotal,
+ * homeTotal}` and until now nothing has ever filled it but the demo fixture, so a live game's
+ * Game tab had no line score to draw (ENG-890). The summary carries it per team under
+ * `scoring[]`, on the same payload huddle-live already polls for player stats — no new fetch.
+ *
+ * Three things about the provider's array decide the implementation, and all three are in the
+ * committed fixture because a hand-built one would have had none of them:
+ *
+ * - **nhl arrives REVERSED** — `number` 3, 2, 1 — so array order is not period order.
+ * - **nba repeats `number`** — 1, 2, 3, 4, 1, where the fifth is overtime. `number` is a
+ *   label WITHIN a period type; only `sequence` is a position. Keying on `number` collides
+ *   OT1 with Q1 and silently loses a quarter.
+ * - **the value key is sport-specific** — `runs` for mlb, `points` for nba and nhl.
+ *
+ * So it sorts by `sequence`, positions by `sequence`, and labels from `type` + `number`.
+ *
+ * **A missing entry is null, never 0.** MLB lists every inning batted, including the scoreless
+ * ones, so absence means the half was not batted — a home side leading after the top of the
+ * ninth never bats, and the client's own test asserts eight home entries against nine away.
+ * Filling those with 0 would say the home team batted and failed to score, which is a
+ * different and wrong claim, and is the `?? 0` mistake this file's neighbours keep recording.
+ */
+export interface SummaryLineScore {
+  periods: string[];
+  away: Array<number | null>;
+  home: Array<number | null>;
+  awayTotal: number;
+  homeTotal: number;
+}
+
+interface ScoringEntry {
+  sequence?: number;
+  number?: number;
+  type?: string;
+  runs?: number;
+  points?: number;
+}
+
+/** "1".."9" for a numbered regulation period; OT, OT2… for anything past it. */
+function periodLabel(entry: ScoringEntry, seenOvertime: number): string {
+  const type = (entry.type ?? '').toLowerCase();
+  if (type === 'inning' || type === 'quarter' || type === 'period' || type === 'half') {
+    return String(entry.number ?? '');
+  }
+  if (type === 'shootout') return 'SO';
+  // overtime, and anything else the provider labels past regulation
+  return seenOvertime > 1 ? `OT${seenOvertime}` : 'OT';
+}
+
+export function summaryLineScore(raw: unknown): SummaryLineScore | null {
+  if (!raw || typeof raw !== 'object') return null;
+  const s = raw as { game?: Record<string, unknown> } & Record<string, unknown>;
+  // Baseball wraps in `game`; basketball and hockey are flat — the same split
+  // `translateSummaryPlayers` handles.
+  const wrapped = (s.game ?? s) as Record<string, unknown>;
+  const side = (k: 'home' | 'away') => (wrapped[k] ?? {}) as Record<string, unknown>;
+
+  const entries = (k: 'home' | 'away'): ScoringEntry[] => {
+    const raw = side(k).scoring;
+    return Array.isArray(raw) ? (raw as ScoringEntry[]) : [];
+  };
+  const home = entries('home');
+  const away = entries('away');
+  if (home.length === 0 && away.length === 0) return null;
+
+  const value = (e: ScoringEntry | undefined): number | null =>
+    e == null ? null : (typeof e.runs === 'number' ? e.runs : typeof e.points === 'number' ? e.points : null);
+
+  // The union of positions across the two sides. A half-inning the home team never batted has
+  // no entry, and must stay absent rather than becoming a zero.
+  const bySeq = (list: ScoringEntry[]) => {
+    const m = new Map<number, ScoringEntry>();
+    for (const e of list) if (typeof e.sequence === 'number') m.set(e.sequence, e);
+    return m;
+  };
+  const h = bySeq(home);
+  const a = bySeq(away);
+  const seqs = [...new Set([...h.keys(), ...a.keys()])].sort((x, y) => x - y);
+  if (seqs.length === 0) return null;
+
+  let overtime = 0;
+  const periods = seqs.map((q) => {
+    const e = a.get(q) ?? h.get(q)!;
+    const type = (e.type ?? '').toLowerCase();
+    if (type && type !== 'inning' && type !== 'quarter' && type !== 'period' && type !== 'half' && type !== 'shootout') {
+      overtime += 1;
+    }
+    return periodLabel(e, overtime);
+  });
+
+  const total = (k: 'home' | 'away'): number => {
+    const t = side(k);
+    const n = typeof t.runs === 'number' ? t.runs : typeof t.points === 'number' ? t.points : null;
+    // Fall back to the column sum rather than to 0: a total the provider omits is recoverable
+    // from the parts, and a 0 beside a non-empty line score is visibly wrong.
+    if (n != null) return n;
+    const m = k === 'home' ? h : a;
+    return seqs.reduce((sum, q) => sum + (value(m.get(q)) ?? 0), 0);
+  };
+
+  return {
+    periods,
+    away: seqs.map((q) => value(a.get(q))),
+    home: seqs.map((q) => value(h.get(q))),
+    awayTotal: total('away'),
+    homeTotal: total('home'),
+  };
+}
