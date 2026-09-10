@@ -50,9 +50,27 @@ export function isFeedType(s) {
     return Object.values(FEED_TYPES).includes(s);
 }
 /**
- * Convert a raw `live_feed` row into the broadcast-facing `FeedEntry`
- * shape. This replaces the duplicate `adaptFeedRow` / `adaptDbFeedRow`
- * helpers that existed in huddle-live and huddle-api.
+ * Convert a raw `live_feed` row into the broadcast-facing `FeedEntry` shape.
+ *
+ * This comment used to say it "replaces the duplicate `adaptFeedRow` / `adaptDbFeedRow`
+ * helpers that existed in huddle-live and huddle-api". It does not, and never did. Both
+ * still exist and both are the production paths: huddle-live's adapts the rows that go out
+ * over the fanout, huddle-api's `adaptDbFeedRow` serves the REST route and the socket's
+ * cold-join seed. This copy is reached only by huddle-api's dev simulator.
+ *
+ * That mattered. `text` read `row.data?.text || ''` in all three. The play translators write
+ * `description`; the event translators write `text`; cs2 and mlb happen to write `text`
+ * everywhere, so it looked right for years. huddle-api#278 fixed one copy on 2026-09-09
+ * (63,178 rows across nfl, nhl and nba rendering as empty cards) and huddle-live#97 fixed the
+ * second on 2026-09-10, after nine NFL plays arrived live over ninety seconds with no text.
+ * Nobody looked for a third, because this comment said there was not one — so the simulator
+ * kept drawing blank NFL cards while production drew the sentence.
+ *
+ * Unifying the three is the right end state and is deliberately not this change; huddle-api's
+ * copy adds `commentCount` and `reactionCounts`, which the fanout cannot fill at broadcast
+ * time because the row is not written yet. Until someone measures that, huddle-api's
+ * `check:feed-adapter-drift` compares all three and fails on a difference that is not
+ * baselined.
  */
 export function adaptFeedRow(row) {
     return {
@@ -60,7 +78,7 @@ export function adaptFeedRow(row) {
         playId: row.id != null ? String(row.id) : null,
         ts: row.occurred_at ? new Date(row.occurred_at).getTime() : Date.now(),
         type: row.feed_type,
-        text: row.data?.text || '',
+        text: row.data?.text || row.data?.description || '',
         subtext: row.data?.subtext || null,
         importance: row.importance || 'low',
         mapNumber: row.data?.mapNumber ?? null,
