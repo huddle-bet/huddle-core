@@ -124,7 +124,28 @@ services:
     name: huddle-api
     runtime: node
     region: oregon
-    plan: free
+    # ── starter, NOT free, AND NOT standard — sized on the metrics, 2026-09-17 ──
+    #
+    # Cam reported intermittent delay on live feed events reaching the app. huddle-api owns the
+    # socket, and free spins down on idle: ENG-412 already measured the floor on this service —
+    # `/api/v1/live` total p50 121ms against **p95 1,597ms**, the spike being the first call every
+    # time, and an ELEVEN BYTE response on the same route spiking to 294ms on its own first call.
+    # That entry's conclusion was that no code change reaches it, and it named its own retirement
+    # condition: "when huddle-api leaves the free tier". This is that.
+    #
+    # The instance churn is the part that decided it. Ten distinct instance ids in 28 hours, five in
+    # the last seven — every replacement is a cold start for whoever arrives next, which is exactly
+    # the shape of "delay at points" rather than "slow".
+    #
+    # **starter rather than standard, because the metrics say this is not a capacity problem.**
+    # Measured over the same 28 hours: memory 127–228 MB against a 512 MB limit (peak 45%), CPU
+    # 0.007–0.020 against a 0.15 limit (peak 13%). starter keeps the same 512 MB and triples the CPU
+    # ceiling to 0.5, which is already ~25x the observed peak. Buying standard's 2 GB would be
+    # buying headroom nothing has asked for.
+    #
+    # Revisit if memory approaches the limit or the socket's room count grows — the reason for the
+    # size is written here so the next person changes it on a measurement rather than a feeling.
+    plan: starter
     repo: https://github.com/huddle-bet/huddle-api
     buildCommand: npm install
     startCommand: node --import tsx src/server.ts
