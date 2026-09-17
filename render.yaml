@@ -23,6 +23,36 @@ envVarGroups:
         sync: false
       - key: STRIPE_PRICE_ID
         sync: false
+      # Where Stripe returns a customer after Checkout — and the reason these are
+      # DECLARED WITH VALUES rather than `sync: false` like the three above.
+      #
+      # They are not secrets, and `sync: false` is what broke them. The blueprint is
+      # declarative, so a key set only in the dashboard is not in the blueprint and does
+      # not survive; `APP_URL` was added there and read back EMPTY, twice. Nothing in this
+      # file recorded that these settings existed at all.
+      #
+      # What that cost, measured 2026-09-16: an empty value is falsy, so `billing.ts` fell
+      # through to `http://localhost:3002`, and a customer completing Checkout in
+      # production was redirected to localhost on their own phone — the charge succeeds
+      # and they land nowhere. `RUNBOOK-key-rotation.md` names this exact failure as the
+      # dangerous default. It was invisible until huddle-api#377 put the resolved URLs on
+      # /health (ENG-964).
+      #
+      # A custom scheme is accepted by Stripe and that was verified against the live API
+      # rather than assumed — including the detail that decides the form: `scheme://path`
+      # is accepted and `scheme:///path` answers "Not a valid URL". `{CHECKOUT_SESSION_ID}`
+      # is substituted by Stripe, and huddle-api's /billing/sync settles the session on
+      # return rather than waiting for the webhook.
+      #
+      # There is deliberately no APP_URL and no STRIPE_PORTAL_RETURN_URL. APP_URL only
+      # ever existed as the base these two fell back to, and with both set explicitly it
+      # has no reader left. The portal's default is built from the deep-link contract in
+      # code (huddle-api#378), so declaring it here would be the same value in two places
+      # — the desync this workspace keeps finding.
+      - key: STRIPE_SUCCESS_URL
+        value: huddle://checkout/success?session_id={CHECKOUT_SESSION_ID}
+      - key: STRIPE_CANCEL_URL
+        value: huddle://checkout/cancelled
       # The assistant's model provider (ENG-436). Read only by huddle-api, in
       # domains/ai/provider.ts; it is in the shared group rather than on the
       # service for the same reason the Stripe keys are — one place to set the
