@@ -742,6 +742,15 @@ services:
         value: "8081"
       - key: PLAN_RAM_MB
         value: "2048"
+      # Declared, not left to the code's default. `npx playwright install` in the build
+      # must see it to install Chromium inside node_modules — Render keeps node_modules
+      # from build to runtime and drops ~/.cache — and the runtime needs it before
+      # playwright's module loads, which is earlier than the `??=` in
+      # headless-scorebot-client.ts runs. The first deploy of this service lacked it
+      # and every scorebot failed with "Executable doesn't exist at
+      # /opt/render/.cache/ms-playwright/…". huddle-live had it in the dashboard.
+      - key: PLAYWRIGHT_BROWSERS_PATH
+        value: "0"
       - key: SPORTRADAR_NBA
         value: "0"
       - key: SPORTRADAR_NHL
