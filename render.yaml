@@ -191,6 +191,14 @@ services:
           type: web
           name: huddle-live
           property: hostport
+      # CS2's own service since ENG-1067. huddle-api subscribes every fixture on both
+      # fanouts and only the owner answers (huddle-api#403); `hostport` for the reason
+      # HUDDLE_LIVE_URL uses it above.
+      - key: HUDDLE_LIVE_CS2_URL
+        fromService:
+          type: web
+          name: huddle-live-cs2
+          property: hostport
       - fromGroup: huddle-shared
 
   # ── huddle-notify (Background Worker) — ENG-429 ───────────
@@ -635,31 +643,28 @@ services:
   # this replaces it with a direct service-to-service WS. Auth via
   # HUDDLE_INTERNAL_SECRET header — not meant for browser clients.
   #
-  # Plan: pro (2 CPU / 4 GB) since 2026-09-22 (ENG-1067). It was standard
-  # (1 CPU / 2 GB), sized for 5-7 concurrent CS2 matches on the headless
-  # Chromium scorebot transport at ~100-130MB per context. On 2026-09-22
-  # about eight CS2 matches went live at once, the scorebots that never
-  # received data kept reloading, and the service was OOM-killed at the 2GB
-  # limit 21 times between 17:39 and 19:30 UTC. Every Sportradar sport runs
-  # in this same process, so each kill dropped MLB too: TB@NYY game 1 kept
-  # 23 of its 58 at-bats and never recorded its final.
+  # Plan: standard (1 CPU / 2 GB), and NO browser, since the CS2 split (ENG-1067).
   #
-  # This is headroom, not the fix. The scorebot admission guard gates NEW
-  # contexts at 75% of container memory and cannot stop reloads of existing
-  # ones. The fix is running CS2 as its own service so a Chromium failure
-  # cannot take the traditional sports down; see ENG-1067. Once that lands,
-  # this service carries no browser and can drop back to starter.
+  # On 2026-09-22 about eight CS2 matches went live at once, the headless scorebots
+  # that never received data kept reloading, and this service was OOM-killed at its
+  # 2 GB limit 21 times between 17:39 and 19:30 UTC. Every Sportradar sport ran in the
+  # same process, so each kill dropped MLB too: TB@NYY game 1 kept 23 of its 58
+  # at-bats. It went to pro as a stopgap (huddle-core#74), then CS2 moved to
+  # huddle-live-cs2 below — same code, told apart by env (huddle-live#137).
+  #
+  # CS2_LIVE=off keeps CS2 out of this process even though the shared group carries
+  # FLARESOLVERR_URL, and the build no longer installs Chromium. What is left is four
+  # Sportradar push streams and the fanout. Standard until its memory is measured
+  # without the browser; drop to starter only on that measurement.
   - type: web
     name: huddle-live
     runtime: node
     region: oregon
-    plan: pro
+    plan: standard
     repo: https://github.com/huddle-bet/huddle-live
-    # Explicitly run `playwright install` after npm install. The package's
-    # postinstall hook normally handles this, but if it ever silently
-    # fails the headless transport crashes on launch with "Executable
-    # doesn't exist" — observed 2026-04-29 16:52 UTC. Belt-and-suspenders.
-    buildCommand: npm install && npx playwright install chromium --only-shell
+    # No `playwright install`: this service runs no browser since the CS2 split. The
+    # install lives on huddle-live-cs2 below.
+    buildCommand: npm install
     startCommand: node --import tsx src/cli.ts watch --all
     healthCheckPath: /health
     envVars:
@@ -667,6 +672,10 @@ services:
         value: production
       - key: PORT
         value: "8081"
+      # CS2 runs in huddle-live-cs2 (ENG-1067). Wins over FLARESOLVERR_URL from the
+      # shared group; any value other than `off` refuses to boot.
+      - key: CS2_LIVE
+        value: "off"
       # Memory canary cap for the headless transport's per-minute
       # `[headless-scorebot] mem rss=...` log. Keep aligned with the
       # service plan's actual RAM ceiling.
@@ -702,9 +711,34 @@ services:
       # still describes the pre-2026-09-06 state.
       - key: SPORTRADAR_ACCESS_LEVEL
         sync: false
-      # huddle-live no longer hits FlareSolverr — the polling scorebot
-      # and matches-harvester both go via cycletls + residential proxy.
-      # FLARESOLVERR_URL is inherited from the shared group but unused.
+      - fromGroup: huddle-shared
+
+  # ── huddle-live-cs2 (Web Service — CS2's own fanout) — ENG-1067 ──
+  # The HLTV headless scorebots, split out of huddle-live after they OOM-looped it
+  # and took every Sportradar sport down with them. Same repo and entrypoint; no
+  # SPORTRADAR_* switches, so no Sportradar adapter starts, and CS2_LIVE unset with
+  # FLARESOLVERR_URL present (shared group) starts CS2. Its proxy credentials
+  # (WEBSHARE_PROXY_LIST_URL, FLARESOLVERR_PROXY_URL) also come from the shared group.
+  #
+  # A web service, not a worker, for the same reason huddle-live is one: huddle-api
+  # opens an internal WS to /fanout (HUDDLE_LIVE_CS2_URL). An OOM here now costs CS2
+  # alone. The scorebot reload growth that caused it is still open on ENG-1067.
+  - type: web
+    name: huddle-live-cs2
+    runtime: node
+    region: oregon
+    plan: standard
+    repo: https://github.com/huddle-bet/huddle-live
+    buildCommand: npm install && npx playwright install chromium --only-shell
+    startCommand: node --import tsx src/cli.ts watch --all
+    healthCheckPath: /health
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: PORT
+        value: "8081"
+      - key: PLAN_RAM_MB
+        value: "2048"
       - fromGroup: huddle-shared
 
   # ── FlareSolverr (Private Service — pre-built image) ──────
