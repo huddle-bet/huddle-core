@@ -635,17 +635,25 @@ services:
   # this replaces it with a direct service-to-service WS. Auth via
   # HUDDLE_INTERNAL_SECRET header — not meant for browser clients.
   #
-  # Plan: standard (1 CPU / 2 GB) — required by the headless Chromium
-  # scorebot transport. With per-context memory tuned to ~100-130MB
-  # (resource blocking + --max-old-space-size=192) the worker fits 5-7
-  # concurrent CS2 matches plus the base node process under 2GB. Polling
-  # transport alone runs comfortably on starter; standard is sized for
-  # HLTV_TRANSPORT=headless. Drop back to starter if reverting.
+  # Plan: pro (2 CPU / 4 GB) since 2026-09-22 (ENG-1067). It was standard
+  # (1 CPU / 2 GB), sized for 5-7 concurrent CS2 matches on the headless
+  # Chromium scorebot transport at ~100-130MB per context. On 2026-09-22
+  # about eight CS2 matches went live at once, the scorebots that never
+  # received data kept reloading, and the service was OOM-killed at the 2GB
+  # limit 21 times between 17:39 and 19:30 UTC. Every Sportradar sport runs
+  # in this same process, so each kill dropped MLB too: TB@NYY game 1 kept
+  # 23 of its 58 at-bats and never recorded its final.
+  #
+  # This is headroom, not the fix. The scorebot admission guard gates NEW
+  # contexts at 75% of container memory and cannot stop reloads of existing
+  # ones. The fix is running CS2 as its own service so a Chromium failure
+  # cannot take the traditional sports down; see ENG-1067. Once that lands,
+  # this service carries no browser and can drop back to starter.
   - type: web
     name: huddle-live
     runtime: node
     region: oregon
-    plan: standard
+    plan: pro
     repo: https://github.com/huddle-bet/huddle-live
     # Explicitly run `playwright install` after npm install. The package's
     # postinstall hook normally handles this, but if it ever silently
