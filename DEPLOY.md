@@ -217,3 +217,22 @@ internal address as the only remaining variable.
   network — it is the **only** control on a reachable endpoint. Blast radius is read-only live
   fixture state and no user data. Rotation procedure and the zero-downtime mechanism:
   `huddle-api/RUNBOOK-key-rotation.md`.
+
+### huddle-live is two services since 2026-09-22 (ENG-1067)
+
+| service | runs | public host | huddle-api env |
+| -- | -- | -- | -- |
+| `huddle-live` | Sportradar NBA/NHL/MLB/NFL push, no browser (`CS2_LIVE=off`) | `huddle-live-fyo6.onrender.com` | `HUDDLE_LIVE_URL` |
+| `huddle-live-cs2` | HLTV headless scorebots (`SPORTRADAR_*=0`) | `huddle-live-cs2.onrender.com` | `HUDDLE_LIVE_CS2_URL` |
+
+Same repo, same entrypoint, told apart by env. CS2's scorebots OOM-looped the shared process 21
+times in two hours and took MLB down with them; now an OOM costs CS2 alone. huddle-api subscribes
+every fixture on both fanouts and only the owner answers (huddle-api#403).
+
+**The new service's `/fanout` is public too**, for the reason huddle-live's is — it is `type: web`
+— and the shared secret is again the only control on it. Same blast radius, same rotation.
+
+**A new service from this repo inherits `huddle-shared`, not huddle-live's dashboard.** The first
+cutover got both halves of that wrong: the group carries `SPORTRADAR_*=1`, so the CS2 service
+started all four leagues, and `PLAYWRIGHT_BROWSERS_PATH=0` lived only in the dashboard, so its
+Chromium never survived the build. Both are declared on the service in `render.yaml` now.
