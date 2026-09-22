@@ -715,8 +715,11 @@ services:
 
   # ── huddle-live-cs2 (Web Service — CS2's own fanout) — ENG-1067 ──
   # The HLTV headless scorebots, split out of huddle-live after they OOM-looped it
-  # and took every Sportradar sport down with them. Same repo and entrypoint; no
-  # SPORTRADAR_* switches, so no Sportradar adapter starts, and CS2_LIVE unset with
+  # and took every Sportradar sport down with them. Same repo and entrypoint. The four
+  # SPORTRADAR_* switches are set to "0" below, and they have to be: the shared group
+  # carries them as "1", so the first deploy of this service started all four leagues
+  # too and wrote a live MLB game from two processes. A service value overrides the
+  # group, and cli.ts starts a league only on exactly "1". CS2_LIVE unset with
   # FLARESOLVERR_URL present (shared group) starts CS2. Its proxy credentials
   # (WEBSHARE_PROXY_LIST_URL, FLARESOLVERR_PROXY_URL) also come from the shared group.
   #
@@ -739,6 +742,14 @@ services:
         value: "8081"
       - key: PLAN_RAM_MB
         value: "2048"
+      - key: SPORTRADAR_NBA
+        value: "0"
+      - key: SPORTRADAR_NHL
+        value: "0"
+      - key: SPORTRADAR_MLB
+        value: "0"
+      - key: SPORTRADAR_NFL
+        value: "0"
       - fromGroup: huddle-shared
 
   # ── FlareSolverr (Private Service — pre-built image) ──────
