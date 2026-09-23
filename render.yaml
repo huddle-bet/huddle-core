@@ -531,13 +531,13 @@ services:
       # DNS was never verified, and the public URL moots the question while exercising the
       # edge a client actually hits rather than only the process.
       - key: HEALTH_API_URL
-        value: https://huddle-api-7f9u.onrender.com/health
+        value: https://huddle-api-v5vt.onrender.com/health
       - key: HEALTH_LIVE_URL
-        value: https://huddle-live-fyo6.onrender.com/health
+        value: https://huddle-live.onrender.com/health
       # CS2's own service since ENG-1067. check:health reads each huddle-live host on
       # the half it serves; without this the CS2 host is not read at all.
       - key: HEALTH_LIVE_CS2_URL
-        value: https://huddle-live-cs2.onrender.com/health
+        value: https://huddle-live-cs2-ge3s.onrender.com/health
       # - key: INGEST_PAUSED_UNTIL
       #   value: 2026-08-02T18:00:00Z   # uncomment + set while ingestion is suspended
 
