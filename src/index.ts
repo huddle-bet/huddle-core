@@ -58,3 +58,7 @@ export * from './betting/calculators.js';
 export * from './betting/win-probability.js';
 export * from './betting/parlay-correlation.js';
 export * from './betting/parlay-pricing.js';
+
+// The one stat vocabulary (ENG-1076): every book's market name onto a canonical stat key.
+// huddle-odds uses it for odds and huddle-api for synced bet legs, so both speak one language.
+export * from './betting/market-types.js';
