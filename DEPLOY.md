@@ -217,7 +217,11 @@ every retry — the shape a hostname that does not exist produces, not an auth f
 
 Render's own service list gives the rule away: `flaresolverr` (service **name**) is addressed
 internally as **`flaresolverr-qrfy:10000`** — the slug, with its collision suffix. huddle-live's
-slug is `huddle-live-fyo6`.
+slug was `huddle-live-fyo6`.
+
+**Superseded 2026-09-23:** that service answers 503 "suspended by its owner", and its replacement is
+`https://huddle-live.onrender.com` (serving huddle-live `fd25fba` when checked). The new service's internal
+slug is not recorded here; read it from the Render dashboard before setting `HUDDLE_LIVE_URL` by hand.
 
 **Nothing in this repo records the working value**, and that is the deeper problem:
 `render.yaml` marks `HUDDLE_LIVE_URL` `sync: false`, so it is dashboard-managed and no file has
@@ -235,14 +239,16 @@ internal address as the only remaining variable.
   unauthenticated upgrade to `https://huddle-live-fyo6.onrender.com/fanout` returns `401`, over
   HTTP/1.1. So the `HUDDLE_INTERNAL_SECRET` header is not a second layer behind the private
   network — it is the **only** control on a reachable endpoint. Blast radius is read-only live
-  fixture state and no user data. Rotation procedure and the zero-downtime mechanism:
+  fixture state and no user data. **Re-measured 2026-09-23 on the replacement host:** the same
+  unauthenticated upgrade to `https://huddle-live.onrender.com/fanout` returns `404`, not `401`. Why
+  is not established; do not read it as the endpoint being closed until the path is checked. Rotation procedure and the zero-downtime mechanism:
   `huddle-api/RUNBOOK-key-rotation.md`.
 
 ### huddle-live is two services since 2026-09-22 (ENG-1067)
 
 | service | runs | public host | huddle-api env |
 | -- | -- | -- | -- |
-| `huddle-live` | Sportradar NBA/NHL/MLB/NFL push, no browser (`CS2_LIVE=off`) | `huddle-live-fyo6.onrender.com` | `HUDDLE_LIVE_URL` |
+| `huddle-live` | Sportradar NBA/NHL/MLB/NFL push, no browser (`CS2_LIVE=off`) | `huddle-live.onrender.com` | `HUDDLE_LIVE_URL` |
 | `huddle-live-cs2` | HLTV headless scorebots (`SPORTRADAR_*=0`) | `huddle-live-cs2.onrender.com` | `HUDDLE_LIVE_CS2_URL` |
 
 Same repo, same entrypoint, told apart by env. CS2's scorebots OOM-looped the shared process 21
