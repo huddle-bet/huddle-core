@@ -459,7 +459,9 @@ services:
   - type: cron
     name: huddle-verify
     runtime: node
-    region: oregon
+    # virginia, beside Supabase (us-east-1). Every service in this file moves there; this
+    # cron goes first because it holds no state. See the "Region" section of DEPLOY.md.
+    region: virginia
     # starter, not free. Render has no free plan for cron jobs, and `plan: free` here made
     # the whole blueprint invalid — `render blueprints validate` rejects it with
     # "free not a valid plan for service type cron".
