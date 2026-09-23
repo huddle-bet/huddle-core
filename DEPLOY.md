@@ -135,7 +135,7 @@ These are baked into the yaml; no action needed. Documented for reference.
 | `PORT` | huddle-live | `8081` |
 | `PORT` | flaresolverr | `8191` |
 | `BYPARR_MODE` | huddle-data, huddle-reconciler | `true` — routes HLTV `/stats` fetches through the Byparr container |
-| `FLARESOLVERR_URL` | huddle-data, huddle-reconciler, huddle-live | `http://flaresolverr-qrfy:8191` (Render private DNS — the suffix is part of the name Render assigned, not optional) |
+| `FLARESOLVERR_URL` | huddle-data, huddle-reconciler, huddle-live-cs2 | `http://flaresolverr-o14o:8191` since the move to virginia (2026-09-23); `flaresolverr-qrfy` before it. Render private DNS — the suffix is part of the name Render assigned, not optional, and it changes whenever the service is recreated |
 
 **`FLARESOLVERR_URL` is required by huddle-live, not just huddle-data.** `huddle-live/src/cli.ts:160` gates the entire CS2 live scorebot on its presence — unset, huddle-live logs one warning and CS2 live tracking is off. CS2 is a launch sport, so this is a launch-blocking variable, not an optional one.
 
@@ -220,8 +220,11 @@ internally as **`flaresolverr-qrfy:10000`** — the slug, with its collision suf
 slug was `huddle-live-fyo6`.
 
 **Superseded 2026-09-23:** that service answers 503 "suspended by its owner", and its replacement is
-`https://huddle-live.onrender.com` (serving huddle-live `fd25fba` when checked). The new service's internal
-slug is not recorded here; read it from the Render dashboard before setting `HUDDLE_LIVE_URL` by hand.
+`https://huddle-live.onrender.com` (serving huddle-live `fd25fba` when checked). The move to virginia
+recreated every service, and this time the plain slug was free: the internal name is **`huddle-live`**,
+so `http://huddle-live:8081` now resolves and is what the `huddle-shared` group holds. The rule above
+still stands — the slug is whatever Render assigned, and it can carry a suffix after any recreation.
+The other slugs after the move: `huddle-api-v5vt`, `huddle-live-cs2-ge3s`, `flaresolverr-o14o`.
 
 **Nothing in this repo records the working value**, and that is the deeper problem:
 `render.yaml` marks `HUDDLE_LIVE_URL` `sync: false`, so it is dashboard-managed and no file has
@@ -249,7 +252,7 @@ internal address as the only remaining variable.
 | service | runs | public host | huddle-api env |
 | -- | -- | -- | -- |
 | `huddle-live` | Sportradar NBA/NHL/MLB/NFL push, no browser (`CS2_LIVE=off`) | `huddle-live.onrender.com` | `HUDDLE_LIVE_URL` |
-| `huddle-live-cs2` | HLTV headless scorebots (`SPORTRADAR_*=0`) | `huddle-live-cs2.onrender.com` | `HUDDLE_LIVE_CS2_URL` |
+| `huddle-live-cs2` | HLTV headless scorebots (`SPORTRADAR_*=0`) | `huddle-live-cs2-ge3s.onrender.com` (virginia, 2026-09-23) | `HUDDLE_LIVE_CS2_URL` |
 
 Same repo, same entrypoint, told apart by env. CS2's scorebots OOM-looped the shared process 21
 times in two hours and took MLB down with them; now an OOM costs CS2 alone. huddle-api subscribes
