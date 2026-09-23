@@ -242,9 +242,11 @@ internal address as the only remaining variable.
   unauthenticated upgrade to `https://huddle-live-fyo6.onrender.com/fanout` returns `401`, over
   HTTP/1.1. So the `HUDDLE_INTERNAL_SECRET` header is not a second layer behind the private
   network — it is the **only** control on a reachable endpoint. Blast radius is read-only live
-  fixture state and no user data. **Re-measured 2026-09-23 on the replacement host:** the same
-  unauthenticated upgrade to `https://huddle-live.onrender.com/fanout` returns `404`, not `401`. Why
-  is not established; do not read it as the endpoint being closed until the path is checked. Rotation procedure and the zero-downtime mechanism:
+  fixture state and no user data. **Re-measured 2026-09-23 on the replacement hosts:** an
+  unauthenticated WebSocket upgrade to `https://huddle-live.onrender.com/fanout` and
+  `https://huddle-live-cs2-ge3s.onrender.com/fanout` returns `401` on both, as before. (A first
+  probe that day read `404`; it was curl with hand-set upgrade headers, which is not a WebSocket
+  handshake. Probe with a real client, e.g. the `ws` package's `unexpected-response`.) Rotation procedure and the zero-downtime mechanism:
   `huddle-api/RUNBOOK-key-rotation.md`.
 
 ### huddle-live is two services since 2026-09-22 (ENG-1067)
