@@ -123,7 +123,7 @@ services:
   - type: web
     name: huddle-api
     runtime: node
-    region: oregon
+    region: virginia
     # ── starter, NOT free, AND NOT standard — sized on the metrics, 2026-09-17 ──
     #
     # Cam reported intermittent delay on live feed events reaching the app. huddle-api owns the
@@ -236,7 +236,7 @@ services:
   - type: worker
     name: huddle-notify
     runtime: node
-    region: oregon
+    region: virginia
     plan: starter
     repo: https://github.com/huddle-bet/huddle-api
     buildCommand: npm install
@@ -263,7 +263,7 @@ services:
   - type: worker
     name: huddle-odds
     runtime: docker
-    region: oregon
+    region: virginia
     plan: standard
     repo: https://github.com/huddle-bet/huddle-odds
     dockerfilePath: ./Dockerfile
@@ -285,7 +285,7 @@ services:
   - type: worker
     name: huddle-data
     runtime: docker
-    region: oregon
+    region: virginia
     plan: starter
     repo: https://github.com/huddle-bet/huddle-data
     dockerfilePath: ./Dockerfile
@@ -293,6 +293,9 @@ services:
     envVars:
       - key: NODE_ENV
         value: production
+      # Was set only in the dashboard; declared 2026-09-23 for the Virginia copy (ENG-912).
+      - key: HLTV_USE_PROXY_FLARESOLVERR
+        value: "true"
       # Use Byparr (Camoufox/Firefox) instead of FlareSolverr (Chromium)
       # for the Tier 2 /stats solve path. The flaresolverr Render
       # service's image was swapped to ghcr.io/thephaseless/byparr:latest
@@ -339,7 +342,7 @@ services:
   - type: worker
     name: huddle-reconciler
     runtime: docker
-    region: oregon
+    region: virginia
     plan: standard
     repo: https://github.com/huddle-bet/huddle-data
     dockerfilePath: ./Dockerfile
@@ -361,7 +364,7 @@ services:
   - type: worker
     name: huddle-engine
     runtime: node
-    region: oregon
+    region: virginia
     plan: standard
     repo: https://github.com/huddle-bet/huddle-engine
     buildCommand: npm install
@@ -597,7 +600,7 @@ services:
   - type: cron
     name: huddle-api-audit
     runtime: node
-    region: oregon
+    region: virginia
     plan: starter
     repo: https://github.com/huddle-bet/huddle-api
     schedule: "40 13 * * *"
@@ -665,7 +668,7 @@ services:
   - type: web
     name: huddle-live
     runtime: node
-    region: oregon
+    region: virginia
     plan: standard
     repo: https://github.com/huddle-bet/huddle-live
     # No `playwright install`: this service runs no browser since the CS2 split. The
@@ -688,6 +691,12 @@ services:
       # five minutes after huddle-live-cs2 was created (ENG-1067).
       - key: PGPOOL_MAX
         value: "2"
+      # Were set only in the dashboard; declared 2026-09-23 so the Virginia copy has them
+      # from its first boot (ENG-912).
+      - key: HLTV_ENABLED
+        value: "1"
+      - key: PLAYWRIGHT_BROWSERS_PATH
+        value: "0"
       # Memory canary cap for the headless transport's per-minute
       # `[headless-scorebot] mem rss=...` log. Keep aligned with the
       # service plan's actual RAM ceiling.
@@ -741,7 +750,7 @@ services:
   - type: web
     name: huddle-live-cs2
     runtime: node
-    region: oregon
+    region: virginia
     plan: standard
     repo: https://github.com/huddle-bet/huddle-live
     buildCommand: npm install && npx playwright install chromium --only-shell
@@ -806,7 +815,7 @@ services:
   - type: pserv
     name: flaresolverr
     runtime: docker
-    region: oregon
+    region: virginia
     plan: standard
     # Migrated 2026-04-28 from upstream FlareSolverr (vanilla Chromium,
     # effectively unmaintained) to Byparr — FlareSolverr-API-compatible
@@ -842,6 +851,16 @@ services:
     envVars:
       - key: PORT
         value: "8191"
+      # Byparr settings that lived only in the dashboard; declared 2026-09-23 so the
+      # Virginia copy boots with them (ENG-912).
+      - key: DRIVER
+        value: undetected-chromedriver
+      - key: BROWSER_TIMEOUT
+        value: "40000"
+      - key: CAPTCHA_SOLVER
+        value: none
+      - key: LOG_LEVEL
+        value: info
       # Inherits WEBSHARE_PROXY_LIST_URL and FLARESOLVERR_PROXY_URL — the
       # entrypoint fetches the former, falls back to the latter, and exports
       # PROXY_SERVER / PROXY_USERNAME / PROXY_PASSWORD before launching Byparr.
