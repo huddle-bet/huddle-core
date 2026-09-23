@@ -54,6 +54,26 @@ Two things about `flaresolverr` that the name hides:
 
 **There is no Redis.** Earlier versions of this doc said huddle-api used Redis for rate limiting. It does not: there is no `redis` dependency in any service, and `@fastify/rate-limit` runs with its default **in-memory** store. Limits are therefore per-process — if huddle-api is ever scaled past one instance, the effective limit multiplies by the instance count.
 
+## Region
+
+Supabase is in `us-east-1`, which is Render's **virginia** region. Every service in this file
+belongs there too. Until 2026-09-23 they ran in oregon, so each database round trip crossed the
+country, and huddle-api's `/health` breached `latency_budget_live` all day (ENG-912).
+
+**Render cannot change a service's region.** The docs say "You can't modify this value after
+creation", and a Blueprint matches existing services by `name`. So to move a service:
+
+1. Rename the old service out of the way: `render services update <srv-id> --name <name>-oregon`.
+2. Set `region: virginia` under the original name and merge. The sync creates a new service.
+3. Set any service-level dashboard variables (`sync: false` keys) on the new service **before its
+   first boot**. A new service inherits `huddle-shared` and nothing from the old service.
+4. For a singleton (huddle-odds, engine, data, reconciler, live), suspend the old service first.
+   Two copies running at once is how the duplicate at-bats happened.
+5. Delete the `-oregon` service after 24 clean hours.
+
+The private network does not cross regions. So huddle-api and both huddle-live services move
+together, and flaresolverr moves with huddle-data and huddle-reconciler.
+
 ## Environment variables
 
 ### `huddle-shared` env var group
