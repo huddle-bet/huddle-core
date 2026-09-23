@@ -680,6 +680,12 @@ services:
       # shared group; any value other than `off` refuses to boot.
       - key: CS2_LIVE
         value: "off"
+      # Supavisor session-pool slots (pool_size 20, shared by every service). huddle-live's
+      # budget is 3 and the split divides it: 2 here, 1 on huddle-live-cs2. Each took the
+      # hardcoded 3 at first, the total reached 22, and writes failed across services from
+      # five minutes after huddle-live-cs2 was created (ENG-1067).
+      - key: PGPOOL_MAX
+        value: "2"
       # Memory canary cap for the headless transport's per-minute
       # `[headless-scorebot] mem rss=...` log. Keep aligned with the
       # service plan's actual RAM ceiling.
@@ -755,6 +761,9 @@ services:
       # /opt/render/.cache/ms-playwright/…". huddle-live had it in the dashboard.
       - key: PLAYWRIGHT_BROWSERS_PATH
         value: "0"
+      # One of huddle-live's 3 pool slots; the other 2 are on huddle-live. See there.
+      - key: PGPOOL_MAX
+        value: "1"
       - key: SPORTRADAR_NBA
         value: "0"
       - key: SPORTRADAR_NHL
