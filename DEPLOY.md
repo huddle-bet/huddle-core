@@ -145,7 +145,7 @@ The mobile app ships through Expo, not Render or Vercel. Required env (see `hudd
 
 | Variable | Notes |
 |---|---|
-| `EXPO_PUBLIC_API_URL` | Public URL of huddle-api — `https://huddle-api-7f9u.onrender.com`. **Not** `huddle-api.onrender.com`: that name was already taken and serves someone else's application. |
+| `EXPO_PUBLIC_API_URL` | Public URL of huddle-api — `https://huddle-api-v5vt.onrender.com`. **Not** `huddle-api.onrender.com`: that name was already taken and serves someone else's application. |
 | `EXPO_PUBLIC_SUPABASE_URL` | Supabase project URL |
 
 `EXPO_PUBLIC_*` values are inlined into the JS bundle at build time and are visible to anyone with the app. Never put a secret in one.
@@ -169,7 +169,7 @@ Notes:
 
 ## Verifying the deploy
 
-1. **huddle-api** — `GET https://huddle-api-7f9u.onrender.com/health` returns 200 **and `status: "ok"`**. `status: "degraded"` with `live_fanout_disconnected` means the huddle-live fanout is down — REST works, live rooms are empty.
+1. **huddle-api** — `GET https://huddle-api-v5vt.onrender.com/health` returns 200 **and `status: "ok"`**. `status: "degraded"` with `live_fanout_disconnected` means the huddle-live fanout is down — REST works, live rooms are empty.
 2. **huddle-live** — Render logs show provider sockets connecting (Sportradar, HLTV polling scorebot via cycletls, etc.); `/health` returns 200 internally
 3. **huddle-odds** — Logs show per-league poll cycles with non-zero odds counts
 4. **huddle-data** — Logs show schedule discovery + stats ingest by sport
