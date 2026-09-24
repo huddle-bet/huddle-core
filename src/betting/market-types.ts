@@ -102,6 +102,13 @@ export const MARKET_TYPE_MAP: Record<string, string> = {
   total_rounds_map1: "total_rounds_map1", total_rounds_map2: "total_rounds_map2",
   total_rounds_map3: "total_rounds_map3", total_rounds_map4: "total_rounds_map4",
   total_rounds_map5: "total_rounds_map5",
+  // A CS2 series' map handicap and its total maps played (ENG-1092). Neither is `spread` or
+  // `total`: a series is scored in maps, so "BCA -1.5" means winning 2-0 and "over 2.5" means a
+  // decider is played, where every other sport's spread and total count points. Filed as
+  // `spread`, a map handicap sits in the same consensus as a round handicap on one map, and
+  // Pinnacle was writing its ±1.5 map lines exactly that way until this type existed.
+  map_handicap: "map_handicap", maps_handicap: "map_handicap",
+  total_maps: "total_maps", maps_total: "total_maps", total_maps_played: "total_maps",
   // NHL
   goals: "goals", player_goals: "goals",
   any_time_goal_scorer: "goals", anytime_goalscorer: "goals",
