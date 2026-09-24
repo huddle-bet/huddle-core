@@ -164,6 +164,35 @@ if "timeout=5000" not in open(p).read():
 print("byparr-wrapper: networkidle wait bounded to 5s and suppressed")
 PATCH
 
+# `X-Proxy-Server: direct` launches this one request's browser with NO proxy (ENG-1139).
+#
+# `get_camoufox` takes the X-Proxy-Server header if one is sent, else PROXY_SERVER, which the
+# entrypoint always sets from FLARESOLVERR_PROXY_URL. So while that is set, no request can egress
+# direct. Caesars' WAF-token mint pulls 18-40 MB per page through the paid Webshare pool (ENG-1114)
+# and has no evidence of needing a residential IP; HLTV does. Only the literal value `direct` takes
+# the new branch: CS2 sends no header or a real proxy URL, so its behaviour cannot change.
+#
+# Guarded both ways: the build FAILS if the pattern is absent or the branch did not land.
+RUN /app/.venv/bin/python - <<'PATCH'
+import sys, ast
+p = "/app/src/utils.py"
+src = open(p).read()
+old = "    if header_server:\n"
+if src.count(old) != 1:
+    sys.exit("byparr-wrapper: `if header_server:` not found exactly once — pin moved, refusing to build")
+new = (
+    "    if header_server == \"direct\":\n"
+    "        proxy_config = None  # huddle: ENG-1139, this request egresses direct\n"
+    "    elif header_server:\n"
+)
+src = src.replace(old, new)
+ast.parse(src)
+open(p, "w").write(src)
+if 'header_server == "direct"' not in open(p).read():
+    sys.exit("byparr-wrapper: direct-egress patch did not apply")
+print("byparr-wrapper: X-Proxy-Server: direct now bypasses PROXY_SERVER")
+PATCH
+
 # Serialise browser launches — one Camoufox at a time (ENG-700).
 #
 # Byparr's `get_camoufox` is a FastAPI dependency with `yield`, so it starts a whole new
