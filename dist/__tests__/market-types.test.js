@@ -250,4 +250,31 @@ describe('TD scorer markets are three events, not one', () => {
         }
     });
 });
+/**
+ * ENG-1092 — a CS2 series is scored in maps. Its handicap ("BCA -1.5") and its total ("over 2.5
+ * maps") are not the points spread and total every other sport quotes, and not the round
+ * handicap or round total of one map. Each needs a type of its own, or the prop matcher builds a
+ * consensus across markets that are not comparable.
+ */
+describe('CS2 series map handicap and total maps', () => {
+    it.each([
+        ['map_handicap', 'map_handicap'],
+        ['maps_handicap', 'map_handicap'],
+        ['Map Handicap', 'map_handicap'],
+        ['total_maps', 'total_maps'],
+        ['maps_total', 'total_maps'],
+        ['total_maps_played', 'total_maps'],
+    ])('maps %s to %s', (input, expected) => {
+        expect(normalizeMarketType(input)).toBe(expected);
+    });
+    it('keeps them useful, so no book has them dropped', () => {
+        expect(isUsefulMarket('map_handicap')).toBe(true);
+        expect(isUsefulMarket('total_maps')).toBe(true);
+    });
+    it('keeps them apart from spread, total and the per-map round total', () => {
+        const types = ['map_handicap', 'spread', 'total_maps', 'total', 'total_rounds', 'total_rounds_map1']
+            .map((m) => normalizeMarketType(m));
+        expect(new Set(types).size).toBe(types.length);
+    });
+});
 //# sourceMappingURL=market-types.test.js.map
