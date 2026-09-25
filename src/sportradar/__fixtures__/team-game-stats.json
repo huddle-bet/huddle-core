@@ -1,0 +1,831 @@
+{
+  "nfl": {
+    "id": "de760528-1dc0-416a-a978-b510d20692ff",
+    "name": "Cardinals",
+    "market": "Arizona",
+    "summary": {
+      "possession_time": "34:21",
+      "avg_gain": 6.5,
+      "safeties": 0,
+      "turnovers": 0,
+      "play_count": 65,
+      "rush_plays": 34,
+      "total_yards": 425,
+      "fumbles": 2,
+      "lost_fumbles": 0,
+      "penalties": 7,
+      "penalty_yards": 78,
+      "return_yards": 7
+    },
+    "first_downs": {
+      "pass": 11,
+      "penalty": 1,
+      "rush": 11,
+      "total": 23
+    },
+    "touchdowns": {
+      "pass": 2,
+      "rush": 1,
+      "total_return": 0,
+      "total": 3,
+      "fumble_return": 0,
+      "int_return": 0,
+      "kick_return": 0,
+      "punt_return": 0,
+      "other": 0
+    },
+    "efficiency": {
+      "goaltogo": {
+        "attempts": 2,
+        "successes": 2,
+        "pct": 100.0
+      },
+      "redzone": {
+        "attempts": 6,
+        "successes": 3,
+        "pct": 50.0
+      },
+      "thirddown": {
+        "attempts": 12,
+        "successes": 7,
+        "pct": 58.333
+      },
+      "fourthdown": {
+        "attempts": 1,
+        "successes": 0,
+        "pct": 0.0
+      }
+    },
+    "rushing": {
+      "totals": {
+        "avg_yards": 4.206,
+        "attempts": 34,
+        "touchdowns": 1,
+        "tlost": 1,
+        "tlost_yards": -1,
+        "yards": 143,
+        "longest": 15,
+        "longest_touchdown": 1,
+        "redzone_attempts": 9,
+        "first_downs": 11,
+        "broken_tackles": 0,
+        "kneel_downs": 1,
+        "scrambles": 1,
+        "yards_after_contact": 0
+      }
+    },
+    "passing": {
+      "totals": {
+        "attempts": 29,
+        "completions": 24,
+        "cmp_pct": 82.759,
+        "interceptions": 0,
+        "sack_yards": 12,
+        "rating": 131.9,
+        "touchdowns": 2,
+        "avg_yards": 9.097,
+        "sacks": 2,
+        "longest": 49,
+        "longest_touchdown": 5,
+        "air_yards": 209,
+        "redzone_attempts": 6,
+        "net_yards": 282,
+        "yards": 294,
+        "first_downs": 11,
+        "int_touchdowns": 0,
+        "throw_aways": 0,
+        "poor_throws": 0,
+        "defended_passes": 0,
+        "dropped_passes": 0,
+        "spikes": 0,
+        "blitzes": 0,
+        "hurries": 0,
+        "knockdowns": 0,
+        "pocket_time": 0.0,
+        "avg_pocket_time": 0.0,
+        "batted_passes": 0,
+        "on_target_throws": 0
+      }
+    }
+  },
+  "nba": {
+    "statistics": {
+      "minutes": "4:00:00",
+      "field_goals_made": 33,
+      "field_goals_att": 86,
+      "field_goals_pct": 38.4,
+      "three_points_made": 12,
+      "three_points_att": 37,
+      "three_points_pct": 32.4,
+      "two_points_made": 21,
+      "two_points_att": 49,
+      "two_points_pct": 42.9,
+      "blocked_att": 4,
+      "free_throws_made": 12,
+      "free_throws_att": 19,
+      "free_throws_pct": 63.2,
+      "offensive_rebounds": 14,
+      "defensive_rebounds": 33,
+      "assists": 18,
+      "steals": 6,
+      "blocks": 7,
+      "assists_turnover_ratio": 1.38,
+      "personal_fouls": 22,
+      "ejections": 0,
+      "foulouts": 0,
+      "points": 90,
+      "fast_break_pts": 13,
+      "second_chance_pts": 17,
+      "team_turnovers": 1,
+      "points_off_turnovers": 21,
+      "team_rebounds": 12,
+      "flagrant_fouls": 1,
+      "player_tech_fouls": 0,
+      "team_tech_fouls": 0,
+      "coach_tech_fouls": 0,
+      "team_points": 0,
+      "total_points": 90,
+      "points_in_paint": 38,
+      "team_offensive_rebounds": 10,
+      "team_defensive_rebounds": 2,
+      "total_rebounds": 59,
+      "total_turnovers": 13,
+      "personal_rebounds": 47,
+      "player_turnovers": 12,
+      "field_goals_at_rim_made": 12,
+      "field_goals_at_rim_att": 23,
+      "field_goals_at_rim_pct": 52.2,
+      "field_goals_at_midrange_made": 2,
+      "field_goals_at_midrange_att": 7,
+      "field_goals_at_midrange_pct": 28.6,
+      "bench_points": 32,
+      "biggest_lead": 16,
+      "effective_fg_pct": 45.3,
+      "efficiency": 91,
+      "efficiency_game_score": 62.6,
+      "fouls_drawn": 21,
+      "offensive_fouls": 2,
+      "pls_min": -4,
+      "points_in_paint_att": 42,
+      "points_in_paint_made": 19,
+      "points_in_paint_pct": 45.2,
+      "total_fouls": 22,
+      "true_shooting_att": 94.36,
+      "true_shooting_pct": 47.7,
+      "coach_ejections": 0,
+      "defensive_rating": 93.7001594896332,
+      "offensive_rating": 96.401028277635,
+      "points_against": 94,
+      "possessions": 93.36,
+      "opponent_possessions": 100.32,
+      "time_leading": "40:24",
+      "defensive_points_per_possession": 1.01,
+      "offensive_points_per_possession": 0.96,
+      "team_fouls": 0,
+      "second_chance_att": 15,
+      "second_chance_made": 8,
+      "second_chance_pct": 53.3,
+      "fast_break_att": 9,
+      "fast_break_made": 4,
+      "fast_break_pct": 44.4
+    }
+  },
+  "nhl": {
+    "statistics": {
+      "total": {
+        "goals": 0,
+        "assists": 0,
+        "penalties": 3,
+        "penalty_minutes": 6,
+        "team_penalties": 0,
+        "team_penalty_minutes": 0,
+        "shots": 22,
+        "blocked_att": 13,
+        "missed_shots": 15,
+        "hits": 39,
+        "giveaways": 19,
+        "takeaways": 2,
+        "blocked_shots": 7,
+        "faceoffs_won": 30,
+        "faceoffs_lost": 33,
+        "powerplays": 3,
+        "shooting_pct": 0.0,
+        "faceoff_win_pct": 47.6,
+        "faceoffs": 63,
+        "points": 0,
+        "emptynet_goals": 0,
+        "overtime_assists": 0,
+        "overtime_goals": 0,
+        "overtime_shots": 0,
+        "penalties_major": 0,
+        "penalties_match": 0,
+        "penalties_minor": 3,
+        "penalties_misconduct": 0,
+        "plus_minus": -16,
+        "time_on_ice": "5:54:00"
+      },
+      "powerplay": {
+        "faceoffs_won": 3,
+        "faceoffs_lost": 3,
+        "shots": 7,
+        "goals": 0,
+        "missed_shots": 3,
+        "assists": 0,
+        "faceoff_win_pct": 50.0,
+        "opportunities": 3,
+        "faceoffs": 6,
+        "strength": [
+          {
+            "opportunities": 3,
+            "shots": 7,
+            "goals": 0,
+            "time": "4:31",
+            "type": "5v4"
+          },
+          {
+            "opportunities": 0,
+            "shots": 0,
+            "goals": 0,
+            "time": "00:00",
+            "type": "5v3"
+          },
+          {
+            "opportunities": 0,
+            "shots": 0,
+            "goals": 0,
+            "time": "00:00",
+            "type": "4v3"
+          }
+        ]
+      },
+      "shorthanded": {
+        "faceoffs_won": 2,
+        "faceoffs_lost": 3,
+        "shots": 0,
+        "goals": 0,
+        "missed_shots": 0,
+        "assists": 0,
+        "faceoff_win_pct": 40.0,
+        "faceoffs": 5,
+        "strength": [
+          {
+            "shots": 0,
+            "goals": 0,
+            "type": "4v5"
+          },
+          {
+            "shots": 0,
+            "goals": 0,
+            "type": "3v5"
+          },
+          {
+            "shots": 0,
+            "goals": 0,
+            "type": "3v4"
+          }
+        ]
+      },
+      "evenstrength": {
+        "faceoffs_won": 25,
+        "faceoffs_lost": 27,
+        "shots": 15,
+        "goals": 0,
+        "missed_shots": 12,
+        "assists": 0,
+        "faceoff_win_pct": 48.1,
+        "faceoffs": 52,
+        "strength": [
+          {
+            "shots": 14,
+            "goals": 0,
+            "type": "5v5"
+          },
+          {
+            "shots": 1,
+            "goals": 0,
+            "type": "4v4"
+          },
+          {
+            "shots": 0,
+            "goals": 0,
+            "type": "3v3"
+          }
+        ]
+      },
+      "penalty": {
+        "shots": 0,
+        "goals": 0,
+        "missed_shots": 0
+      }
+    }
+  },
+  "mlb": {
+    "runs": 7,
+    "hits": 14,
+    "errors": 0,
+    "statistics": {
+      "hitting": {
+        "overall": {
+          "ab": 37,
+          "lob": 20,
+          "rbi": 7,
+          "abhr": 0,
+          "abk": 5.286,
+          "bip": 31,
+          "babip": 0.452,
+          "bbk": 0.286,
+          "bbpa": 0.05,
+          "iso": 0.108,
+          "obp": 0.4,
+          "ops": 0.886,
+          "seca": 0.162,
+          "slg": 0.486,
+          "xbh": 4,
+          "pitch_count": 137,
+          "lob_risp_2out": 5,
+          "team_lob": 9,
+          "ab_risp": 15,
+          "hit_risp": 7,
+          "rbi_2out": 1,
+          "linedrive": 12,
+          "groundball": 9,
+          "popup": 1,
+          "flyball": 9,
+          "ap": 40,
+          "avg": ".378",
+          "gofo": 0.55,
+          "onbase": {
+            "s": 10,
+            "d": 4,
+            "t": 0,
+            "hr": 0,
+            "tb": 18,
+            "bb": 2,
+            "ibb": 0,
+            "hbp": 0,
+            "fc": 1,
+            "roe": 0,
+            "h": 14,
+            "ci": 0,
+            "rov": 0,
+            "cycle": 0
+          },
+          "runs": {
+            "total": 7
+          },
+          "outcome": {
+            "klook": 16,
+            "kswing": 24,
+            "ktotal": 40,
+            "ball": 42,
+            "iball": 0,
+            "dirtball": 6,
+            "foul": 18
+          },
+          "outs": {
+            "po": 1,
+            "fo": 8,
+            "fidp": 0,
+            "lo": 2,
+            "lidp": 0,
+            "go": 6,
+            "gidp": 0,
+            "klook": 0,
+            "kswing": 7,
+            "ktotal": 7,
+            "sacfly": 1,
+            "sachit": 0
+          },
+          "steal": {
+            "caught": 0,
+            "stolen": 0,
+            "pct": 0,
+            "pickoff": 0
+          },
+          "pitches": {
+            "count": 137,
+            "btotal": 48,
+            "ktotal": 89
+          }
+        }
+      },
+      "pitching": {
+        "overall": {
+          "oba": 0.219,
+          "lob": 10,
+          "era": "5",
+          "k9": 9,
+          "whip": 1.3333,
+          "kbb": 1.8,
+          "pitch_count": 156,
+          "wp": 1,
+          "bk": 0,
+          "ip_1": 27,
+          "ip_2": 9,
+          "bf": 37,
+          "gofo": 1.286,
+          "babip": 0.238,
+          "bf_ip": 4.111,
+          "bf_start": 22,
+          "gbfb": 2,
+          "oab": 32,
+          "slg": 0.406,
+          "obp": 0.324,
+          "no_hitter": 0,
+          "perfect_game": 0,
+          "onbase": {
+            "s": 5,
+            "d": 0,
+            "t": 0,
+            "hr": 2,
+            "tb": 13,
+            "bb": 5,
+            "ibb": 0,
+            "hbp": 0,
+            "fc": 1,
+            "roe": 0,
+            "h": 7,
+            "ci": 0,
+            "rov": 0,
+            "h9": 7,
+            "hr9": 2
+          },
+          "runs": {
+            "total": 5,
+            "unearned": 0,
+            "earned": 5,
+            "ir": 0,
+            "ira": 0,
+            "bqr": 0,
+            "bqra": 0
+          },
+          "outcome": {
+            "klook": 30,
+            "kswing": 16,
+            "ktotal": 46,
+            "ball": 54,
+            "iball": 0,
+            "dirtball": 3,
+            "foul": 30
+          },
+          "outs": {
+            "po": 0,
+            "fo": 4,
+            "fidp": 0,
+            "lo": 3,
+            "lidp": 1,
+            "go": 9,
+            "gidp": 1,
+            "klook": 2,
+            "kswing": 7,
+            "ktotal": 9,
+            "sacfly": 0,
+            "sachit": 0
+          },
+          "steal": {
+            "caught": 0,
+            "stolen": 0,
+            "pickoff": 0
+          },
+          "pitches": {
+            "count": 156,
+            "btotal": 57,
+            "ktotal": 99,
+            "per_ip": 17.333,
+            "per_bf": 4.216,
+            "per_start": 94
+          },
+          "in_play": {
+            "linedrive": 5,
+            "groundball": 12,
+            "popup": 0,
+            "flyball": 6
+          },
+          "games": {
+            "svo": 1,
+            "qstart": 0,
+            "shutout": 0,
+            "complete": 0,
+            "win": 1,
+            "loss": 0,
+            "save": 1,
+            "hold": 3,
+            "blown_save": 0
+          }
+        }
+      },
+      "fielding": {
+        "overall": {
+          "po": 27,
+          "a": 10,
+          "dp": 2,
+          "tp": 0,
+          "error": 0,
+          "tc": 37,
+          "fpct": 1,
+          "c_wp": 1,
+          "pb": 0,
+          "steal": {
+            "caught": 0,
+            "stolen": 0,
+            "pickoff": 0,
+            "pct": 0
+          },
+          "errors": {
+            "throwing": 0,
+            "fielding": 0,
+            "interference": 0,
+            "total": 0
+          },
+          "assists": {
+            "outfield": 0,
+            "total": 10
+          }
+        }
+      }
+    }
+  },
+  "nhl_shootout": {
+    "gameId": "66a45031-6439-4ed8-a0d6-1e0717a0645e",
+    "home": {
+      "name": "Oilers",
+      "points": 1,
+      "shootout": {
+        "shots": 3,
+        "missed_shots": 0,
+        "goals": 2,
+        "shots_against": 3,
+        "goals_against": 3,
+        "saves": 0,
+        "saves_pct": 0.0
+      },
+      "statistics": {
+        "total": {
+          "goals": 1,
+          "assists": 2,
+          "penalties": 4,
+          "penalty_minutes": 8,
+          "team_penalties": 1,
+          "team_penalty_minutes": 2,
+          "shots": 31,
+          "blocked_att": 17,
+          "missed_shots": 15,
+          "hits": 22,
+          "giveaways": 12,
+          "takeaways": 3,
+          "blocked_shots": 26,
+          "faceoffs_won": 29,
+          "faceoffs_lost": 26,
+          "powerplays": 3,
+          "shooting_pct": 3.2,
+          "faceoff_win_pct": 52.7,
+          "faceoffs": 55,
+          "points": 3,
+          "emptynet_goals": 0,
+          "overtime_assists": 0,
+          "overtime_goals": 0,
+          "overtime_shots": 0,
+          "penalties_major": 0,
+          "penalties_match": 0,
+          "penalties_minor": 3,
+          "penalties_misconduct": 0,
+          "plus_minus": 0,
+          "time_on_ice": "6:14:54"
+        },
+        "powerplay": {
+          "faceoffs_won": 3,
+          "faceoffs_lost": 2,
+          "shots": 7,
+          "goals": 0,
+          "missed_shots": 3,
+          "assists": 0,
+          "faceoff_win_pct": 60.0,
+          "opportunities": 3,
+          "faceoffs": 5,
+          "strength": [
+            {
+              "opportunities": 3,
+              "shots": 6,
+              "goals": 0,
+              "time": "3:12",
+              "type": "5v4"
+            },
+            {
+              "opportunities": 1,
+              "shots": 1,
+              "goals": 0,
+              "time": "1:24",
+              "type": "5v3"
+            },
+            {
+              "opportunities": 0,
+              "shots": 0,
+              "goals": 0,
+              "time": "00:00",
+              "type": "4v3"
+            }
+          ]
+        },
+        "shorthanded": {
+          "faceoffs_won": 4,
+          "faceoffs_lost": 6,
+          "shots": 1,
+          "goals": 0,
+          "missed_shots": 1,
+          "assists": 0,
+          "faceoff_win_pct": 40.0,
+          "faceoffs": 10,
+          "strength": [
+            {
+              "shots": 1,
+              "goals": 0,
+              "type": "4v5"
+            },
+            {
+              "shots": 0,
+              "goals": 0,
+              "type": "3v5"
+            },
+            {
+              "shots": 0,
+              "goals": 0,
+              "type": "3v4"
+            }
+          ]
+        },
+        "evenstrength": {
+          "faceoffs_won": 22,
+          "faceoffs_lost": 18,
+          "shots": 23,
+          "goals": 1,
+          "missed_shots": 11,
+          "assists": 2,
+          "faceoff_win_pct": 55.0,
+          "faceoffs": 40,
+          "strength": [
+            {
+              "shots": 23,
+              "goals": 1,
+              "type": "5v5"
+            },
+            {
+              "shots": 0,
+              "goals": 0,
+              "type": "4v4"
+            },
+            {
+              "shots": 0,
+              "goals": 0,
+              "type": "3v3"
+            }
+          ]
+        },
+        "penalty": {
+          "shots": 0,
+          "goals": 0,
+          "missed_shots": 0
+        }
+      }
+    },
+    "away": {
+      "name": "Avalanche",
+      "points": 2,
+      "shootout": {
+        "shots": 3,
+        "missed_shots": 0,
+        "goals": 3,
+        "shots_against": 3,
+        "goals_against": 2,
+        "saves": 1,
+        "saves_pct": 0.333
+      },
+      "statistics": {
+        "total": {
+          "goals": 1,
+          "assists": 1,
+          "penalties": 3,
+          "penalty_minutes": 6,
+          "team_penalties": 0,
+          "team_penalty_minutes": 0,
+          "shots": 32,
+          "blocked_att": 26,
+          "missed_shots": 25,
+          "hits": 12,
+          "giveaways": 16,
+          "takeaways": 3,
+          "blocked_shots": 15,
+          "faceoffs_won": 26,
+          "faceoffs_lost": 29,
+          "powerplays": 4,
+          "shooting_pct": 3.1,
+          "faceoff_win_pct": 47.3,
+          "faceoffs": 55,
+          "points": 2,
+          "emptynet_goals": 0,
+          "overtime_assists": 0,
+          "overtime_goals": 0,
+          "overtime_shots": 2,
+          "penalties_major": 0,
+          "penalties_match": 0,
+          "penalties_minor": 3,
+          "penalties_misconduct": 0,
+          "plus_minus": 0,
+          "time_on_ice": "6:16:54"
+        },
+        "powerplay": {
+          "faceoffs_won": 6,
+          "faceoffs_lost": 4,
+          "shots": 5,
+          "goals": 0,
+          "missed_shots": 9,
+          "assists": 0,
+          "faceoff_win_pct": 60.0,
+          "opportunities": 4,
+          "faceoffs": 10,
+          "strength": [
+            {
+              "opportunities": 3,
+              "shots": 4,
+              "goals": 0,
+              "time": "6:00",
+              "type": "5v4"
+            },
+            {
+              "opportunities": 0,
+              "shots": 0,
+              "goals": 0,
+              "time": "00:00",
+              "type": "5v3"
+            },
+            {
+              "opportunities": 1,
+              "shots": 1,
+              "goals": 0,
+              "time": "2:00",
+              "type": "4v3"
+            }
+          ]
+        },
+        "shorthanded": {
+          "faceoffs_won": 2,
+          "faceoffs_lost": 3,
+          "shots": 0,
+          "goals": 0,
+          "missed_shots": 0,
+          "assists": 0,
+          "faceoff_win_pct": 40.0,
+          "faceoffs": 5,
+          "strength": [
+            {
+              "shots": 0,
+              "goals": 0,
+              "type": "4v5"
+            },
+            {
+              "shots": 0,
+              "goals": 0,
+              "type": "3v5"
+            },
+            {
+              "shots": 0,
+              "goals": 0,
+              "type": "3v4"
+            }
+          ]
+        },
+        "evenstrength": {
+          "faceoffs_won": 18,
+          "faceoffs_lost": 22,
+          "shots": 27,
+          "goals": 1,
+          "missed_shots": 16,
+          "assists": 1,
+          "faceoff_win_pct": 45.0,
+          "faceoffs": 40,
+          "strength": [
+            {
+              "shots": 26,
+              "goals": 1,
+              "type": "5v5"
+            },
+            {
+              "shots": 0,
+              "goals": 0,
+              "type": "4v4"
+            },
+            {
+              "shots": 1,
+              "goals": 0,
+              "type": "3v3"
+            }
+          ]
+        },
+        "penalty": {
+          "shots": 0,
+          "goals": 0,
+          "missed_shots": 0
+        }
+      }
+    }
+  }
+}
