@@ -277,4 +277,10 @@ describe('CS2 series map handicap and total maps', () => {
         expect(new Set(types).size).toBe(types.length);
     });
 });
+describe('dst_td — a team defense or special teams touchdown (ENG-1157)', () => {
+    it('is a market we track, under its own canonical key', () => {
+        expect(normalizeMarketType('dst_td')).toBe('dst_td');
+        expect(isUsefulMarket('dst_td')).toBe(true);
+    });
+});
 //# sourceMappingURL=market-types.test.js.map

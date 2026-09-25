@@ -184,6 +184,11 @@ export const MARKET_TYPE_MAP: Record<string, string> = {
   first_touchdown_scorer: "first_td_scorer",
   period_first_touchdown_scored: "first_td_scorer",
   last_touchdown_scorer: "last_td_scorer",
+  // A TEAM's defense or special teams scoring a touchdown — interception, fumble, kick, punt
+  // or blocked-kick return (ENG-1157, from Caesars bets). Canonical only: each book's own
+  // spelling is aliased where its bets are read (huddle-api's BOOK_ALIASES), so no odds feed
+  // starts storing a market it did not store before.
+  dst_td: "dst_td",
   // Kicking, which the map had only as `kicking_points`.
   extra_points_made: "extra_points", extra_points: "extra_points",
   completions: "completions", player_completions: "completions",
