@@ -26,6 +26,7 @@ export * from './config/leagues.js';
 export * from './config/registry.js';
 export * from './sportradar/player-stats.js';
 export * from './sportradar/nfl-player-stats.js';
+export * from './sportradar/team-stats.js';
 // Sportradar status → EventStatus. Shared because it was duplicated nine times across
 // huddle-data and huddle-live, and every copy carried the same two bugs (ENG-521).
 export * from './sportradar/game-status.js';
